@@ -1,4 +1,5 @@
 import base64
+import os
 
 # imgstring = input()
 # imgdata = base64.b64decode(imgstring)
@@ -10,7 +11,7 @@ import base64
 
 def writeImage(imgstring):
     imgdata = base64.b64decode(imgstring)
-    filename = '/home/chico/Pictures/temp.jpg'
+    filename = os.getcwd() +"/temp.jpg"
     with open(filename, 'wb') as f:
         f.write(imgdata)
 

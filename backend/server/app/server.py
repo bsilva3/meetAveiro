@@ -4,6 +4,7 @@ import webscrape
 from search import search_wiki
 from img_utils import writeImage
 from prediction import predict_image
+import os
 
 app = Flask(__name__)
 
@@ -35,7 +36,8 @@ def classify_image():
     res = request.get_json(force=True)
     image = res['image']
     writeImage(image)
-    classification = predict_image('/home/chico/Pictures/temp.jpg')
+    #classification = predict_image('/home/chico/Pictures/temp.jpg')
+    classification = predict_image(os.getcwd()+"/temp.jpg")
     print(classification)
     img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
     print(img_name.lower())
@@ -45,6 +47,4 @@ def classify_image():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
-
-
+    app.run(debug=True, port=8080, host="0.0.0.0")

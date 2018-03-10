@@ -3,10 +3,12 @@ package pi.ua.meetaveiro.fragments;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -15,6 +17,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,17 +33,35 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.interfaces.DataReceiver;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class PhotoLogFragment extends Fragment implements OnMapReadyCallback {
+public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver {
 
     private static final int CAMERA_REQUEST = 1888;
     private static final int FINE_LOCATION_REQUEST = 1889;
@@ -57,13 +78,21 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback {
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private boolean mLocationPermissionGranted;
+    private Map<Marker, Boolean> markers;
+    //Alterar consoante o IP da máquina (que pode ser consultado com ip addr show)
+    private final static String API_URL = "http://192.168.1.3:8080/search";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
-        }
+        markers = new HashMap<>();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M){
+            // Location Permissions for API 23 and above
+            if (getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
+            }
+        } //no need to aks for permissions for api below 23
+
         if (savedInstanceState != null) {
             this.mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             this.mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
@@ -79,9 +108,15 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback {
         this.buttonAddPhoto = getActivity().findViewById(R.id.search);
         buttonAddPhoto.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (getContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
-                }else {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    if (getContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
+                    } else {
+                        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                    }
+                } else {
+                    //api's below 23 get the permission to access camera immediately
                     Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
                     startActivityForResult(cameraIntent, CAMERA_REQUEST);
                 }
@@ -217,19 +252,30 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
+            //create json with server request, and add the photo base 64 encoded
+            String base64Photo = bitMapToBase64(photo);
+            JSONObject jsonRequest = new JSONObject();
+            try {
+                jsonRequest.put("image", base64Photo);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             // Add a marker in photo location
             LatLng marker;
             if (mLastKnownLocation!=null)
                 marker = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
             else
                 marker = mDefaultLocation;
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(marker)
-                    .title("<<nome do local retornado>>")
-                    .snippet("<<descrição breve retornada>>")
-                    .icon(BitmapDescriptorFactory.fromBitmap(photo))
-            );
+            //add the marker to the map of markers, but indicate that this marker
+            //does not have an updated info yet
+            markers.put(mMap.addMarker(new MarkerOptions()
+                            .position(marker)
+                            .title(getContext().getString(R.string.unknown_string))
+                            .snippet("Unknown")
+                            .icon(BitmapDescriptorFactory.fromBitmap(photo))),
+                    false);
+            //send a base 64 encoded photo to server
+            new uploadFileToServerTask().execute(jsonRequest.toString());
         }
     }
 
@@ -240,6 +286,120 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback {
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
             super.onSaveInstanceState(outState);
         }
+    }
+
+    public String bitMapToBase64 (Bitmap image){
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
+    @Override
+    public void onResponseReceived(Object result) {
+        JSONObject json = null;
+        try {
+            json = new JSONObject(result.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Marker markerToUpdate = null;
+        //search the not yet updated marker
+        for(Map.Entry entry : markers.entrySet()){
+            if(entry.getValue().equals(false)){
+                markerToUpdate = (Marker) entry.getKey();
+                break;
+            }
+        }
+        try {
+            markerToUpdate.setTitle(json.get("name").toString());
+            markerToUpdate.setSnippet(json.get("description").toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        markers.put(markerToUpdate, true);
+    }
+
+    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+        ProgressDialog progDailog;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progDailog = new ProgressDialog(getContext());
+            progDailog.setMessage(getContext().getString(R.string.scanning_image_string));
+            progDailog.setIndeterminate(false);
+            progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progDailog.setCancelable(true);
+            progDailog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String JsonResponse = null;
+            String JsonDATA = params[0];
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            Log.d("response", "begin");
+            try {
+                //Create a URL object holding our url
+                URL url = new URL(API_URL);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setDoOutput(true);
+                // is output buffer writter
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                //set headers and method
+                Writer writer = new BufferedWriter(new OutputStreamWriter
+                        (urlConnection.getOutputStream(), "UTF-8"));
+                writer.write(JsonDATA);
+                // json data
+                writer.close();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                //input stream
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String inputLine;
+                while ((inputLine = reader.readLine()) != null)
+                    buffer.append(inputLine + "\n");
+                if (buffer.length() == 0) {
+                    // Stream was empty. No point in parsing.
+                    return null;
+                }
+                JsonResponse = buffer.toString();
+                //send to post execute
+                return JsonResponse;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+            super.onPostExecute(response);
+            progDailog.dismiss();
+            onResponseReceived(response);
+        }
+
     }
 
 }

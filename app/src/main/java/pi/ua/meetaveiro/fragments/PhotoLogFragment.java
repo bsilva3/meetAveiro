@@ -3,7 +3,9 @@ package pi.ua.meetaveiro.fragments;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -22,6 +24,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -78,14 +83,18 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private boolean mLocationPermissionGranted;
+    //map to store marker that are not yet updated with information
     private Map<Marker, Boolean> markers;
+    //map that stores the image in each map
+    private Map<Marker, Bitmap> imageMarkers;
     //Alterar consoante o IP da máquina (que pode ser consultado com ip addr show)
-    private final static String API_URL = "http://192.168.1.3:8080/search";
+    private final static String API_URL = "http://192.168.43.216:8080/search";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         markers = new HashMap<>();
+        imageMarkers = new HashMap<>();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M){
             // Location Permissions for API 23 and above
             if (getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -122,6 +131,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 }
             }
         });
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         mapFragment.getMapAsync(this);
@@ -130,6 +140,16 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         transaction.replace(R.id.map, mapFragment);
         transaction.commit();
         return view;
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        //IEETA
+        /*Marker m = mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())
+                .title(getContext().getString(R.string.unknown_string))
+                .snippet("Unknown")
+                .icon(BitmapDescriptorFactory.fromBitmap(photo)));*/
     }
 
     @Override
@@ -268,12 +288,13 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 marker = mDefaultLocation;
             //add the marker to the map of markers, but indicate that this marker
             //does not have an updated info yet
-            markers.put(mMap.addMarker(new MarkerOptions()
-                            .position(marker)
-                            .title(getContext().getString(R.string.unknown_string))
-                            .snippet("Unknown")
-                            .icon(BitmapDescriptorFactory.fromBitmap(photo))),
-                    false);
+            Marker m = mMap.addMarker(new MarkerOptions()
+                    .position(marker)
+                    .title(getContext().getString(R.string.unknown_string))
+                    .snippet("Unknown")
+                    .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+            markers.put(m, false);
+            imageMarkers.put(m, photo);
             //send a base 64 encoded photo to server
             new uploadFileToServerTask().execute(jsonRequest.toString());
         }
@@ -302,6 +323,9 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             json = new JSONObject(result.toString());
         } catch (JSONException e) {
             e.printStackTrace();
+        } catch (java.lang.NullPointerException e){
+            Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG);
+            return;
         }
         Marker markerToUpdate = null;
         //search the not yet updated marker
@@ -318,6 +342,41 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             e.printStackTrace();
         }
         markers.put(markerToUpdate, true);
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                Log.d("markerClick", "clicked");
+                if (m != null) {
+                    Log.d("markerClickI", "clicked with info");
+                    createAndShowInfoDialog(m);
+                    return true;
+                }
+                return false;
+            }
+        });
+        createAndShowInfoDialog(markerToUpdate);
+    }
+
+    private void createAndShowInfoDialog(Marker m){
+        final Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.point_info_dialog);
+        dialog.setTitle(m.getTitle());
+        dialog.setCancelable(true);
+        ImageView image = (ImageView) dialog.findViewById(R.id.point_image);
+        TextView description = (TextView) dialog.findViewById(R.id.point_description);
+        Button btn = (Button) dialog.findViewById(R.id.close_info_dialog);
+        image.setImageBitmap(imageMarkers.get(m));
+        description.setText(m.getSnippet());
+        //******************************************************
+        btn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                dialog.dismiss();
+            }
+
+        });
+        //******************************************************
+        dialog.show();
     }
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {

@@ -1,5 +1,6 @@
 <resources>
     <string name ="unknown_string"> Unknown </string>
+    <string name ="close_string"> Close </string>
     <string name ="scanning_image_string"> Scanning image... </string>
     <string name="app_name">meetAveiro</string>
     <string name="title_activity_photo_log_map">Photo Log</string>

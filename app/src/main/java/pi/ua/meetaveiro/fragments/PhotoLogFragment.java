@@ -73,6 +73,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
     private GoogleMap mMap;
     private FloatingActionButton buttonAddPhoto;
+    private FloatingActionButton buttonStart;
+    private FloatingActionButton buttonStop;
     private Location mLastKnownLocation;
     private CameraPosition mCameraPosition;
     // The entry point to the Fused Location Provider.
@@ -105,7 +107,10 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
-        this.buttonAddPhoto = getActivity().findViewById(R.id.search);
+        this.buttonStart = view.findViewById(R.id.start);
+        this.buttonStop = view.findViewById(R.id.start);
+        this.buttonAddPhoto = view.findViewById(R.id.search);
+
         buttonAddPhoto.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
@@ -120,6 +125,20 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                     Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
                     startActivityForResult(cameraIntent, CAMERA_REQUEST);
                 }
+            }
+        });
+
+        buttonStart.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                buttonStart.setVisibility(View.GONE);
+                buttonStop.setVisibility(View.VISIBLE);
+            }
+        });
+
+        buttonStart.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                buttonStart.setVisibility(View.GONE);
+                buttonStop.setVisibility(View.VISIBLE);
             }
         });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -171,6 +190,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        googleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         mMap = googleMap;
 
         // Prompt the user for permission.

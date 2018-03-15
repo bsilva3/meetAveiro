@@ -11,8 +11,9 @@ beautifulsoup4
 flask
 requests
 clarifai
-urllib
+urllib (instalado por omissão)
 wikipedia
+lxml
 
 
 ############

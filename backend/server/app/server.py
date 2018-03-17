@@ -1,14 +1,25 @@
+'''
+Servidor, construído sobre Flask, que expõe uma REST API, cujos serviços se 
+aplicam à identificação de imagens e recolha de informação pertinente sobre
+o que elas representam (ex: monumentos)
+'''
+
 # from app import app
 from flask import jsonify, request, Flask
 import webscrape
 from search import search_wiki
 from img_utils import writeImage
 from prediction import predict_image
-import os
 
 app = Flask(__name__)
 
 def process_image_search(query):
+    '''
+    Extrai informação (a partir da wikimedia API ou por web crawling)
+    de acordo com o edificio identificado
+
+    query - nome do edificio
+    '''
     message = 'not found'
     if query in webscrape.urls.keys():
         message = webscrape.process_search(query)
@@ -36,8 +47,7 @@ def classify_image():
     res = request.get_json(force=True)
     image = res['image']
     writeImage(image)
-    #classification = predict_image('/home/chico/Pictures/temp.jpg')
-    classification = predict_image(os.getcwd()+"/temp.jpg")
+    classification = predict_image('/home/chico/Pictures/temp.jpg')
     print(classification)
     img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
     print(img_name.lower())
@@ -47,4 +57,6 @@ def classify_image():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080, host="0.0.0.0")
+    app.run(debug=True, port=8080)
+
+

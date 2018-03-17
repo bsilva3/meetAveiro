@@ -3,7 +3,6 @@ package pi.ua.meetaveiro.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -12,7 +11,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -24,8 +22,10 @@ import com.google.firebase.auth.FirebaseUser;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
+import pi.ua.meetaveiro.others.Route;
 
-public class NavigationDrawerActivity extends AppCompatActivity {
+public class NavigationDrawerActivity extends AppCompatActivity implements RouteHistoryFragment.OnListFragmentInteractionListener {
 
     private NavigationView navigationView;
     private DrawerLayout drawer;
@@ -47,6 +47,7 @@ public class NavigationDrawerActivity extends AppCompatActivity {
     // tags used to attach the fragments
     private static final String TAG_PHOTO_LOG = "home";
     private static final String TAG_ACCOUNT_SETTINGS = "photos";
+    private static final String TAG_ROUTE_HISTORY = "history";
     public static String CURRENT_TAG = TAG_PHOTO_LOG;
 
     // toolbar titles respected to selected nav menu item
@@ -101,7 +102,7 @@ public class NavigationDrawerActivity extends AppCompatActivity {
      */
     private void loadNavHeader() {
         // name, website
-        txtName.setText("meetAveiro");
+        txtName.setText(getString(R.string.app_name));
         txtWebsite.setText(user.getEmail());
 
         // loading header background image
@@ -127,8 +128,6 @@ public class NavigationDrawerActivity extends AppCompatActivity {
             return;
         }
 
-
-
         // Sometimes, when fragment has huge data, screen seems hanging
         // when switching between navigation menus
         // So using runnable, the fragment is loaded with cross fade effect
@@ -139,8 +138,7 @@ public class NavigationDrawerActivity extends AppCompatActivity {
                 // update the main content by replacing fragments
                 Fragment fragment = getHomeFragment();
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,
-                        android.R.anim.fade_out);
+                fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
                 fragmentTransaction.replace(R.id.frame, fragment, CURRENT_TAG);
                 fragmentTransaction.commitAllowingStateLoss();
             }
@@ -161,10 +159,13 @@ public class NavigationDrawerActivity extends AppCompatActivity {
     private Fragment getHomeFragment() {
         switch (navItemIndex) {
             case 0:
-                // photo log fragment
+                // Photo log fragment
                 return new PhotoLogFragment();
             case 1:
-                // account settings fragment
+                // Route history fragment
+                return new RouteHistoryFragment();
+            case 2:
+                // Account settings fragment
                 return new AccountSettingsFragment();
             default:
                 return new PhotoLogFragment();
@@ -194,8 +195,12 @@ public class NavigationDrawerActivity extends AppCompatActivity {
                         navItemIndex = 0;
                         CURRENT_TAG = TAG_PHOTO_LOG;
                         break;
-                    case R.id.option_account_settings:
+                    case R.id.option_route_history:
                         navItemIndex = 1;
+                        CURRENT_TAG = TAG_ROUTE_HISTORY;
+                        break;
+                    case R.id.option_account_settings:
+                        navItemIndex = 2;
                         CURRENT_TAG = TAG_ACCOUNT_SETTINGS;
                         break;
                     case R.id.option_logout:
@@ -229,23 +234,7 @@ public class NavigationDrawerActivity extends AppCompatActivity {
         });
 
 
-        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.openDrawer, R.string.closeDrawer) {
-
-            @Override
-            public void onDrawerClosed(View drawerView) {
-                // Code here will be triggered once the drawer closes as we dont want anything to happen so we leave this blank
-                super.onDrawerClosed(drawerView);
-            }
-
-            @Override
-            public void onDrawerOpened(View drawerView) {
-                // Code here will be triggered once the drawer open as we dont want anything to happen so we leave this blank
-                super.onDrawerOpened(drawerView);
-            }
-        };
-
-        //Setting the actionbarToggle to drawer layout
-        drawer.setDrawerListener(actionBarDrawerToggle);
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.openDrawer, R.string.closeDrawer);
 
         //calling sync state is necessary or else your hamburger icon wont show up
         actionBarDrawerToggle.syncState();
@@ -274,52 +263,14 @@ public class NavigationDrawerActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-
-        // show menu only when home fragment is selected
-        //if (navItemIndex == 0) {
-         //   getMenuInflater().inflate(R.menu.main, menu);
-        //}
-
-        // when fragment is notifications, load the menu created for notifications
-        //if (navItemIndex == 3) {
-         //   getMenuInflater().inflate(R.menu.notifications, menu);
-        //}
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        //int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        //if (id == R.id.action_logout) {
-        //    Toast.makeText(getApplicationContext(), "Logout user!", Toast.LENGTH_LONG).show();
-        //    return true;
-        //}
-
-        // user is in notifications fragment
-        // and selected 'Mark all as Read'
-        //if (id == R.id.action_mark_all_read) {
-        //    Toast.makeText(getApplicationContext(), "All notifications marked as read!", Toast.LENGTH_LONG).show();
-        //}
-
-        // user is in notifications fragment
-        // and selected 'Clear All'
-        //if (id == R.id.action_clear_notifications) {
-        //    Toast.makeText(getApplicationContext(), "Clear all notifications!", Toast.LENGTH_LONG).show();
-        //}
-
-        return super.onOptionsItemSelected(item);
-    }
-
     //sign out method
     public void signOut() {
         auth.signOut();
+    }
+
+    //called when a item is clicked on the route list fragment
+    @Override
+    public void onListFragmentInteraction(Route item) {
+
     }
 }

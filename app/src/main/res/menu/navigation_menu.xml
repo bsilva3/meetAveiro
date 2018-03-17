@@ -7,6 +7,10 @@
             android:icon="@drawable/ic_map"
             android:title="@string/option_photo_log" />
         <item
+            android:id="@+id/option_route_history"
+            android:icon="@drawable/ic_history"
+            android:title="@string/option_route_history" />
+        <item
             android:id="@+id/option_account_settings"
             android:icon="@drawable/ic_settings"
             android:title="@string/option_account_settings" />

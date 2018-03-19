@@ -58,7 +58,7 @@ def search_department(query):
     soup = bs.BeautifulSoup(sauce, 'lxml')
     summary = soup.find('p')
     #print(summary.text)
-    return summary.text
+    return summary.text.strip()
 
 
 def search_eventos():
@@ -85,20 +85,41 @@ def search_eventos():
 def search_turismo():
     '''
     Extrai informação sobre eventos descritos no site do turismo de Aveiro
-
-    (em desenvolvimento)
+    e devolve-os numa lista de dicionarios
     '''
     turismo_url = 'https://turismoinaveiro.com/collections/experiencias-cidade-de-aveiro'
     sauce = urllib.request.urlopen(turismo_url).read()
     soup = bs.BeautifulSoup(sauce, 'lxml')
     events = soup.find_all('a', {'class': 'product-card'})
 
+    result = []
+
     for e in events:
+        res = {}
         temp_url = 'https://turismoinaveiro.com/' + e['href']
         temp_sauce = urllib.request.urlopen(temp_url).read()
         temp_soup = bs.BeautifulSoup(temp_sauce, 'lxml')
         title = temp_soup.find('h1')
-        print(title.text)
+        price = temp_soup.find('span', {'class': 'product-single__price'})
+        table = temp_soup.find('table')
+        if table is not None:
+            tr = table.find('tr')
+            td = tr.find('td')
+            ps = td.find_all('p')
+        #print(title.text.strip())
+        #print(price.text.strip())
+        res['title'] = title.text.strip()
+        res['price'] = price.text.strip()
+
+        if len(ps) == 3:
+            #print(ps[1].text.strip())
+            #print(ps[2].text.strip())
+            location = ps[1].text.strip() + '\n' + ps[2].text.strip()
+            res['location'] = location
+        else:
+            res['location'] = ps[1].text.strip()
+        result.append(res)
+    return result
 
 #search_eventos()
 search_turismo()

@@ -1,0 +1,7 @@
+DROP TABLE meetAveiroUsers.InstanciaPercurso;
+DROP TABLE meetAveiroUsers.Ponto;
+DROP TABLE meetAveiroUsers.Percurso;
+DROP TABLE meetAveiroUsers.Fotografia;
+DROP TABLE meetAveiroUsers.Conceito;
+DROP TABLE meetAveiroUsers.Utilizador;
+DROP TABLE meetAveiroUsers.Tipo;

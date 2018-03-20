@@ -47,12 +47,19 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
@@ -62,7 +69,6 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-
 
 /**
  * Photo logging and route making {@link Fragment} subclass.
@@ -92,6 +98,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
     //Alterar consoante o IP da máquina (que pode ser consultado com ip addr show)
     private final static String API_URL = "http://192.168.1.3:8080/search";
+    private final static String FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -217,6 +224,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
             // Add a marker in photo location
             LatLng marker;
             if (mLastKnownLocation!=null)
@@ -246,6 +254,13 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         }
     }
 
+    public String bitMapToBase64 (Bitmap image){
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
     @Override
     public void onResponseReceived(Object result) {
         JSONObject json = null;
@@ -254,7 +269,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (java.lang.NullPointerException e){
-            Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG);
+            Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG).show();
             return;
         }
         Marker markerToUpdate = null;
@@ -265,6 +280,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 break;
             }
         }
+        Marker oldMarker = markerToUpdate;
         try {
             markerToUpdate.setTitle(json.get("name").toString());
             markerToUpdate.setSnippet(json.get("description").toString());
@@ -272,6 +288,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             e.printStackTrace();
         }
         markers.put(markerToUpdate, true);
+        //update the marker in the map that stores every marker and the image in the marker
+        updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker m) {
@@ -284,7 +302,14 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 return false;
             }
         });
+        saveMarkersOnStorage(FILENAME, imageMarkers);
         createAndShowInfoDialog(markerToUpdate);
+    }
+    //used to save the updated marker with the info obtained from the server
+    private void updateMarkerOnMap(Marker old, Marker newMarker){
+        Bitmap bit = imageMarkers.get(old);
+        imageMarkers.remove(old);
+        imageMarkers.put(newMarker, bit);
     }
 
     private void createAndShowInfoDialog(Marker m){
@@ -308,6 +333,78 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         //******************************************************
         dialog.show();
     }
+
+    public void saveMarkersOnStorage(String fileName, Map m){
+        //http://www.androidinterview.com/android-data-storage-options-sharedpreferences-tutorial/
+        /*File file = new File(getContext().getFilesDir(),fileName);
+        if(!file.exists()){
+            file.mkdir();
+        }
+        FileOutputStream f = null;
+        try {
+            f = new FileOutputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            f.write(mapToByteArray(m));
+            f.flush();
+            f.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+    }
+
+    public Map loadMarkersFromStorage(String fileName){
+        File file = new File(fileName);
+        if(file.exists()){
+            int size = (int) file.length();
+            byte[] bytes = new byte[size];
+            try {
+                BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+                buf.read(bytes, 0, bytes.length);
+                buf.close();
+            } catch (FileNotFoundException e) {
+                Toast.makeText(getContext(), "File not found", Toast.LENGTH_LONG).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return byteArrayToMap(bytes);
+        }
+        return null;
+    }
+
+    private byte[] mapToByteArray(Map map){
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        ObjectOutputStream out = null;
+        try {
+            out = new ObjectOutputStream(byteOut);
+            out.writeObject(map);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return byteOut.toByteArray();
+    }
+
+    private Map byteArrayToMap (byte[] b){
+        ByteArrayInputStream byteIn = new ByteArrayInputStream(b);
+        ObjectInputStream in = null;
+        try {
+            in = new ObjectInputStream(byteIn);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<Marker, Bitmap> data = null;
+        try {
+            data = (Map<Marker, Bitmap>) in.readObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;

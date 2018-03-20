@@ -1,0 +1,67 @@
+CREATE SCHEMA meetAveiroUsers
+	AUTHORIZATION postgres;
+	
+CREATE TABLE meetAveiroUsers.Tipo(
+	Id integer NOT NULL,
+	Nome text NOT NULL,
+	PRIMARY KEY (Id)
+);
+
+CREATE TABLE meetAveiroUsers.Utilizador (
+    Email text NOT NULL,
+    Tipo integer NOT NULL,
+    PRIMARY KEY (Email),
+    FOREIGN KEY (Tipo) REFERENCES meetAveiroUsers.Tipo(Id)
+);
+
+CREATE TABLE meetAveiroUsers.Conceito (
+	NomeConceito text NOT NULL,
+	EmailCriador text NOT NULL,
+	Latitude float,
+	Longitude float,
+	Raio float,	
+	Descricao text,
+	Classificacao float,
+	PRIMARY KEY (NomeConceito),
+    FOREIGN KEY (EmailCriador) REFERENCES meetAveiroUsers.Utilizador(Email)
+);
+
+CREATE TABLE meetAveiroUsers.Fotografia (
+	IdFoto integer NOT NULL,
+	NomeConceito text,
+	EmailCriador text NOT NULL,
+	PRIMARY KEY (IdFoto),
+    FOREIGN KEY (EmailCriador) REFERENCES meetAveiroUsers.Utilizador(Email),
+	FOREIGN KEY (NomeConceito) REFERENCES meetAveiroUsers.Conceito(NomeConceito)
+);
+
+CREATE TABLE meetAveiroUsers.Percurso (
+	Id integer NOT NULL,
+	EmailUser text NOT NULL,
+	Titulo text NOT NULL,
+	Descricao text,
+	Classificacao float,
+	PRIMARY KEY (Id),
+    FOREIGN KEY (EmailUser) REFERENCES meetAveiroUsers.Utilizador(Email)
+);
+
+CREATE TABLE meetAveiroUsers.Ponto (
+	IdPonto integer NOT NULL,
+	IdFoto integer NOT NULL,
+	Latitude float NOT NULL,
+	Longitude float NOT NULL,
+	IdPercurso integer NOT NULL,
+	PRIMARY KEY (IdPonto),
+	FOREIGN KEY (IdFoto) REFERENCES meetAveiroUsers.Fotografia(IdFoto),
+	FOREIGN KEY (IdPercurso) REFERENCES meetAveiroUsers.Percurso(Id)
+);
+
+CREATE TABLE meetAveiroUsers.InstanciaPercurso (
+	EmailUser text NOT NULL,
+	IdPercurso integer NOT NULL,
+	DataInicio timestamp NOT NULL,
+	DataFim timestamp NOT NULL,
+	PRIMARY KEY (EmailUser, IdPercurso, DataInicio),
+	FOREIGN KEY (IdPercurso) REFERENCES meetAveiroUsers.Percurso(Id),
+	FOREIGN KEY (EmailUser) REFERENCES meetAveiroUsers.Utilizador(Email)
+);

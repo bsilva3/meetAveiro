@@ -5,19 +5,19 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.os.Looper;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,6 +29,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,8 +43,6 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,29 +65,31 @@ import pi.ua.meetaveiro.interfaces.DataReceiver;
 
 
 /**
- * A simple {@link Fragment} subclass.
+ * Photo logging and route making {@link Fragment} subclass.
  */
-public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver {
-
+public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver{
     private static final int CAMERA_REQUEST = 1888;
-    private static final int FINE_LOCATION_REQUEST = 1889;
     private static final String TAG = "ERRO";
     private static final int DEFAULT_ZOOM = 10;
-    private static final String KEY_CAMERA_POSITION = "camera_position";
-    private static final String KEY_LOCATION = "location";
+    private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
+    private static final String KEY_LOCATION = "lastLocation";
 
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
-    private GoogleMap mMap;
-    private FloatingActionButton buttonAddPhoto;
-    private Location mLastKnownLocation;
+    // Last known map camera position
     private CameraPosition mCameraPosition;
+    // Last known device location
+    private Location mLastKnownLocation;
+    // Map Object
+    private GoogleMap mMap;
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private boolean mLocationPermissionGranted;
+    private boolean mLocationPermissionGranted = false;
+
     //map to store marker that are not yet updated with information
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
     private Map<Marker, Bitmap> imageMarkers;
+
     //Alterar consoante o IP da máquina (que pode ser consultado com ip addr show)
     private final static String API_URL = "http://192.168.1.3:8080/search";
 
@@ -94,18 +98,13 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         super.onCreate(savedInstanceState);
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M){
-            // Location Permissions for API 23 and above
-            if (getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
-            }
-        } //no need to aks for permissions for api below 23
 
         if (savedInstanceState != null) {
             this.mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             this.mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
     }
 
     @Override
@@ -113,21 +112,11 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
-        this.buttonAddPhoto = view.findViewById(R.id.search);
+        FloatingActionButton buttonAddPhoto = view.findViewById(R.id.search);
         buttonAddPhoto.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    if (getContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
-                    } else {
-                        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(cameraIntent, CAMERA_REQUEST);
-                    }
-                } else {
-                    //api's below 23 get the permission to access camera immediately
-                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
-                }
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
             }
         });
 
@@ -140,44 +129,11 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         transaction.commit();
         return view;
     }
+
     @Override
     public void onResume() {
         super.onResume();
-        //IEETA
-        /*Marker m = mMap.addMarker(new MarkerOptions()
-                .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())
-                .title(getContext().getString(R.string.unknown_string))
-                .snippet("Unknown")
-                .icon(BitmapDescriptorFactory.fromBitmap(photo)));*/
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        mLocationPermissionGranted = false;
-        switch (requestCode) {
-            case FINE_LOCATION_REQUEST: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    mLocationPermissionGranted = true;
-                    updateLocationUI();
-                } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                    Toast.makeText(getContext(), "Sem acesso á localização será impossivel ter acesso a esta funcionalidade", Toast.LENGTH_LONG).show();
-                    getActivity().finish();
-                }
-                break;
-            }
-            case CAMERA_REQUEST: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
-                } else {
-                    Toast.makeText(getContext(), "Sem a camara será impossivel ter acesso a esta funcionalidade", Toast.LENGTH_LONG).show();
-                }
-                break;
-            }
-        }
-
+        removeDeviceLocationUpdates();
     }
 
     /**
@@ -191,29 +147,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Prompt the user for permission.
-        getLocationPermission();
-
-        // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
-
-        // Get the current location of the device and set the position of the map.
-        getDeviceLocation();
-
-    }
-
-    private void getLocationPermission() {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mLocationPermissionGranted = true;
-        } else {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
-        }
+        requestDeviceLocationUpdates();
     }
 
     private void updateLocationUI() {
@@ -221,49 +156,50 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             return;
         }
         try {
-            if (mLocationPermissionGranted) {
-                mMap.setMyLocationEnabled(true);
-                mMap.getUiSettings().setMyLocationButtonEnabled(true);
-                getDeviceLocation();
-            } else {
-                mMap.setMyLocationEnabled(false);
-                mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                mLastKnownLocation = null;
-                getLocationPermission();
-            }
-        } catch (SecurityException e)  {
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
 
-    private void getDeviceLocation() {
-         /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        try {
-            if (mLocationPermissionGranted) {
-                Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(getActivity(), new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            mLastKnownLocation = task.getResult();
-                            if(mLastKnownLocation != null) {
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                            }else {
-                                Toast.makeText(getContext(), "Não foi possivel obter a localização por favor verifique que tem o GPS ligado e tente novamente", Toast.LENGTH_LONG).show();
-                                getActivity().finish();
-                            }
-                        } else {
-                            Toast.makeText( getContext(), "Não foi possivel obter a localização por favor verifique que tem o GPS ligado e tente novamente", Toast.LENGTH_LONG).show();
-                            getActivity().finish();
-                        }
-                    }
-                });
+    LocationCallback mLocationCallback = new LocationCallback(){
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+
+            if (locationResult == null) {
+                return;
             }
-        } catch (SecurityException e)  {
+
+            Log.i("MapsActivity", "Location: " + locationResult.getLastLocation().getLatitude() + " " + locationResult.getLastLocation().getLongitude());
+
+            mLastKnownLocation = locationResult.getLastLocation();
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+
+        }
+
+        @Override
+        public void onLocationAvailability (LocationAvailability locationAvailability){
+            super.onLocationAvailability(locationAvailability);
+            if(!locationAvailability.isLocationAvailable())
+                Toast.makeText(getContext(), "Localização não disponivel",  Toast.LENGTH_SHORT);
+        }
+    };
+
+    private void requestDeviceLocationUpdates() {
+        try{
+            mFusedLocationProviderClient.requestLocationUpdates(LocationRequest.create(), mLocationCallback, Looper.myLooper());
+        } catch (SecurityException e) {
+            Log.e("Exception: %s", e.getMessage());
+        }
+    }
+
+    private void removeDeviceLocationUpdates() {
+        try{
+            mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
@@ -271,8 +207,10 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+            String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
             //create json with server request, and add the photo base 64 encoded
-            String base64Photo = bitMapToBase64(photo);
             JSONObject jsonRequest = new JSONObject();
             try {
                 jsonRequest.put("image", base64Photo);
@@ -306,13 +244,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
             super.onSaveInstanceState(outState);
         }
-    }
-
-    public String bitMapToBase64 (Bitmap image){
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream .toByteArray();
-        return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
     @Override

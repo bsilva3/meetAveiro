@@ -56,7 +56,7 @@
     </string-array>
 
     <string name="activity_title_about_us">About Us</string>
-    <string name="title_activity_navigation_drawer">NavigationDrawerActivity</string>
+    <string name="title_activity_navigation_drawer">meetAveiro</string>
     <string name="option_route_history">Route History</string>
     <string name="route">Route</string>
 

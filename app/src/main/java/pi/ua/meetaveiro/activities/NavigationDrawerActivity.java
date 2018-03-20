@@ -1,23 +1,39 @@
 package pi.ua.meetaveiro.activities;
 
+import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
@@ -26,6 +42,8 @@ import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
 import pi.ua.meetaveiro.others.Route;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements RouteHistoryFragment.OnListFragmentInteractionListener {
+    private static final int PERMISSIONS_REQUEST = 1889;
+    private static final String TAG = "LOGGER";
 
     private NavigationView navigationView;
     private DrawerLayout drawer;
@@ -58,6 +76,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Route
     private Handler mHandler;
     private FirebaseAuth auth;
 
+    private Bundle savedState;
+    private boolean mPermissionsGranted = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,17 +103,49 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Route
         // load toolbar titles from string resources
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
 
-        // load nav menu header data
-        loadNavHeader();
+        savedState = savedInstanceState;
 
-        // initializing navigation menu
-        setUpNavigationView();
+        // First and foremost get permissions
+        getPermissions();
 
-        if (savedInstanceState == null) {
-            navItemIndex = 0;
-            CURRENT_TAG = TAG_PHOTO_LOG;
-            loadHomeFragment();
+        setupNavigationFragments();
+    }
+
+    private void setupNavigationFragments(){
+        if(mPermissionsGranted) {
+            // load nav menu header data
+            loadNavHeader();
+
+            // initializing navigation menu
+            setUpNavigationView();
+
+            if (savedState == null) {
+                navItemIndex = 0;
+                CURRENT_TAG = TAG_PHOTO_LOG;
+                loadHomeFragment();
+            }
         }
+    }
+
+    private void getPermissions() {
+        /*
+         * Request location permission, so that we can get the location of the
+         * device. The result of the permission request is handled by a callback,
+         * onRequestPermissionsResult.
+         */
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            List<String> listPermissionsNeeded = new ArrayList<>();
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+                listPermissionsNeeded.add(Manifest.permission.CAMERA);
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            // Should we show an explanation?
+            if(listPermissionsNeeded.size()>0){
+                ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), PERMISSIONS_REQUEST);
+                return;
+            }
+        }
+        mPermissionsGranted = true;
     }
 
     /***
@@ -106,8 +159,69 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Route
         txtWebsite.setText(user.getEmail());
 
         // loading header background image
-        Glide.with(this).load(urlNavHeaderBg)
-                .into(imgNavHeaderBg);
+        Glide.with(this).load(urlNavHeaderBg).into(imgNavHeaderBg);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST: {
+
+                Map<String, Integer> perms = new HashMap<>();
+                // Initialize the map with both permissions
+                perms.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
+                // Fill with actual results from user
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < permissions.length; i++)
+                        perms.put(permissions[i], grantResults[i]);
+                    // Check for both permissions
+                    if (perms.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "Camera and Location permission granted");
+                        mPermissionsGranted = true;
+                        setupNavigationFragments();
+                    } else {
+                        Log.d(TAG, "Some permissions are not granted ask again ");
+                        // permission is denied (this is the first time, when "never ask again" is not checked) so ask again explaining the usage of permission
+//                      // shouldShowRequestPermissionRationale will return true
+                        // show the dialog or snackbar saying its necessary and try again otherwise proceed with setup.
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.SEND_SMS) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                            showDialogOK("Camera and Location Services Permission required for this app",
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            switch (which) {
+                                                case DialogInterface.BUTTON_POSITIVE:
+                                                    getPermissions();
+                                                    break;
+                                                case DialogInterface.BUTTON_NEGATIVE:
+                                                    finish();
+                                                    break;
+                                            }
+                                        }
+                                    });
+                        }
+                        // permission is denied (and never ask again is  checked)
+                        // shouldShowRequestPermissionRationale will return false
+                        else {
+                            Toast.makeText(this, "Go to settings and enable permissions", Toast.LENGTH_LONG).show();
+                            finish();
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private void showDialogOK(String message, DialogInterface.OnClickListener okListener) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton("OK", okListener)
+                .setNegativeButton("Cancel", okListener)
+                .create()
+                .show();
     }
 
     /***
@@ -154,6 +268,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Route
 
         // refresh toolbar menu
         invalidateOptionsMenu();
+
     }
 
     private Fragment getHomeFragment() {

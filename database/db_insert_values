@@ -1,0 +1,61 @@
+-- Adição de Tipos de Utilizadores
+INSERT INTO meetAveiroUsers.Tipo(Nome)
+VALUES('Administrador');                            -- id 1
+INSERT INTO meetAveiroUsers.Tipo(Nome)
+VALUES('Turista');                                  -- id 2
+
+-- Adição de Administradores
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('maria@ua.pt',1);
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('carol@ua.pt',1);
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('manel@ua.pt',1);
+
+-- Adição de Turistas
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('joana@ua.pt',2);
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('joao@ua.pt',2);
+INSERT INTO meetAveiroUsers.Utilizador (Email, Tipo)
+VALUES('carlos@ua.pt',2);
+
+-- Adição de conceitos - Só os administradores criam conceitos
+INSERT INTO meetAveiroUsers.Conceito (NomeConceito,	EmailCriador, Latitude,	Longitude, Raio, Descricao,	Classificacao)
+VALUES('Biblioteca, Universidade de Aveiro', 'joana@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 4.5);
+INSERT INTO meetAveiroUsers.Conceito (NomeConceito,	EmailCriador, Latitude,	Longitude, Raio, Descricao,	Classificacao)
+VALUES('DETI, Universidade de Aveiro', 'joana@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 4.9);
+INSERT INTO meetAveiroUsers.Conceito (NomeConceito,	EmailCriador, Latitude,	Longitude, Raio, Descricao,	Classificacao)
+VALUES('DMat, Universidade de Aveiro', 'joao@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 4.3);
+INSERT INTO meetAveiroUsers.Conceito (NomeConceito,	EmailCriador, Latitude,	Longitude, Raio, Descricao,	Classificacao)
+VALUES('Reitoria, Universidade de Aveiro', 'carlos@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 4.3);
+
+-- Adição das fotografias
+INSERT INTO meetAveiroUsers.Fotografia (NomeConceito, EmailCriador)
+VALUES('Biblioteca, Universidade de Aveiro','joao@ua.pt');                                     -- id 1
+INSERT INTO meetAveiroUsers.Fotografia (NomeConceito, EmailCriador)
+VALUES('Biblioteca, Universidade de Aveiro','carlos@ua.pt');                                   -- id 2
+INSERT INTO meetAveiroUsers.Fotografia (NomeConceito, EmailCriador)
+VALUES('DETI, Universidade de Aveiro','carlos@ua.pt');                                         -- id 3 
+INSERT INTO meetAveiroUsers.Fotografia (NomeConceito, EmailCriador)
+VALUES('DMat, Universidade de Aveiro','carlos@ua.pt');                                         -- id 4
+
+-- Adição de percursos
+INSERT INTO meetAveiroUsers.Percurso (EmailUser, Titulo, Descricao, Classificacao)
+VALUES('manel@ua.pt','Conhece a UA','Conhece a Universidade de Aveiro',4.6);                   -- id 1
+
+-- Adição de Pontos - Podem não ter fotografias associadas
+INSERT INTO meetAveiroUsers.Ponto (Latitude, Longitude)
+VALUES(40.5, -8.6);                                                                            -- id 1
+INSERT INTO meetAveiroUsers.Ponto (IdFoto, Latitude, Longitude)
+VALUES(1, 40.6310031, -8.659642599999984);                                                     -- id 2 
+INSERT INTO meetAveiroUsers.Ponto (IdFoto, Latitude, Longitude, IdPercurso)
+VALUES(2, 40.6310031, -8.659642599999984, 1);                                                  -- id 3 
+INSERT INTO meetAveiroUsers.Ponto (IdFoto, Latitude, Longitude, IdPercurso)
+VALUES(3, 40.633175, -8.659496, 1);                                                            -- id 4 
+INSERT INTO meetAveiroUsers.Ponto (IdFoto, Latitude, Longitude, IdPercurso)
+VALUES(4, 40.630349, -8.658214, 1);                                                            -- id 5 
+
+-- Adição de instancias de percursos
+INSERT INTO meetAveiroUsers.InstanciaPercurso (EmailUser, IdPercurso, DataInicio, DataFim)
+VALUES();

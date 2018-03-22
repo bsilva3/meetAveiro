@@ -1,7 +1,5 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
@@ -27,6 +25,9 @@ class Utilizador(db.Model):
 
     # O email é fk da tabela conceito
     conc = db.relationship('Conceito', back_populates="emailcriador")
+
+    # O email é fk da tabela percurso
+    conc = db.relationship('Percurso', back_populates="emailuser")
 
     def __init__(self, email, tipoid):
         self.email = email
@@ -56,6 +57,26 @@ class Conceito(db.Model):
         self.descricao = descricao
         self.classificacao = classificacao
 
+class Percurso(db.Model):
+    __tablename__ = 'percurso'
+    id = db.Column('id', db.Integer, primary_key=True)
+
+    # O email é fk da tabela percurso
+    emailc = db.Column('emailuser', db.String(80), ForeignKey('utilizador.email'))
+    emailuser = relationship('Utilizador')
+
+    titulo = db.Column('titulo', db.String(80), unique=True, nullable=False)
+    descricao = db.Column('descricao', db.String(80))
+    classificacao = db.Column('classificacao', db.Float)
+    estado = db.Column('estado', db.String(80), nullable=False)
+
+    def __init__(self, emailc, titulo, estado, descricao=None, classificacao=None):
+        self.emailc=emailc
+        self.titulo=titulo
+        self.descricao=descricao
+        self.classificacao=classificacao
+        self.estado=estado
+
 # Adição dos tipos de Utilizadores
 def addTipo(nome):
     tipo = Tipo(nome)
@@ -73,4 +94,9 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
                 raio=None, descricao=None, classificacao=None):
     conceito = Conceito(nomeconceito, emailcriador, latitude, longitude, raio, descricao, classificacao)
     db.session.add(conceito)
+    db.session.commit()
+
+def addPercurso(emailc, titulo, estado, descricao=None, classificacao=None):
+    percurso = Percurso(emailc, titulo, estado, descricao, classificacao)
+    db.session.add(percurso)
     db.session.commit()

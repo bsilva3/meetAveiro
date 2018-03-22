@@ -54,9 +54,17 @@ def addConceitosExemplo():
     addConceito('DMat, Universidade de Aveiro', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 4.3)
     addConceito('Reitoria, Universidade de Aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 4.3)
 
+def addPercursosExemplo():
+    addPercurso('manel@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro', 4.6)
+    addPercurso('joana@ua.pt', 'Aveiro 1', 'Publico', 'Conhece a cidade de Aveiro', 4.4)
+    addPercurso('joana@ua.pt', 'Aveiro 2', 'Privado', 'Conhece a cidade de Aveiro', 4.4)
+
 @app.route('/')
 def main():
-    addConceitosExemplo()
+    #addTiposExemplo()
+    #addUtilizadoresExemplo()
+    #addConceitosExemplo()
+    addPercursosExemplo()
     return 'Done'
 
 if __name__ == '__main__':

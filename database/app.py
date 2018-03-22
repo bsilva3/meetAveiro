@@ -17,14 +17,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(password)s@%(ho
 
 db.init_app(app)
 
-@app.route('/')
-def main():
+def addTiposExemplo():
     ## Adição dos tipos de Utilizadores ##
     addTipo('Administrador')
     addTipo('Turista')
-    addTipo('ExAdministrador')           # Quando um administrador elimina a conta
-    addTipo('ExTurista')                 # Quando um turista elimina a conta
+    addTipo('ExAdministrador')  # Quando um administrador elimina a conta
+    addTipo('ExTurista')  # Quando um turista elimina a conta
 
+def addUtilizadoresExemplo():
     ## Adição dos Utilizadores ##
 
     # Adição de Administradores
@@ -47,7 +47,16 @@ def main():
     #addUtilizador('carlos@ua.pt', 3)            # sqlalchemy.exc.IntegrityError
     #addUtilizador('abc@ua.pt', 7)               # sqlalchemy.exc.IntegrityError
 
+def addConceitosExemplo():
+    # Adição de conceitos
+    addConceito('Biblioteca, Universidade de Aveiro', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 4.5)
+    addConceito('DETI, Universidade de Aveiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 4.9)
+    addConceito('DMat, Universidade de Aveiro', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 4.3)
+    addConceito('Reitoria, Universidade de Aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 4.3)
 
+@app.route('/')
+def main():
+    addConceitosExemplo()
     return 'Done'
 
 if __name__ == '__main__':

@@ -59,12 +59,31 @@ def addPercursosExemplo():
     addPercurso('joana@ua.pt', 'Aveiro 1', 'Publico', 'Conhece a cidade de Aveiro', 4.4)
     addPercurso('joana@ua.pt', 'Aveiro 2', 'Privado', 'Conhece a cidade de Aveiro', 4.4)
 
+def addPontosExemplo():
+    addPonto(40.5, -8.6)
+    addPonto(40.6310031, -8.659642599999984, 1)
+    addPonto(40.633175, -8.659496, 1)
+    addPonto(40.630349, -8.658214, 1)
+
+def addInstanciaPercursoExemplo():
+    addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00')
+
+def addFotografiaExemplo():
+    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5)
+    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5)
+
+def addInfoExemplo():
+    addTiposExemplo()
+    addUtilizadoresExemplo()
+    addConceitosExemplo()
+    addPercursosExemplo()
+    addPontosExemplo()
+    addInstanciaPercursoExemplo()
+    addFotografiaExemplo()
+
 @app.route('/')
 def main():
-    #addTiposExemplo()
-    #addUtilizadoresExemplo()
-    #addConceitosExemplo()
-    addPercursosExemplo()
+    addFotografiaExemplo()
     return 'Done'
 
 if __name__ == '__main__':

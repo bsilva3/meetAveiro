@@ -49,11 +49,12 @@ CREATE TABLE Ponto (
 );
 
 CREATE TABLE InstanciaPercurso (
+	Id SERIAL,
 	EmailUser text NOT NULL,
 	IdPercurso integer NOT NULL,
 	DataInicio timestamp NOT NULL,
 	DataFim timestamp NOT NULL,
-	PRIMARY KEY (EmailUser, IdPercurso, DataInicio),
+	PRIMARY KEY (Id),
 	FOREIGN KEY (IdPercurso) REFERENCES Percurso(Id),
 	FOREIGN KEY (EmailUser) REFERENCES Utilizador(Email)
 );
@@ -64,13 +65,12 @@ CREATE TABLE Fotografia (
 	EmailCriador text NOT NULL,
 	Latitude float NOT NULL,
 	Longitude float NOT NULL,
-	IdPercurso integer, 
-	DataInicioInstPercurso timestamp,
+	IdInstPercurso integer, 
 	DataFoto timestamp NOT NULL,
 	Feedback float,
 	Path text NOT NULL,
 	PRIMARY KEY (IdFoto),
 	FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email),
 	FOREIGN KEY (NomeConceito) REFERENCES Conceito(NomeConceito),
-	FOREIGN KEY (EmailCriador, IdPercurso, DataInicioInstPercurso) REFERENCES InstanciaPercurso(EmailUser, IdPercurso, DataInicio)
+	FOREIGN KEY (IdInstPercurso) REFERENCES InstanciaPercurso(ID)
 );

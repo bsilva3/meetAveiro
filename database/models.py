@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
@@ -29,6 +29,11 @@ class Utilizador(db.Model):
     # O email é fk da tabela percurso
     conc = db.relationship('Percurso', back_populates="emailuser")
 
+    # O email é fk da tabela InstanciaPercurso
+    inst = db.relationship('InstanciaPercurso', back_populates="emailuser")
+
+    foto = db.relationship('Fotografia', back_populates="emailcriador")
+
     def __init__(self, email, tipoid):
         self.email = email
         self.tipoid = tipoid
@@ -46,6 +51,8 @@ class Conceito(db.Model):
     raio = db.Column('raio', db.Float)
     descricao = db.Column('descricao', db.String(80))
     classificacao = db.Column('classificacao', db.Float)
+
+    conc = db.relationship('Fotografia', back_populates="nomeconceito")
 
     def __init__(self, nomeconceito, emailc, latitude=None, longitude=None,
                  raio=None, descricao=None, classificacao=None):
@@ -70,12 +77,90 @@ class Percurso(db.Model):
     classificacao = db.Column('classificacao', db.Float)
     estado = db.Column('estado', db.String(80), nullable=False)
 
+    # O id do percurso é fk da tabela ponto
+    conc = db.relationship('Ponto', back_populates="idpercurso")
+
+    # O id do percurso é fk da tabela InstanciaPercurso
+    concc = db.relationship('InstanciaPercurso', back_populates="idpercurso")
+
+
     def __init__(self, emailc, titulo, estado, descricao=None, classificacao=None):
         self.emailc=emailc
         self.titulo=titulo
         self.descricao=descricao
         self.classificacao=classificacao
         self.estado=estado
+
+class Ponto(db.Model):
+    __tablename__ = 'ponto'
+    idponto = db.Column('idponto', db.Integer, primary_key=True)
+    latitude = db.Column('latitude', db.Float, nullable=False)
+    longitude = db.Column('longitude', db.Float, nullable=False)
+
+    # O id do percurso é fk da tabela ponto
+    idperc = db.Column('idpercurso', db.Integer, ForeignKey('percurso.id'))
+    idpercurso = relationship('Percurso')
+
+    def __init__(self, latitude, longitude, idperc):
+        self.latitude=latitude
+        self.longitude=longitude
+        self.idperc=idperc
+
+class InstanciaPercurso(db.Model):
+    __tablename__ = 'instanciapercurso'
+
+    id = db.Column('id', db.Integer, primary_key=True)
+
+    # O email é fk da tabela InstanciaPercurso
+    emailc = db.Column('emailuser', db.String(80), ForeignKey('utilizador.email'))
+    emailuser = relationship('Utilizador')
+
+    # O id do percurso é fk da tabela InstanciaPercurso
+    idperc = db.Column('idpercurso', db.Integer, ForeignKey('percurso.id'))
+    idpercurso = relationship('Percurso')
+
+    datainicio = db.Column('datainicio',db.Date)
+    datafim = db.Column('datafim', db.Date)
+
+    instid = db.relationship('Fotografia', back_populates="idinstpercurso")
+
+    def __init__(self, emailc, idperc, datainicio, datafim):
+        self.emailc=emailc
+        self.idperc=idperc
+        self.datafim=datafim
+        self.datainicio=datainicio
+
+class Fotografia(db.Model):
+    __tablename__ = 'fotografia'
+    id = db.Column('idfoto', db.Integer, primary_key=True)
+
+    nomeconc = db.Column('nomeconceito', db.String(80), ForeignKey('conceito.nomeconceito'))
+    nomeconceito = relationship('Conceito')
+
+    emailinst = db.Column('emailcriador', db.String(80), ForeignKey('utilizador.email'))
+    emailcriador = relationship('Utilizador')
+
+    latitude = db.Column('latitude', db.Float, nullable=False)
+    longitude = db.Column('longitude', db.Float, nullable=False)
+
+    path = db.Column('path', db.String(80), nullable=False)
+
+    idinstperc = db.Column('idinstpercurso', db.Integer, ForeignKey('instanciapercurso.id'))
+    idinstpercurso = relationship('InstanciaPercurso')
+
+    datafoto = db.Column('datafoto', db.Date, nullable=False)
+
+    feedback = db.Column('feedback', db.Float)
+
+    def __init__(self, nomeconc, emailinst, latitude, longitude, path, idinstperc, datafoto, feedback):
+        self.nomeconc=nomeconc
+        self.emailinst=emailinst
+        self.latitude=latitude
+        self.longitude=longitude
+        self.path=path
+        self.idinstperc=idinstperc
+        self.datafoto=datafoto
+        self.feedback=feedback
 
 # Adição dos tipos de Utilizadores
 def addTipo(nome):
@@ -99,4 +184,19 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
 def addPercurso(emailc, titulo, estado, descricao=None, classificacao=None):
     percurso = Percurso(emailc, titulo, estado, descricao, classificacao)
     db.session.add(percurso)
+    db.session.commit()
+
+def addPonto(latitude, longitude, idperc=None):
+    ponto = Ponto(latitude, longitude, idperc)
+    db.session.add(ponto)
+    db.session.commit()
+
+def addInstanciaPercurso(emailc, idperc, datainicio, datafim):
+    inst = InstanciaPercurso(emailc, idperc, datainicio, datafim)
+    db.session.add(inst)
+    db.session.commit()
+
+def addFotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback):
+    foto = Fotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback)
+    db.session.add(foto)
     db.session.commit()

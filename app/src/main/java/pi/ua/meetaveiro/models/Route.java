@@ -1,4 +1,4 @@
-package pi.ua.meetaveiro.others;
+package pi.ua.meetaveiro.models;
 
 import android.content.res.Resources;
 import com.google.android.gms.maps.model.LatLng;

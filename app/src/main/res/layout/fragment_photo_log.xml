@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-
     <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -31,7 +30,18 @@
                 android:layout_marginBottom="15dp"
                 android:visibility="gone"
                 android:padding="0dp"
-                android:src="@android:drawable/ic_media_pause" />
+                android:backgroundTint="@color/danger"
+                android:src="@drawable/ic_stop" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:visibility="gone"
+                android:padding="0dp"
+                android:backgroundTint="@color/warning"
+                android:src="@drawable/ic_pause" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/start"
@@ -40,6 +50,7 @@
                 android:layout_marginBottom="15dp"
                 android:visibility="visible"
                 android:padding="0dp"
+                android:backgroundTint="@color/success"
                 android:src="@android:drawable/ic_media_play" />
 
             <android.support.design.widget.FloatingActionButton

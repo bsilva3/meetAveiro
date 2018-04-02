@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteHistoryFragment.OnListFragmentInteractionListener;
-import pi.ua.meetaveiro.others.Route;
+import pi.ua.meetaveiro.models.Route;
 
 import java.util.List;
 

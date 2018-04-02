@@ -1,20 +1,18 @@
 package pi.ua.meetaveiro.fragments;
 
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -28,12 +26,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.location.places.GeoDataClient;
+import com.google.android.gms.location.places.PlaceDetectionClient;
+import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -43,6 +45,9 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,17 +74,25 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.models.Route;
+
+import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
  * Photo logging and route making {@link Fragment} subclass.
  */
-public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver{
+public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver {
+    //Constant used in the location settings dialog.
+    private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
     private static final String TAG = "ERRO";
     private static final int DEFAULT_ZOOM = 10;
+    private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
+    private static final String KEY_ROUTE_STATE = "routeState";
 
+    // Default location
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
     // Last known map camera position
     private CameraPosition mCameraPosition;
@@ -87,45 +100,137 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private Location mLastKnownLocation;
     // Map Object
     private GoogleMap mMap;
+
+    // The entry points to the Places API.
+    private GeoDataClient mGeoDataClient;
+    private PlaceDetectionClient mPlaceDetectionClient;
+
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private boolean mLocationPermissionGranted = false;
+    //Provides access to the Location Settings API.
+    private SettingsClient mSettingsClient;
+    //Tracks the status of the location updates request. Value changes when the user presses the Start Updates and Stop Updates buttons.
+    private Boolean mRequestingLocationUpdates;
+    //Callback for Location events.
+    private LocationCallback mLocationCallback;
 
     //map to store marker that are not yet updated with information
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
-    private Map<Marker, Bitmap> imageMarkers;
+    private Map<Marker, Bitmap> imageMarkers = new HashMap<>();
 
-    //Alterar consoante o IP da máquina (que pode ser consultado com ip addr show)
-    private final static String API_URL = "http://192.168.1.3:8080/search";
-    private final static String FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
+    //Parent Activity
+    private Activity activity;
+
+    private FloatingActionButton buttonStopRoute;
+    private FloatingActionButton buttonAddPhoto;
+    private FloatingActionButton buttonStartRoute;
+    private FloatingActionButton buttonPauseRoute;
+
+    private ROUTE_STATE buttonsState;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
+        mRequestingLocationUpdates = false;
+        buttonsState = ROUTE_STATE.STOPPED;
 
-        if (savedInstanceState != null) {
-            this.mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
-            this.mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
-        }
+        // Construct a GeoDataClient.
+        mGeoDataClient = Places.getGeoDataClient(getContext(), null);
 
+        // Construct a PlaceDetectionClient.
+        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext(), null);
+
+        // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
+
+        mSettingsClient = LocationServices.getSettingsClient(getContext());
+    }
+
+
+    /**
+     * Updates fields based on data stored in the bundle.
+     *
+     * @param savedInstanceState The activity state saved in the Bundle.
+     */
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            // Update the value of mRequestingLocationUpdates from the Bundle, and make sure that
+            // the Start Updates and Stop Updates buttons are correctly enabled or disabled.
+            if (savedInstanceState.keySet().contains(KEY_REQUESTING_LOCATION_UPDATES)) {
+                mRequestingLocationUpdates = savedInstanceState.getBoolean(KEY_REQUESTING_LOCATION_UPDATES);
+            }
+
+            // Update the value of mCurrentLocation from the Bundle and update the UI to show the
+            // correct latitude and longitude.
+            if (savedInstanceState.keySet().contains(KEY_LOCATION)) {
+                // Since KEY_LOCATION was found in the Bundle, we can be sure that mCurrentLocation
+                // is not null.
+                mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
+            }
+
+            // Update the value of mLastUpdateTime from the Bundle and update the UI.
+            if (savedInstanceState.keySet().contains(KEY_CAMERA_POSITION)) {
+                mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
+            }
+
+            // Update the value of mLastUpdateTime from the Bundle and update the UI.
+            if (savedInstanceState.keySet().contains(KEY_ROUTE_STATE)) {
+                buttonsState = (ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
+            }
+        }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
-        FloatingActionButton buttonAddPhoto = view.findViewById(R.id.search);
-        buttonAddPhoto.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent, CAMERA_REQUEST);
+
+        buttonAddPhoto = view.findViewById(R.id.search);
+        buttonStartRoute = view.findViewById(R.id.start);
+        buttonPauseRoute = view.findViewById(R.id.pause);
+        buttonStopRoute = view.findViewById(R.id.stop);
+
+        buttonAddPhoto.setOnClickListener(v -> {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        });
+
+        buttonStartRoute.setOnClickListener(v -> {
+            try{
+                ((RouteStateListener) activity).onRouteStateChanged(true);
+                buttonsState = ROUTE_STATE.STARTED;
+                updateRouteButtons(buttonsState);
+            }catch (ClassCastException e){
+                Log.e("Exception: %s", e.getMessage());
             }
         });
+
+        buttonStopRoute.setOnClickListener(v -> {
+            try{
+                ((RouteStateListener) activity).onRouteStateChanged(false);
+                buttonsState = ROUTE_STATE.STOPPED;
+                updateRouteButtons(buttonsState);
+            }catch (ClassCastException e){
+                Log.e("Exception: %s", e.getMessage());
+            }
+        });
+
+        buttonPauseRoute.setOnClickListener(v -> {
+            try{
+                ((RouteStateListener) activity).onRouteStateChanged(false);
+                buttonsState = ROUTE_STATE.PAUSED;
+                updateRouteButtons(buttonsState);
+            }catch (ClassCastException e){
+                Log.e("Exception: %s", e.getMessage());
+            }
+        });
+
+        updateValuesFromBundle(savedInstanceState);
+        updateRouteButtons(buttonsState);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
@@ -137,10 +242,20 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        removeDeviceLocationUpdates();
+    public void updateRouteButtons(ROUTE_STATE state){
+        if(ROUTE_STATE.STARTED.equals(state)){
+            buttonStartRoute.setVisibility( View.GONE );
+            buttonPauseRoute.setVisibility( View.VISIBLE );
+            buttonStopRoute.setVisibility( View.VISIBLE );
+        }else if(ROUTE_STATE.PAUSED.equals(state)){
+            buttonStopRoute.setVisibility( View.VISIBLE );
+            buttonPauseRoute.setVisibility( View.GONE );
+            buttonStartRoute.setVisibility( View.VISIBLE );
+        }else if(ROUTE_STATE.STOPPED.equals(state)){
+            buttonStopRoute.setVisibility( View.GONE );
+            buttonPauseRoute.setVisibility( View.GONE );
+            buttonStartRoute.setVisibility( View.VISIBLE );
+        }
     }
 
     /**
@@ -154,8 +269,12 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
-        requestDeviceLocationUpdates();
+
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation();
     }
 
     private void updateLocationUI() {
@@ -170,79 +289,113 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         }
     }
 
-    LocationCallback mLocationCallback = new LocationCallback(){
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            super.onLocationResult(locationResult);
+    /**
+     * Gets the current location of the device, and positions the map's camera.
+     */
+    private void getDeviceLocation() {
+        /*
+         * Get the best and most recent location of the device, which may be null in rare
+         * cases when a location is not available.
+         */
+        try {
+            Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
+            locationResult.addOnCompleteListener(getActivity(), new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        // Set the map's camera position to the current location of the device.
+                        mLastKnownLocation = task.getResult();
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                    } else {
+                        Log.d(TAG, "Current location is null. Using defaults.");
+                        Log.e(TAG, "Exception: %s", task.getException());
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    }
+                }
+            }).addOnFailureListener(getActivity(), new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    int statusCode = ((ApiException) e).getStatusCode();
+                    switch (statusCode) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            Log.i(TAG, "Location settings are not satisfied. Attempting to upgrade " +
+                                    "location settings ");
+                            try {
+                                // Show the dialog by calling startResolutionForResult(), and check the
+                                // result in onActivityResult().
+                                ResolvableApiException rae = (ResolvableApiException) e;
+                                rae.startResolutionForResult(getActivity(), REQUEST_CHECK_SETTINGS);
+                            } catch (IntentSender.SendIntentException sie) {
+                                Log.i(TAG, "PendingIntent unable to execute request.");
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            String errorMessage = "Location settings are inadequate, and cannot be " +
+                                    "fixed here. Fix in Settings.";
+                            Log.e(TAG, errorMessage);
+                            Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_LONG).show();
+                            mRequestingLocationUpdates = false;
+                    }
 
-            if (locationResult == null) {
-                return;
-            }
-
-            Log.i("MapsActivity", "Location: " + locationResult.getLastLocation().getLatitude() + " " + locationResult.getLastLocation().getLongitude());
-
-            mLastKnownLocation = locationResult.getLastLocation();
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-
-        }
-
-        @Override
-        public void onLocationAvailability (LocationAvailability locationAvailability){
-            super.onLocationAvailability(locationAvailability);
-            if(!locationAvailability.isLocationAvailable())
-                Toast.makeText(getContext(), "Localização não disponivel",  Toast.LENGTH_SHORT);
-        }
-    };
-
-    private void requestDeviceLocationUpdates() {
-        try{
-            mFusedLocationProviderClient.requestLocationUpdates(LocationRequest.create(), mLocationCallback, Looper.myLooper());
-        } catch (SecurityException e) {
-            Log.e("Exception: %s", e.getMessage());
-        }
-    }
-
-    private void removeDeviceLocationUpdates() {
-        try{
-            mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
-        } catch (SecurityException e) {
+                    updateLocationUI();
+                }
+            });
+        } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            Bitmap photo = (Bitmap) data.getExtras().get("data");
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-            String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
-            //create json with server request, and add the photo base 64 encoded
-            JSONObject jsonRequest = new JSONObject();
-            try {
-                jsonRequest.put("image", base64Photo);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        switch (requestCode) {
+            // Check for the integer request code originally supplied to startResolutionForResult().
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        Log.i(TAG, "User agreed to make required location settings changes.");
+                        // Nothing to do. startLocationupdates() gets called in onResume again.
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.i(TAG, "User chose not to make required location settings changes.");
+                        mRequestingLocationUpdates = false;
+                        updateLocationUI();
+                        break;
+                }
+                break;
+            case CAMERA_REQUEST:
+                if (resultCode == Activity.RESULT_OK) {
+                    Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+                    //create json with server request, and add the photo base 64 encoded
+                    JSONObject jsonRequest = new JSONObject();
+                    try {
+                        jsonRequest.put("image", base64Photo);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
 
-            // Add a marker in photo location
-            LatLng marker;
-            if (mLastKnownLocation!=null)
-                marker = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-            else
-                marker = mDefaultLocation;
-            //add the marker to the map of markers, but indicate that this marker
-            //does not have an updated info yet
-            Marker m = mMap.addMarker(new MarkerOptions()
-                    .position(marker)
-                    .title(getContext().getString(R.string.unknown_string))
-                    .snippet("Unknown")
-                    .icon(BitmapDescriptorFactory.fromBitmap(photo)));
-            markers.put(m, false);
-            imageMarkers.put(m, photo);
-            //send a base 64 encoded photo to server
-            new uploadFileToServerTask().execute(jsonRequest.toString());
+                    if (mLastKnownLocation!=null) {
+                        //add the marker to the map of markers, but indicate that this marker
+                        //does not have an updated info yet
+                        Marker m = mMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                                .title(getContext().getString(R.string.unknown_string))
+                                .snippet("Unknown")
+                                .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+                        markers.put(m, false);
+                        imageMarkers.put(m, photo);
+                        //send a base 64 encoded photo to server
+                        new uploadFileToServerTask().execute(jsonRequest.toString());
+                    }else {
+                        //Report error to user
+                        Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
         }
+
     }
 
     @Override
@@ -250,8 +403,22 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
+            outState.putSerializable(KEY_ROUTE_STATE, buttonsState);
             super.onSaveInstanceState(outState);
         }
+    }
+
+    public void onNewLocation(Location location){
+        if (location == null) {
+            return;
+        }
+
+        Log.i("PhotoLogActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
+
+        mLastKnownLocation = location;
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+
     }
 
     public String bitMapToBase64 (Bitmap image){
@@ -302,9 +469,10 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 return false;
             }
         });
-        saveMarkersOnStorage(FILENAME, imageMarkers);
+        saveMarkersOnStorage(PREFERENCES_FILENAME, imageMarkers);
         createAndShowInfoDialog(markerToUpdate);
     }
+
     //used to save the updated marker with the info obtained from the server
     private void updateMarkerOnMap(Marker old, Marker newMarker){
         Bitmap bit = imageMarkers.get(old);
@@ -486,6 +654,17 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             onResponseReceived(response);
         }
 
+    }
+
+    @Override
+    public void onAttach(Context context)
+    {
+        super.onAttach(context);
+        this.activity = (Activity) context;
+    }
+
+    public interface RouteStateListener{
+        void onRouteStateChanged(boolean started);
     }
 
 }

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.others.Route;
+import pi.ua.meetaveiro.models.Route;
 
 /**
  * A fragment representing a list of Items.

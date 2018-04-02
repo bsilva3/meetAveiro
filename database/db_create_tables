@@ -1,21 +1,18 @@
-CREATE SCHEMA meetAveiroUsers
-	AUTHORIZATION postgres;
-	
-CREATE TABLE meetAveiroUsers.Tipo(
-	Id integer NOT NULL,
-	Nome text NOT NULL,
+CREATE TABLE Tipo(
+	Id SERIAL,
+	Nome text NOT NULL UNIQUE,
 	PRIMARY KEY (Id)
 );
 
-CREATE TABLE meetAveiroUsers.Utilizador (
-    Email text NOT NULL,
+CREATE TABLE Utilizador (
+    Email text,
     Tipo integer NOT NULL,
     PRIMARY KEY (Email),
-    FOREIGN KEY (Tipo) REFERENCES meetAveiroUsers.Tipo(Id)
+    FOREIGN KEY (Tipo) REFERENCES Tipo(Id)
 );
 
-CREATE TABLE meetAveiroUsers.Conceito (
-	NomeConceito text NOT NULL,
+CREATE TABLE Conceito (
+	NomeConceito text,
 	EmailCriador text NOT NULL,
 	Latitude float,
 	Longitude float,
@@ -23,45 +20,57 @@ CREATE TABLE meetAveiroUsers.Conceito (
 	Descricao text,
 	Classificacao float,
 	PRIMARY KEY (NomeConceito),
-    FOREIGN KEY (EmailCriador) REFERENCES meetAveiroUsers.Utilizador(Email)
+    FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email)
 );
 
-CREATE TABLE meetAveiroUsers.Fotografia (
-	IdFoto integer NOT NULL,
-	NomeConceito text,
-	EmailCriador text NOT NULL,
-	PRIMARY KEY (IdFoto),
-    FOREIGN KEY (EmailCriador) REFERENCES meetAveiroUsers.Utilizador(Email),
-	FOREIGN KEY (NomeConceito) REFERENCES meetAveiroUsers.Conceito(NomeConceito)
-);
-
-CREATE TABLE meetAveiroUsers.Percurso (
-	Id integer NOT NULL,
+CREATE TABLE Percurso (
+	Id SERIAL,
 	EmailUser text NOT NULL,
 	Titulo text NOT NULL,
 	Descricao text,
 	Classificacao float,
+	Estado text NOT NULL,												-- (*)
 	PRIMARY KEY (Id),
-    FOREIGN KEY (EmailUser) REFERENCES meetAveiroUsers.Utilizador(Email)
+    FOREIGN KEY (EmailUser) REFERENCES Utilizador(Email)
 );
 
-CREATE TABLE meetAveiroUsers.Ponto (
-	IdPonto integer NOT NULL,
-	IdFoto integer NOT NULL,
+-- (*) Isto foi o que o Prof. Neves. Estados possíveis:
+--        Validado (Criado por um administrador ou apesar de não o ter sido um administrador "validou-o") 
+--        Publico (Um utilizador criou-o e deu permissões para este ser público)
+--        Privado (Um utilizador criou-o e NÃO deu permissões para este ser público)
+
+CREATE TABLE Ponto (
+	IdPonto SERIAL,
 	Latitude float NOT NULL,
 	Longitude float NOT NULL,
-	IdPercurso integer NOT NULL,
+	IdPercurso integer, 
 	PRIMARY KEY (IdPonto),
-	FOREIGN KEY (IdFoto) REFERENCES meetAveiroUsers.Fotografia(IdFoto),
-	FOREIGN KEY (IdPercurso) REFERENCES meetAveiroUsers.Percurso(Id)
+	FOREIGN KEY (IdPercurso) REFERENCES Percurso(Id)
 );
 
-CREATE TABLE meetAveiroUsers.InstanciaPercurso (
+CREATE TABLE InstanciaPercurso (
+	Id SERIAL,
 	EmailUser text NOT NULL,
 	IdPercurso integer NOT NULL,
 	DataInicio timestamp NOT NULL,
 	DataFim timestamp NOT NULL,
-	PRIMARY KEY (EmailUser, IdPercurso, DataInicio),
-	FOREIGN KEY (IdPercurso) REFERENCES meetAveiroUsers.Percurso(Id),
-	FOREIGN KEY (EmailUser) REFERENCES meetAveiroUsers.Utilizador(Email)
+	PRIMARY KEY (Id),
+	FOREIGN KEY (IdPercurso) REFERENCES Percurso(Id),
+	FOREIGN KEY (EmailUser) REFERENCES Utilizador(Email)
+);
+
+CREATE TABLE Fotografia (
+	IdFoto SERIAL,
+	NomeConceito text,
+	EmailCriador text NOT NULL,
+	Latitude float NOT NULL,
+	Longitude float NOT NULL,
+	IdInstPercurso integer, 
+	DataFoto timestamp NOT NULL,
+	Feedback float,
+	Path text NOT NULL,
+	PRIMARY KEY (IdFoto),
+	FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email),
+	FOREIGN KEY (NomeConceito) REFERENCES Conceito(NomeConceito),
+	FOREIGN KEY (IdInstPercurso) REFERENCES InstanciaPercurso(ID)
 );

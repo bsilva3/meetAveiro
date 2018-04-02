@@ -5,9 +5,14 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -57,9 +62,11 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -70,6 +77,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import pi.ua.meetaveiro.R;
@@ -77,6 +85,8 @@ import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Route;
 
 import static pi.ua.meetaveiro.others.Constants.*;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Photo logging and route making {@link Fragment} subclass.
@@ -128,6 +138,13 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private FloatingActionButton buttonPauseRoute;
 
     private ROUTE_STATE buttonsState;
+
+    //To store in local
+    private SharedPreferences prefs = null;
+    // To delete the shared preferences use : SharedPreferences.Editor.clear();
+    //following a commit();
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -275,6 +292,39 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+
+        //Initialize Preferences*
+        prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
+
+
+        /*While we have markers stored iterate trough.
+        * For each marker add to the map with all information related to it*/
+        boolean stop = false;
+        int tmp = 0;
+        while (!stop){
+            if (prefs.contains("Lat" + tmp)) {
+                String lat = prefs.getString("Lat" + tmp, "");
+                String lng = prefs.getString("Lng" + tmp, "");
+                String btm = prefs.getString("bmp" + tmp, "");
+                String snip = prefs.getString("Snip" + tmp, "");
+                String titl = prefs.getString("Titl" + tmp,"");
+                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+                Bitmap img = StringToBitMap(btm);
+                try {
+                    mMap.addMarker(new MarkerOptions().position(l)
+                            .icon(BitmapDescriptorFactory.fromBitmap(img))
+                            .title(titl)
+                            .snippet(snip));
+                }catch (Exception e){
+                    mMap.addMarker(new MarkerOptions().position(l)
+                            .title(titl)
+                            .snippet(snip));
+                }
+                tmp++;
+            }else{
+                stop = true;
+            }
+        }
     }
 
     private void updateLocationUI() {
@@ -395,7 +445,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 }
                 break;
         }
-
     }
 
     @Override
@@ -455,6 +504,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             e.printStackTrace();
         }
         markers.put(markerToUpdate, true);
+
+
         //update the marker in the map that stores every marker and the image in the marker
         updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -469,7 +520,10 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 return false;
             }
         });
-        saveMarkersOnStorage(PREFERENCES_FILENAME, imageMarkers);
+
+
+
+        //saveMarkersOnStorage(FILENAME, imageMarkers);
         createAndShowInfoDialog(markerToUpdate);
     }
 
@@ -502,75 +556,67 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         dialog.show();
     }
 
-    public void saveMarkersOnStorage(String fileName, Map m){
-        //http://www.androidinterview.com/android-data-storage-options-sharedpreferences-tutorial/
-        /*File file = new File(getContext().getFilesDir(),fileName);
-        if(!file.exists()){
-            file.mkdir();
+
+    /*
+    * When the app is in background and whren a different fragment is selected
+    * this will be triggered.
+    * Each marker has:
+    * - Latitude    Lat
+    * - Longitude   Lng
+    * - Icon        bmp
+    * - Title       Titl
+    * - Snippet     Snip
+    */
+    @Override
+    public void onPause() {
+        super.onPause();  // Always call the superclass method first
+
+        //Iterate trough all saved markers.
+        int i = 0;
+        Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Marker, Bitmap> pair = it.next();
+            Bitmap img = pair.getValue();
+            Marker m = pair.getKey();
+
+            //Add to the preferences the information of the markers
+
+            prefs.edit().putString("Lat"+i,String.valueOf(m.getPosition().latitude)).commit();
+            prefs.edit().putString("Lng"+i,String.valueOf(m.getPosition().longitude)).commit();
+            prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).commit();
+            prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).commit();
+            prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
+            i++;
+
         }
-        FileOutputStream f = null;
-        try {
-            f = new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            f.write(mapToByteArray(m));
-            f.flush();
-            f.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
+
+
+
+        //saveMarkersOnStorage(FILENAME, imageMarkers);
     }
 
-    public Map loadMarkersFromStorage(String fileName){
-        File file = new File(fileName);
-        if(file.exists()){
-            int size = (int) file.length();
-            byte[] bytes = new byte[size];
-            try {
-                BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-                buf.read(bytes, 0, bytes.length);
-                buf.close();
-            } catch (FileNotFoundException e) {
-                Toast.makeText(getContext(), "File not found", Toast.LENGTH_LONG).show();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return byteArrayToMap(bytes);
-        }
-        return null;
+    /*Encodes the Image to a string*/
+    public String BitMapToString(Bitmap bitmap){
+        ByteArrayOutputStream baos=new  ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100, baos);
+        byte [] b=baos.toByteArray();
+        String temp=Base64.encodeToString(b, Base64.DEFAULT);
+        return temp;
     }
 
-    private byte[] mapToByteArray(Map map){
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
+    /**
+     * @param encodedString
+     * @return bitmap (from given string)
+     */
+    public Bitmap StringToBitMap(String encodedString){
         try {
-            out = new ObjectOutputStream(byteOut);
-            out.writeObject(map);
-        } catch (IOException e) {
-            e.printStackTrace();
+            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
+            Bitmap bitmap= BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            return bitmap;
+        } catch(Exception e) {
+            e.getMessage();
+            return null;
         }
-        return byteOut.toByteArray();
-    }
-
-    private Map byteArrayToMap (byte[] b){
-        ByteArrayInputStream byteIn = new ByteArrayInputStream(b);
-        ObjectInputStream in = null;
-        try {
-            in = new ObjectInputStream(byteIn);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Map<Marker, Bitmap> data = null;
-        try {
-            data = (Map<Marker, Bitmap>) in.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return data;
     }
 
 

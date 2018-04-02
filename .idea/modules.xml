@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/meetAveiro.iml" filepath="$PROJECT_DIR$/meetAveiro.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/pi_2017_2018_g02.iml" filepath="$PROJECT_DIR$/.idea/pi_2017_2018_g02.iml" />
     </modules>
   </component>
 </project>

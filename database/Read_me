@@ -1,0 +1,7 @@
+1. Install Postgres (pgAdminIII)
+
+2. Dependências
+	pip3 install flask-sqlalchemy
+	sudo apt-get install libpq-dev
+	pip3 install psycopg2
+	pip3 install Flask-Migrate

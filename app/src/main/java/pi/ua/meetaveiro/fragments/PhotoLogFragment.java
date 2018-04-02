@@ -21,6 +21,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,6 +41,8 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.PlaceDetectionClient;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBufferResponse;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -57,21 +60,12 @@ import com.google.android.gms.tasks.Task;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Console;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
@@ -83,6 +77,7 @@ import java.util.Map;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.*;
 
@@ -137,14 +132,18 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private FloatingActionButton buttonStartRoute;
     private FloatingActionButton buttonPauseRoute;
 
+    //Current start/pause/stop buttons state
     private ROUTE_STATE buttonsState;
 
-    //To store in local
+    //To store in local storage
     private SharedPreferences prefs = null;
-    // To delete the shared preferences use : SharedPreferences.Editor.clear();
-    //following a commit();
 
-
+    // Used for selecting the current place.
+    private static final int M_MAX_ENTRIES = 10;
+    private String[] mLikelyPlaceNames;
+    private String[] mLikelyPlaceAddresses;
+    private String[] mLikelyPlaceAttributions;
+    private LatLng[] mLikelyPlaceLatLngs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -156,17 +155,16 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         buttonsState = ROUTE_STATE.STOPPED;
 
         // Construct a GeoDataClient.
-        mGeoDataClient = Places.getGeoDataClient(getContext(), null);
+        mGeoDataClient = Places.getGeoDataClient(getContext());
 
         // Construct a PlaceDetectionClient.
-        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext(), null);
+        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext());
 
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         mSettingsClient = LocationServices.getSettingsClient(getContext());
     }
-
 
     /**
      * Updates fields based on data stored in the bundle.
@@ -309,7 +307,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 String snip = prefs.getString("Snip" + tmp, "");
                 String titl = prefs.getString("Titl" + tmp,"");
                 LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-                Bitmap img = StringToBitMap(btm);
+                Bitmap img = Utils.StringToBitMap(btm);
                 try {
                     mMap.addMarker(new MarkerOptions().position(l)
                             .icon(BitmapDescriptorFactory.fromBitmap(img))
@@ -505,7 +503,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         }
         markers.put(markerToUpdate, true);
 
-
         //update the marker in the map that stores every marker and the image in the marker
         updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -520,9 +517,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 return false;
             }
         });
-
-
-
         //saveMarkersOnStorage(FILENAME, imageMarkers);
         createAndShowInfoDialog(markerToUpdate);
     }
@@ -585,40 +579,12 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             prefs.edit().putString("Lng"+i,String.valueOf(m.getPosition().longitude)).commit();
             prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).commit();
             prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).commit();
-            prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
+            prefs.edit().putString("bmp"+i,Utils.BitMapToString(img)).commit();
             i++;
 
         }
-
-
-
         //saveMarkersOnStorage(FILENAME, imageMarkers);
     }
-
-    /*Encodes the Image to a string*/
-    public String BitMapToString(Bitmap bitmap){
-        ByteArrayOutputStream baos=new  ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG,100, baos);
-        byte [] b=baos.toByteArray();
-        String temp=Base64.encodeToString(b, Base64.DEFAULT);
-        return temp;
-    }
-
-    /**
-     * @param encodedString
-     * @return bitmap (from given string)
-     */
-    public Bitmap StringToBitMap(String encodedString){
-        try {
-            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
-            Bitmap bitmap= BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
-            return bitmap;
-        } catch(Exception e) {
-            e.getMessage();
-            return null;
-        }
-    }
-
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;
@@ -702,9 +668,103 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
     }
 
+    /**
+     * Prompts the user to select the current place from a list of likely places, and shows the
+     * current place on the map - provided the user has granted location permission.
+     */
+    public void showCurrentPlace() {
+        if (mMap == null) {
+            return;
+        }
+        // Get the likely places - that is, the businesses and other points of interest that
+        // are the best match for the device's current location.
+        @SuppressWarnings("MissingPermission")
+        final Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
+        placeResult.addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+
+                        // Set the count, handling cases where less than 5 entries are returned.
+                        int count;
+                        if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                            count = likelyPlaces.getCount();
+                        } else {
+                            count = M_MAX_ENTRIES;
+                        }
+
+                        int i = 0;
+                        mLikelyPlaceNames = new String[count];
+                        mLikelyPlaceAddresses = new String[count];
+                        mLikelyPlaceAttributions = new String[count];
+                        mLikelyPlaceLatLngs = new LatLng[count];
+
+                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                            // Build a list of likely places to show the user.
+                            mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                            mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                                    .getAddress();
+                            mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                                    .getAttributions();
+                            mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+
+                            i++;
+                            if (i > (count - 1)) {
+                                break;
+                            }
+                        }
+
+                        // Release the place likelihood buffer, to avoid memory leaks.
+                        likelyPlaces.release();
+
+                        // Show a dialog offering the user the list of likely places, and add a
+                        // marker at the selected place.
+                        openPlacesDialog();
+
+                    } else {
+                        Log.e(TAG, "Exception: %s", task.getException());
+                    }
+                });
+
+    }
+
+
+    /**
+     * Displays a form allowing the user to select a place from a list of likely places.
+     */
+    private void openPlacesDialog() {
+        // Ask the user to choose the place where they are now.
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // The "which" argument contains the position of the selected item.
+                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
+                String markerSnippet = mLikelyPlaceAddresses[which];
+                if (mLikelyPlaceAttributions[which] != null) {
+                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
+                }
+
+                // Add a marker for the selected place, with an info window
+                // showing information about that place.
+                mMap.addMarker(new MarkerOptions()
+                        .title(mLikelyPlaceNames[which])
+                        .position(markerLatLng)
+                        .snippet(markerSnippet));
+
+                // Position the map's camera at the location of the marker.
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+                        DEFAULT_ZOOM));
+            }
+        };
+
+        // Display the dialog.
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle(R.string.pick_place)
+                .setItems(mLikelyPlaceNames, listener)
+                .show();
+    }
+
     @Override
-    public void onAttach(Context context)
-    {
+    public void onAttach(Context context) {
         super.onAttach(context);
         this.activity = (Activity) context;
     }

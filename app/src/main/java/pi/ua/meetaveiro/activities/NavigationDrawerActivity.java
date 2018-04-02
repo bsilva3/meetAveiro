@@ -30,6 +30,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -82,6 +83,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
 
     // toolbar titles respected to selected nav menu item
     private String[] activityTitles;
+
+    //Current home fragment
+    Fragment currentFragment;
 
     // flag to load home fragment when user presses back key
     private boolean shouldLoadHomeFragOnBackPress = true;
@@ -326,6 +330,31 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
                 .show();
     }
 
+    /**
+     * Sets up the options menu.
+     * @param menu The options menu.
+     * @return Boolean.
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(navItemIndex==0)
+            getMenuInflater().inflate(R.menu.current_place_menu, menu);
+        return true;
+    }
+
+    /**
+     * Handles a click on the menu option to get a place.
+     * @param item The menu item to handle.
+     * @return Boolean.
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.option_get_place) {
+            ((PhotoLogFragment) currentFragment).showCurrentPlace();
+        }
+        return true;
+    }
+
     /***
      * Returns respected fragment that user
      * selected from navigation menu
@@ -352,10 +381,10 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
             @Override
             public void run() {
                 // update the main content by replacing fragments
-                Fragment fragment = getHomeFragment();
+                currentFragment = getHomeFragment();
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
-                fragmentTransaction.replace(R.id.frame, fragment, CURRENT_TAG);
+                fragmentTransaction.replace(R.id.frame, currentFragment, CURRENT_TAG);
                 fragmentTransaction.commitAllowingStateLoss();
             }
         };

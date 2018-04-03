@@ -1,0 +1,28 @@
+{% extends "structure.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="page-header">
+        <h2>Manage concepts</h2>
+    </div>
+    
+    {% for t in topics %}
+
+    <form action="{{ url_for('show_gallery', query=t) }}" method="GET">
+        <button type="submit" class="btn btn-primary">{{ t }}</button>
+    </form>
+
+    {% endfor %}
+    
+</div>
+
+{% if pending > 0 %}
+<div class="container">
+    <div class="page-header">
+        <h2>{{ pending }} Pending requests</h2>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

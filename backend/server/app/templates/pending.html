@@ -1,0 +1,38 @@
+{% extends "structure.html" %}
+
+{% block content %}
+
+
+<div class="container">
+    <div class="page-header">
+        <h1>Pending requests</h1>
+    </div>
+    
+    <div class="row">
+        {% for key in requests.keys() %}
+            {% for image in requests[key] %}
+            <div class="col-sm-4">
+                <div class="card" style="width: 100%;">
+                    <div class="card-header">
+                        <h3 class="card-title">{{ key }}</h3>
+                    </div>
+                    <img src=" {{ url_for('send_image', topic='pending', filename=(key+':'+image)) }} "  class="img-thumbnail"
+                    style="height:15em;">
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="confirmRequest('{{ image }}', '{{ key }}', 'POST')">Confirm</a>
+                        <button class="btn btn-danger" onclick="confirmRequest('{{ image }}', '{{ key }}', 'DELETE')">Delete</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/pending.js')}}"></script>
+{{super()}}
+{% endblock %}

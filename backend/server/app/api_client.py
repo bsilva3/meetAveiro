@@ -26,7 +26,7 @@ url = 'http://127.0.0.1:8080/search' # url do serviço
 #start = time.time()
 
 # pedido RESTful e tratamento da resposta
-response = requests.post(url, data=json.dumps(data)) 
+response = requests.post(url, data=json.dumps(data))
 
 res = response.json()
 

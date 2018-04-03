@@ -14,7 +14,8 @@ clarifai
 urllib (instalado por omissão)
 wikipedia
 lxml
-
+flask-bootstrap
+flask-nav
 
 ############
 #instruções#

@@ -1,0 +1,36 @@
+{% extends "structure.html" %}
+
+{% block content %}
+
+
+<div class="container">
+    <div class="page-header">
+        <h1>{{ path.capitalize() }}</h1>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <form action="{{ url_for('upload', topic=path) }}" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="file" name="file" class="form-control-file" accept="image/*" multiple>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        {% for image in topic %}
+        <div class="col-sm-4">
+            <img src=" {{ url_for('send_image', topic=path, filename=image) }} "  class="img-thumbnail"
+                onclick="delElement('{{ path }}', '{{ image }}')" style="height:15em;">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/gallery.js')}}"></script>
+{{super()}}
+{% endblock %}

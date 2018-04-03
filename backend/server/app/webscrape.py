@@ -69,17 +69,35 @@ def search_eventos():
     '''
     sauce = urllib.request.urlopen(eventos).read()
     soup = bs.BeautifulSoup(sauce, 'lxml')
-    name = soup.findAll('div', {"class": "viral-event-title"})
+
+    events = soup.findAll('div', {"class": "viral-event-title"})
     #hour = soup.findAll('div', {"class": "viral-event-hour"})
-    place = soup.findAll('a', {"class": "viral-event-place"})
-    eventType = soup.findAll('div', {"class": "viral-event-box viral-event-box-other viral-event-box-cat"})
+    #place = soup.findAll('a', {"class": "viral-event-place"})
+    #eventType = soup.findAll('div', {"class": "viral-event-box viral-event-box-other viral-event-box-cat"})
     
-    for i in range(0, len(name)):
-        print(name[i].text.strip())
-        #print(hour[i].text.strip())
-        print(place[i].text.strip())
-        print(eventType[i].text.strip())
+    for i in range(0, len(events)):
+        base_url = 'https://www.viralagenda.com/'
+        anchor = events[i].find('a')
+        #opener = urllib.request.build_opener()
+        #opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        #data = opener.open(base_url + anchor['href']).read()
+        temp_sauce = urllib.request.urlopen(base_url + anchor['href']).read()
+        temp_soup = bs.BeautifulSoup(temp_sauce, 'lxml')
+        name = temp_soup.find('h1')
+        #hour = temp_soup.find('div', {'class': 'time'})
+        #time = hour.find('span', {'class': 'viral-event-slot'})
+
+        
+
+        print(name.text.strip())
+        #print(time.text.strip())
         print()
+
+        #print(name[i].text.strip())
+        #print(hour[i].text.strip())
+        #print(place[i].text.strip())
+        #print(eventType[i].text.strip())
+        #print()
 
 
 def search_turismo():
@@ -122,4 +140,4 @@ def search_turismo():
     return result
 
 #search_eventos()
-search_turismo()
+#search_turismo()

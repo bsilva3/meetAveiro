@@ -65,11 +65,12 @@ def process_image_search(query):
         message = search_wiki(query)
     return message
 
+
 @app.route('/')
 @app.route('/index')
 def index():
     pending_requests = get_request_files()
-    return render_template('index.html', topics=['bibs', 'duck'], pending=count_elems_dict(pending_requests))
+    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], pending=count_elems_dict(pending_requests))
 
 @app.route('/gallery/<string:query>', methods=['GET'])
 def show_gallery(query):
@@ -105,14 +106,23 @@ def classify_image():
     image = res['image']
     writeImage(image)
     classification = predict_image('./temp.jpg')
-    print(classification)
+    # print(classification)
     img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
-    print(img_name.lower())
+    # print(img_name.lower())
+
+    folder = os.path.join('./static/img', img_name)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    files = os.listdir(folder)
+
+    file_id = str(len(files)) + '.jpg'
+    filename = os.path.join(folder, file_id)
+    os.rename('./temp.jpg', filename)
+
     return jsonify({
         'name' : img_name,
-        'description' : process_image_search(img_name.lower())
+        'description' : img_name
     })
-
 
 @app.route('/resources/delimage', methods=['POST'])
 def delete_image():
@@ -150,6 +160,8 @@ def manage_requests():
     if method == 'POST':
         file_desc = filename.split('.')
         dest_folder = os.path.join(IMAGE_FOLDER, concept)
+        if not os.path.exists(dest_folder):
+            os.makedirs(dest_folder)
         files = os.listdir(dest_folder)
         new_file = str(len(files)) + '.' + file_desc[1]
         os.rename(req_folder, os.path.join(dest_folder, new_file))

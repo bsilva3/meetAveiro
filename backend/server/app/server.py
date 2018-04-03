@@ -121,7 +121,29 @@ def classify_image():
 
     return jsonify({
         'name' : img_name,
-        'description' : img_name
+        'description' : process_image_search(img_name),
+        'id' : file_id
+    })
+
+@app.route('/search/feedback', methods=['POST'])
+def send_feedback():
+    res = request.get_json(force=True)
+    file_id = res['id']
+    concept = res['concept']
+    feedback = res['feedback']
+    
+    if feedback == 1:
+        req_path = os.path.join('./static/img', concept)
+        file_path = os.path.join(req_path, file_id)
+        dest_path = os.path.join(IMAGE_FOLDER, concept)
+        if not os.path.exists(dest_path):
+            os.makedirs(dest_path)
+        new_id = str(len(os.listdir(dest_path))) + '.jpg'
+        new_file_path = os.path.join(dest_path, new_id)
+        os.rename(file_path, os.path.join(new_file_path))
+
+    return jsonify({
+        'status': 'OK'
     })
 
 @app.route('/resources/delimage', methods=['POST'])

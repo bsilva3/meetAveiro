@@ -30,8 +30,24 @@ response = requests.post(url, data=json.dumps(data))
 
 res = response.json()
 
+name = res['name']
+f_id = res['id']
 print("Name: " + res['name'])
 print(res['description'])
+
+data = {
+    'id' : f_id,
+    'concept' : name,
+    'feedback' : 1
+}
+
+url = 'http://127.0.0.1:8080/search/feedback' # url do serviço
+
+response = requests.post(url, data=json.dumps(data))
+
+res = response.json()
+
+print('DONE')
 
 #end = time.time()
 #print("Time: ")

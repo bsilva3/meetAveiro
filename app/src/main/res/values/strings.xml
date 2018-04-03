@@ -107,4 +107,12 @@
         functionality.</string>
     <string name="settings">Settings</string>
     <string name="pause_route">Pause Route</string>
+
+    <!-- dialog box tour save -->
+    <string name="tour_save">Would you like to save and/or share this Tour?</string>
+
+    <!-- dialog box for feedback-->
+    <string name="feedback">Dou you think our app was able to identify succesfully your image?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

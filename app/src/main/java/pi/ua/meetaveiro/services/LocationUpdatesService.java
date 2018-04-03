@@ -68,13 +68,15 @@ public class LocationUpdatesService extends Service {
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
      * than this value.
      */
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2;
+    //the minimum distance the user has to travel to update the location
+    private static final float SMALLEST_DISPLACEMENT = 0.50F; //half a meter
 
     /**
      * The identifier for the notification displayed for the foreground service.
@@ -261,23 +263,40 @@ public class LocationUpdatesService extends Service {
         PendingIntent activityPendingIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, NavigationDrawerActivity.class), 0);
 
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle(text)
-                .setPriority(Notification.PRIORITY_HIGH)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setWhen(System.currentTimeMillis())
-                .setOngoing(true)
-                .setChannelId(CHANNEL_ID)
-                .addAction(new Notification.Action.Builder(R.drawable.ic_add_photo,
-                        getString(R.string.take_picture),
-                        activityPendingIntent).build())
-                .addAction(new Notification.Action.Builder(R.drawable.ic_pause,
-                        getString(R.string.pause_route),
-                        servicePendingIntent).build())
-                .addAction(new Notification.Action.Builder(R.drawable.ic_stop,
-                        getString(R.string.stop_route),
-                        servicePendingIntent).build())
-                .build();
+        Notification notification = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            notification = new Notification.Builder(this)
+                    .setContentTitle(text)
+                    .setPriority(Notification.PRIORITY_HIGH)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setWhen(System.currentTimeMillis())
+                    .setOngoing(true)
+                    .setChannelId(CHANNEL_ID)
+                    .addAction(new Notification.Action.Builder(R.drawable.ic_add_photo,
+                            getString(R.string.take_picture),
+                            activityPendingIntent).build())
+                    .addAction(new Notification.Action.Builder(R.drawable.ic_pause,
+                            getString(R.string.pause_route),
+                            servicePendingIntent).build())
+                    .addAction(new Notification.Action.Builder(R.drawable.ic_stop,
+                            getString(R.string.stop_route),
+                            servicePendingIntent).build())
+                    .build();
+        }
+        else{
+               notification  = new Notification.Builder(this)
+                    .setCategory(Notification.CATEGORY_MESSAGE)
+                    .setContentTitle(text)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setOngoing(true)
+                       .addAction(R.drawable.ic_add_photo, getString(R.string.take_picture), activityPendingIntent)
+                       .addAction(R.drawable.ic_pause, getString(R.string.pause_route), servicePendingIntent)
+                       .addAction(R.drawable.ic_stop, getString(R.string.stop_route), servicePendingIntent)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC).build();
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.notify(Notification.PRIORITY_MAX, notification );
+        }
 
         return notification;
     }
@@ -319,6 +338,8 @@ public class LocationUpdatesService extends Service {
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT);
     }
 
     /**

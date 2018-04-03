@@ -2,17 +2,19 @@ package pi.ua.meetaveiro.fragments;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -50,6 +53,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -57,36 +62,28 @@ import com.google.android.gms.tasks.Task;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Console;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-import pi.ua.meetaveiro.models.Route;
-
-import static pi.ua.meetaveiro.others.Constants.*;
+import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static android.content.Context.MODE_PRIVATE;
+import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
 
 /**
  * Photo logging and route making {@link Fragment} subclass.
@@ -96,7 +93,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
     private static final String TAG = "ERRO";
-    private static final int DEFAULT_ZOOM = 10;
+    private static final int DEFAULT_ZOOM = 15;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
@@ -144,11 +141,18 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     // To delete the shared preferences use : SharedPreferences.Editor.clear();
     //following a commit();
 
+    //to draw the lines for the tour path
+    private ArrayList<LatLng> points;
+    Polyline line;
+    LocationsReceiver locationsReceiver;
+
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        locationsReceiver = new LocationsReceiver();
 
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
@@ -165,6 +169,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         mSettingsClient = LocationServices.getSettingsClient(getContext());
+
+        points = new ArrayList<LatLng>(); //stores all points during the tour so that a trajectory line can be drawn using those points
     }
 
 
@@ -258,6 +264,14 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         transaction.commit();
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(locationsReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+    }
+
+
 
     public void updateRouteButtons(ROUTE_STATE state){
         if(ROUTE_STATE.STARTED.equals(state)){
@@ -466,7 +480,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         mLastKnownLocation = location;
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
 
     }
 
@@ -497,9 +511,11 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             }
         }
         Marker oldMarker = markerToUpdate;
+        String id = null;
         try {
             markerToUpdate.setTitle(json.get("name").toString());
             markerToUpdate.setSnippet(json.get("description").toString());
+            id = json.get("id").toString();
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -507,6 +523,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
 
         //update the marker in the map that stores every marker and the image in the marker
+        final String idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -514,17 +531,14 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 Log.d("markerClick", "clicked");
                 if (m != null) {
                     Log.d("markerClickI", "clicked with info");
-                    createAndShowInfoDialog(m);
+                    createAndShowInfoDialog(m, idFinal);
                     return true;
                 }
                 return false;
             }
         });
-
-
-
-        //saveMarkersOnStorage(FILENAME, imageMarkers);
-        createAndShowInfoDialog(markerToUpdate);
+        //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
+        createAndShowInfoDialog(markerToUpdate, id);
     }
 
     //used to save the updated marker with the info obtained from the server
@@ -534,7 +548,75 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         imageMarkers.put(newMarker, bit);
     }
 
-    private void createAndShowInfoDialog(Marker m){
+    private void createAndShowInfoDialog(Marker m, String id){
+        final Dialog dialog = new Dialog(getContext());
+        String name = m.getTitle();
+        String description = m.getSnippet();
+        dialog.setContentView(R.layout.point_info_dialog);
+        dialog.setTitle(name);
+        dialog.setCancelable(true);
+        ImageView image = (ImageView) dialog.findViewById(R.id.point_image);
+        TextView descriptionText = (TextView) dialog.findViewById(R.id.point_description);
+        Button btn = (Button) dialog.findViewById(R.id.close_info_dialog);
+        image.setImageBitmap(imageMarkers.get(m));
+        descriptionText.setText(description);
+        //******************************************************
+        btn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                dialog.dismiss();
+            }
+
+        });
+        //******************************************************
+        dialog.show();
+
+        //when the dialog with the description is closed, we show a feedback box;
+        //the user says if the app was able to identify the image succesfully, or close the dialog
+        //without providing an answer
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(final DialogInterface arg0) {
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        JSONObject jsonRequest = new JSONObject();
+                        try {
+                            jsonRequest.put("name", name);
+                            jsonRequest.put("id", id);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                //Yes button clicked
+                                try {
+                                    jsonRequest.put("feedback", 1);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                //No button clicked
+                                try {
+                                    jsonRequest.put("feedback", 0);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                        }
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setMessage(getResources().getString(R.string.feedback)).setPositiveButton(getResources().getString(R.string.yes), dialogClickListener)
+                        .setNegativeButton(getResources().getString(R.string.no), dialogClickListener).show();
+            }
+        });
+    }
+
+    private void createAndShowSaveTourDialog(Marker m){
         final Dialog dialog = new Dialog(getContext());
         dialog.setContentView(R.layout.point_info_dialog);
         dialog.setTitle(m.getTitle());
@@ -556,7 +638,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         dialog.show();
     }
 
-
     /*
     * When the app is in background and whren a different fragment is selected
     * this will be triggered.
@@ -570,7 +651,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
-
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(locationsReceiver);
+        super.onPause();
         //Iterate trough all saved markers.
         int i = 0;
         Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
@@ -588,10 +670,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
             i++;
 
+
         }
-
-
-
         //saveMarkersOnStorage(FILENAME, imageMarkers);
     }
 
@@ -711,6 +791,34 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
     public interface RouteStateListener{
         void onRouteStateChanged(boolean started);
+    }
+
+    /**
+     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
+     */
+    private class LocationsReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            if (location != null) {
+                //add points and redraw the trajectory line
+                points.add(new LatLng(location.getLatitude(), location.getLongitude()));
+                redrawLine();
+                onNewLocation(location);
+            }
+        }
+    }
+
+    private void redrawLine(){
+        if (line != null)
+            line.remove(); //delete all polylines
+        PolylineOptions options = new PolylineOptions().width(8).color(Color.BLUE).geodesic(true);
+        for (int i = 0; i < points.size(); i++) {
+            LatLng point = points.get(i);
+            options.add(point);
+        }
+        line = mMap.addPolyline(options); //add Polyline
+
     }
 
 }

@@ -30,7 +30,7 @@
                 android:layout_marginBottom="15dp"
                 android:visibility="gone"
                 android:padding="0dp"
-                android:backgroundTint="@color/danger"
+                app:backgroundTint="@color/danger"
                 android:src="@drawable/ic_stop" />
 
             <android.support.design.widget.FloatingActionButton
@@ -40,7 +40,7 @@
                 android:layout_marginBottom="15dp"
                 android:visibility="gone"
                 android:padding="0dp"
-                android:backgroundTint="@color/warning"
+                app:backgroundTint="@color/warning"
                 android:src="@drawable/ic_pause" />
 
             <android.support.design.widget.FloatingActionButton
@@ -50,7 +50,7 @@
                 android:layout_marginBottom="15dp"
                 android:visibility="visible"
                 android:padding="0dp"
-                android:backgroundTint="@color/success"
+                app:backgroundTint="@color/success"
                 android:src="@android:drawable/ic_media_play" />
 
             <android.support.design.widget.FloatingActionButton

@@ -2,13 +2,13 @@ package pi.ua.meetaveiro.others;
 
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 
-import java.text.DateFormat;
-import java.util.Date;
-
-import pi.ua.meetaveiro.R;
+import java.io.ByteArrayOutputStream;
 
 public class Utils {
 
@@ -42,7 +42,28 @@ public class Utils {
         return location == null ? "Unknown location" : "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
     }
 
-    public static String getLocationTitle(Context context) {
-        return context.getString(R.string.location_updated, DateFormat.getDateTimeInstance().format(new Date()));
+    /**
+     * @param bitmap {@link Bitmap}
+     * @return {@link String} object of the {@code location}
+     */
+    public static String BitMapToString(Bitmap bitmap){
+        ByteArrayOutputStream baos=new  ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100, baos);
+        return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+    }
+
+    /**
+     * @param encodedString
+     * @return bitmap (from given string)
+     */
+    public static Bitmap StringToBitMap(String encodedString){
+        try {
+            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
+            Bitmap bitmap= BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            return bitmap;
+        } catch(Exception e) {
+            e.getMessage();
+            return null;
+        }
     }
 }

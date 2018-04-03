@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -43,6 +42,8 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.PlaceDetectionClient;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBufferResponse;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -79,6 +80,7 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static android.content.Context.MODE_PRIVATE;
@@ -93,7 +95,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
     private static final String TAG = "ERRO";
-    private static final int DEFAULT_ZOOM = 15;
+    private static final int DEFAULT_ZOOM = 10;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
@@ -134,6 +136,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private FloatingActionButton buttonStartRoute;
     private FloatingActionButton buttonPauseRoute;
 
+    //Current start/pause/stop buttons state
     private ROUTE_STATE buttonsState;
 
     //To store in local
@@ -147,6 +150,12 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     LocationsReceiver locationsReceiver;
 
 
+    // Used for selecting the current place.
+    private static final int M_MAX_ENTRIES = 10;
+    private String[] mLikelyPlaceNames;
+    private String[] mLikelyPlaceAddresses;
+    private String[] mLikelyPlaceAttributions;
+    private LatLng[] mLikelyPlaceLatLngs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -323,7 +332,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 String snip = prefs.getString("Snip" + tmp, "");
                 String titl = prefs.getString("Titl" + tmp,"");
                 LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-                Bitmap img = StringToBitMap(btm);
+                Bitmap img = Utils.StringToBitMap(btm);
                 try {
                     mMap.addMarker(new MarkerOptions().position(l)
                             .icon(BitmapDescriptorFactory.fromBitmap(img))
@@ -480,7 +489,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         mLastKnownLocation = location;
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
 
     }
 
@@ -638,6 +647,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         dialog.show();
     }
 
+
     /*
     * When the app is in background and whren a different fragment is selected
     * this will be triggered.
@@ -780,6 +790,101 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             onResponseReceived(response);
         }
 
+    }
+
+    /**
+     * Prompts the user to select the current place from a list of likely places, and shows the
+     * current place on the map - provided the user has granted location permission.
+     */
+    public void showCurrentPlace() {
+        if (mMap == null) {
+            return;
+        }
+        // Get the likely places - that is, the businesses and other points of interest that
+        // are the best match for the device's current location.
+        @SuppressWarnings("MissingPermission")
+        final Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
+        placeResult.addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+
+                        // Set the count, handling cases where less than 5 entries are returned.
+                        int count;
+                        if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                            count = likelyPlaces.getCount();
+                        } else {
+                            count = M_MAX_ENTRIES;
+                        }
+
+                        int i = 0;
+                        mLikelyPlaceNames = new String[count];
+                        mLikelyPlaceAddresses = new String[count];
+                        mLikelyPlaceAttributions = new String[count];
+                        mLikelyPlaceLatLngs = new LatLng[count];
+
+                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                            // Build a list of likely places to show the user.
+                            mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                            mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                                    .getAddress();
+                            mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                                    .getAttributions();
+                            mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+
+                            i++;
+                            if (i > (count - 1)) {
+                                break;
+                            }
+                        }
+
+                        // Release the place likelihood buffer, to avoid memory leaks.
+                        likelyPlaces.release();
+
+                        // Show a dialog offering the user the list of likely places, and add a
+                        // marker at the selected place.
+                        openPlacesDialog();
+
+                    } else {
+                        Log.e(TAG, "Exception: %s", task.getException());
+                    }
+                });
+
+    }
+
+
+    /**
+     * Displays a form allowing the user to select a place from a list of likely places.
+     */
+    private void openPlacesDialog() {
+        // Ask the user to choose the place where they are now.
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // The "which" argument contains the position of the selected item.
+                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
+                String markerSnippet = mLikelyPlaceAddresses[which];
+                if (mLikelyPlaceAttributions[which] != null) {
+                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
+                }
+
+                // Add a marker for the selected place, with an info window
+                // showing information about that place.
+                mMap.addMarker(new MarkerOptions()
+                        .title(mLikelyPlaceNames[which])
+                        .position(markerLatLng)
+                        .snippet(markerSnippet));
+
+                // Position the map's camera at the location of the marker.
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+                        DEFAULT_ZOOM));
+            }
+        };
+
+        // Display the dialog.
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle(R.string.pick_place)
+                .setItems(mLikelyPlaceNames, listener)
+                .show();
     }
 
     @Override

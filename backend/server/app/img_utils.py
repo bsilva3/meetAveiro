@@ -24,7 +24,7 @@ def writeImage(imgstring):
     imgstring - imagem em formato string base64
     '''
     imgdata = base64.b64decode(imgstring)
-    filename = '/home/chico/Pictures/temp.jpg'
+    filename = './temp.jpg'
     with open(filename, 'wb') as f:
         f.write(imgdata)
 

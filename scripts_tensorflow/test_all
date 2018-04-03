@@ -1,0 +1,14 @@
+#!/bin/bash
+HOME_DIR="/home/ana/Documents/PI/"
+
+cd "${HOME_DIR}"Tensorflow/tensorflow-for-poets-2        
+source ~/tensorflow/bin/activate 
+
+for dir in "${HOME_DIR}"Fotografias/Teste/*; do
+	for filename in $dir/*; do
+        echo $filename
+		python -m scripts.label_image \
+		    --graph=tf_files/retrained_graph.pb  \
+		    --image=$filename
+    done
+done

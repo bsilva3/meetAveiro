@@ -83,7 +83,12 @@ def addInfoExemplo():
 
 @app.route('/')
 def main():
-    addFotografiaExemplo()
+    # Saber o número de utilizadores
+    #print(countUtilizadores())
+    # Obter todos os administradores
+    #print(UtilizadoresQueSaoAdministradores())
+    #print(TipoDeUtilizador('andre@ua.pt'))
+    print(getFotosUser('joana@ua.pt'))
     return 'Done'
 
 if __name__ == '__main__':

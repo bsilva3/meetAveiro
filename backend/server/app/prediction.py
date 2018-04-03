@@ -9,7 +9,7 @@ from clarifai.rest import ClarifaiApp
 from clarifai.rest import Image as ClImage
 import json
 
-API_KEY = 'ca151274dc0546cdb191aff8fa00ec17' # chave do Bruno
+API_KEY = 'e25c8e658b6e4594abd9403ee7ea2508' # chave do Bruno
 
 def predict_image(filename):
     '''

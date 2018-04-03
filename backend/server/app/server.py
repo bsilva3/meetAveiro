@@ -4,17 +4,20 @@ aplicam à identificação de imagens e recolha de informação pertinente sobre
 o que elas representam (ex: monumentos)
 '''
 
-# from app import app
 from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
 
-import webscrape
+from webscrape import search_turismo, process_search, urls
 from search import search_wiki
 from img_utils import writeImage
 from prediction import predict_image
+
 import os
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 IMAGE_FOLDER = './Pictures'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -57,8 +60,8 @@ def process_image_search(query):
     query - nome do edificio
     '''
     message = 'not found'
-    if query in webscrape.urls.keys():
-        message = webscrape.process_search(query)
+    if query in urls.keys():
+        message = process_search(query)
     else:
         if query == 'reitoria':
             query = 'Universidade de Aveiro'
@@ -70,7 +73,8 @@ def process_image_search(query):
 @app.route('/index')
 def index():
     pending_requests = get_request_files()
-    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], pending=count_elems_dict(pending_requests))
+    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
+        pending=count_elems_dict(pending_requests))
 
 @app.route('/gallery/<string:query>', methods=['GET'])
 def show_gallery(query):
@@ -165,6 +169,12 @@ def upload(topic):
         file.save(destination)
     return redirect(url_for('show_gallery', query=topic))
 
+@app.route('/resources/events', methods=['GET'])
+def get_events():
+    with open('./static/results/events.txt') as fp:
+        events = fp.read()
+    return events
+
 @app.route('/requests')
 def show_requests():
     pending_requests = get_request_files()
@@ -191,3 +201,16 @@ def manage_requests():
         os.remove(req_folder)
     
     return redirect(url_for('show_requests'))
+
+
+scheduler = BackgroundScheduler()
+scheduler.start()
+scheduler.add_job(
+    func=search_turismo,
+    trigger=IntervalTrigger(minutes=60),
+    id='search_turismo',
+    name='Saves events to a file every 60 minutes',
+    replace_existing=True)
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
+

@@ -16,6 +16,7 @@ wikipedia
 lxml
 flask-bootstrap
 flask-nav
+apscheduler
 
 ############
 #instruções#

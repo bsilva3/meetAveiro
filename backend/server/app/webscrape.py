@@ -7,6 +7,7 @@ sobre a mesma (caso a wikipedia contenha uma entrada válida sobre ela)
 
 import bs4 as bs
 import urllib.request
+import json
 
 # urls para os edificios da universidade
 urls = {
@@ -38,7 +39,7 @@ def search_bibs(query):
     '''
     link = urls[query]
     sauce = urllib.request.urlopen(link).read()
-    soup = bs.BeautifulSoup(sauce, 'lxml')
+    soup = bs.BeautifulSoup(sauce, 'html5lib')
     block = soup.find('blockquote')
 
     for child in block.find_all('p'):
@@ -55,7 +56,7 @@ def search_department(query):
     '''
     link = urls[query]
     sauce = urllib.request.urlopen(link).read()
-    soup = bs.BeautifulSoup(sauce, 'lxml')
+    soup = bs.BeautifulSoup(sauce, 'html5lib')
     summary = soup.find('p')
     #print(summary.text)
     return summary.text.strip()
@@ -68,7 +69,7 @@ def search_eventos():
     (em desenvolvimento)
     '''
     sauce = urllib.request.urlopen(eventos).read()
-    soup = bs.BeautifulSoup(sauce, 'lxml')
+    soup = bs.BeautifulSoup(sauce, 'html5lib')
 
     events = soup.findAll('div', {"class": "viral-event-title"})
     #hour = soup.findAll('div', {"class": "viral-event-hour"})
@@ -82,7 +83,7 @@ def search_eventos():
         #opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         #data = opener.open(base_url + anchor['href']).read()
         temp_sauce = urllib.request.urlopen(base_url + anchor['href']).read()
-        temp_soup = bs.BeautifulSoup(temp_sauce, 'lxml')
+        temp_soup = bs.BeautifulSoup(temp_sauce, 'html5lib')
         name = temp_soup.find('h1')
         #hour = temp_soup.find('div', {'class': 'time'})
         #time = hour.find('span', {'class': 'viral-event-slot'})
@@ -107,7 +108,7 @@ def search_turismo():
     '''
     turismo_url = 'https://turismoinaveiro.com/collections/experiencias-cidade-de-aveiro'
     sauce = urllib.request.urlopen(turismo_url).read()
-    soup = bs.BeautifulSoup(sauce, 'lxml')
+    soup = bs.BeautifulSoup(sauce, 'html5lib')
     events = soup.find_all('a', {'class': 'product-card'})
 
     result = []
@@ -116,7 +117,7 @@ def search_turismo():
         res = {}
         temp_url = 'https://turismoinaveiro.com/' + e['href']
         temp_sauce = urllib.request.urlopen(temp_url).read()
-        temp_soup = bs.BeautifulSoup(temp_sauce, 'lxml')
+        temp_soup = bs.BeautifulSoup(temp_sauce, 'html5lib')
         title = temp_soup.find('h1')
         price = temp_soup.find('span', {'class': 'product-single__price'})
         table = temp_soup.find('table')
@@ -132,12 +133,14 @@ def search_turismo():
         if len(ps) == 3:
             #print(ps[1].text.strip())
             #print(ps[2].text.strip())
-            location = ps[1].text.strip() + '\n' + ps[2].text.strip()
-            res['location'] = location
+            res['location'] = ps[1].text.strip()
+            res['coordinates'] = ps[2].text.strip()
         else:
             res['location'] = ps[1].text.strip()
         result.append(res)
-    return result
+
+    with open('./static/results/events.txt', 'w', encoding='utf8') as json_file:
+        json.dump(result, json_file, ensure_ascii=False)
 
 #search_eventos()
 #search_turismo()

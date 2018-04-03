@@ -169,10 +169,10 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         buttonsState = ROUTE_STATE.STOPPED;
 
         // Construct a GeoDataClient.
-        mGeoDataClient = Places.getGeoDataClient(getContext(), null);
+        mGeoDataClient = Places.getGeoDataClient(getContext());
 
         // Construct a PlaceDetectionClient.
-        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext(), null);
+        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext());
 
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
@@ -680,7 +680,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
             i++;
 
-
         }
         //saveMarkersOnStorage(FILENAME, imageMarkers);
     }
@@ -923,7 +922,5 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
             options.add(point);
         }
         line = mMap.addPolyline(options); //add Polyline
-
     }
-
 }

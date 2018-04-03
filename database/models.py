@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey, ForeignKeyConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy import text
 
 db = SQLAlchemy()
 
@@ -200,3 +201,28 @@ def addFotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafo
     foto = Fotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback)
     db.session.add(foto)
     db.session.commit()
+
+def countUtilizadores():
+    return Utilizador.query.count()
+
+def UtilizadoresQueSaoAdministradores():
+    sql = text('select id, nome from tipo')
+    result = db.engine.execute(sql)
+    tipos = []
+    for row in result:
+        tipos.append((row[0],row[1]))
+    return tipos
+
+def TipoDeUtilizador(em):
+    sql = text('select tipo from utilizador where email=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    for row in result:
+        return row[0]
+
+def getFotosUser(em):
+    sql = text('select * from fotografia where emailcriador=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    fotos = []
+    for row in result:
+        fotos.append((row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+    return fotos

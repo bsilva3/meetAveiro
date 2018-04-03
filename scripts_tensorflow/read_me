@@ -1,0 +1,10 @@
+Mudar as permissões dos ficheiros bash
+chmod u+x retrain
+chmod u+x test_all
+
+Correr os scripts
+./retrain
+./test_all
+
+Guardar os resultados num script
+./test_all &> out.txt

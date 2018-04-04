@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -334,14 +335,17 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
                 Bitmap img = Utils.StringToBitMap(btm);
                 try {
-                    mMap.addMarker(new MarkerOptions().position(l)
+                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
                             .icon(BitmapDescriptorFactory.fromBitmap(img))
                             .title(titl)
                             .snippet(snip));
+                    imageMarkers.put(m,img);
+                    markers.put(m,true);
                 }catch (Exception e){
-                    mMap.addMarker(new MarkerOptions().position(l)
+                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
                             .title(titl)
                             .snippet(snip));
+                    markers.put(m,true);
                 }
                 tmp++;
             }else{

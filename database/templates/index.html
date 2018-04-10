@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>SB Admin - Start Bootstrap Template</title>
+  <!-- Bootstrap core CSS-->
+  <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom fonts for this template-->
+  <link href="/static/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <!-- Page level plugin CSS-->
+  <link href="/static/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
+  <!-- Custom styles for this template-->
+  <link href="/static/css/sb-admin.css" rel="stylesheet">
+
+  <!-- MetisMenu CSS -->
+  <link href="/static/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
+  <!-- Morris Charts CSS -->
+  <link href="/static/vendor/morrisjs/morris.css" rel="stylesheet">
+
+</head>
+
+<body class="fixed-nav sticky-footer bg-dark" id="page-top">
+
+      <!-- Tabela dos conceitos -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="fa fa-table"></i>Conceitos</div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Nome do Conceito</th>
+                  <th>Percentagem de fotografias</th>
+                  <th>Número de fotografias</th>
+                  <th>Precisão/Exatidão</th>
+                  <th>Classificação</th>
+                  <th>Tempo de reconhecimento</th>
+                </tr>
+              </thead>
+              <tfoot>
+                <tr>
+                  <th>Rank</th>
+                  <th>Nome do Conceito</th>
+                  <th>Percentagem de fotografias</th>
+                  <th>Número de fotografias</th>
+                  <th>Precisão/Exatidão</th>
+                  <th>Classificação</th>
+                  <th>Tempo de reconhecimento</th>
+                </tr>
+              </tfoot>
+              <tbody>
+                {%- for conceito in conceitos %}
+                <tr>
+                  <td>{{conceito[0]}}</td>
+                  <td>{{conceito[1]}}</td>
+                  <td>{{conceito[2]}}</td>
+                  <td>{{conceito[3]}}</td>
+                  <td>{{conceito[4]}}</td>
+                    <td>{{conceito[5]}}</td>
+                    <td>{{conceito[6]}}</td>
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+          <!-- Fim da tabela dos conceitos -->
+
+          <!-- Tabela dos percursos -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="fa fa-table"></i>Percursos</div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Nome do Conceito</th>
+                  <th>Percentagem de fotografias</th>
+                  <th>Número de fotografias</th>
+                  <th>Precisão/Exatidão</th>
+                  <th>Classificação</th>
+                  <th>Tempo de reconhecimento</th>
+                </tr>
+              </thead>
+              <tfoot>
+                <tr>
+                  <th>Rank</th>
+                  <th>Nome do Conceito</th>
+                  <th>Percentagem de fotografias</th>
+                  <th>Número de fotografias</th>
+                  <th>Precisão/Exatidão</th>
+                  <th>Classificação</th>
+                  <th>Tempo de reconhecimento</th>
+                </tr>
+              </tfoot>
+              <tbody>
+                {%- for conceito in conceitos %}
+                <tr>
+                  <td>{{conceito[0]}}</td>
+                  <td>{{conceito[1]}}</td>
+                  <td>{{conceito[2]}}</td>
+                  <td>{{conceito[3]}}</td>
+                  <td>{{conceito[4]}}</td>
+                    <td>{{conceito[5]}}</td>
+                    <td>{{conceito[6]}}</td>
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+           <!-- Fim da Tabela dos percursos -->
+
+
+                <!-- /.col-lg-6 -->
+                <div class="col-lg-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Donut Chart Example
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div id="morris-donut-chart"></div>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                </div>
+                <!-- /.col-lg-6 -->
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="/static/vendor/jquery/jquery.min.js"></script>
+    <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Core plugin JavaScript-->
+    <script src="/static/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Page level plugin JavaScript-->
+    <script src="/static/vendor/chart.js/Chart.min.js"></script>
+    <script src="/static/vendor/datatables/jquery.dataTables.js"></script>
+    <script src="/static/vendor/datatables/dataTables.bootstrap4.js"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="/static/js/sb-admin.min.js"></script>
+    <!-- Custom scripts for this page-->
+    <script src="/static/js/sb-admin-datatables.min.js"></script>
+    <script src="/static/js/sb-admin-charts.min.js"></script>
+    <!-- Morris Charts JavaScript -->
+    <script src="/static/vendor/raphael/raphael.min.js"></script>
+    <script src="/static/vendor/morrisjs/morris.min.js"></script>
+    <script src="/static/data/morris-data.js"></script>
+  </div>
+</body>
+
+</html>

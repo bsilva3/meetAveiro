@@ -12,7 +12,7 @@ from img_utils import readImage
 # Cliente para testar funcionamento da REST API #
 #################################################
 
-img = readImage('/home/chico/Pictures/bibs.jpg') # converter imagem para string base64
+img = readImage('./temp.jpg') # converter imagem para string base64
 
 # json para o pedido
 data = {
@@ -21,7 +21,7 @@ data = {
 
 #print(data)
 
-url = 'http://192.168.193.213:8080/search' # url do serviço
+url = 'http://127.0.0.1:8080/search' # url do serviço
 
 #start = time.time()
 
@@ -34,7 +34,7 @@ name = res['name']
 f_id = res['id']
 print("Name: " + res['name'])
 print(res['description'])
-
+'''
 data = {
     'id' : f_id,
     'concept' : name,
@@ -52,3 +52,4 @@ print('DONE')
 #end = time.time()
 #print("Time: ")
 #print(end - start)
+'''

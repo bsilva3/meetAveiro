@@ -24,7 +24,7 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-IMAGE_FOLDER = './Pictures'
+IMAGE_FOLDER = '../../../../treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
@@ -37,6 +37,12 @@ mynav = Navbar('MeetAveiro',
     View('Stats', 'show_stats'),
     View('Requests', 'show_requests'))
 nav.register_element('mynavbar', mynav)
+
+
+infos = {
+    ''
+}
+
 
 def get_request_files():
     folder = './static/img'
@@ -116,9 +122,9 @@ def classify_image():
     writeImage(image)
     classification = predict_image('./temp.jpg')
     # print(classification)
-    img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
+    #img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
     # print(img_name.lower())
-
+    img_name = classification[0]
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):
         os.makedirs(folder)

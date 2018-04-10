@@ -21,7 +21,7 @@ data = {
 
 #print(data)
 
-url = 'http://127.0.0.1:8080/search' # url do serviço
+url = 'http://192.168.193.213:8080/search' # url do serviço
 
 #start = time.time()
 
@@ -41,7 +41,7 @@ data = {
     'feedback' : 1
 }
 
-url = 'http://127.0.0.1:8080/search/feedback' # url do serviço
+url = 'http://192.168.193.213:8080/search/feedback' # url do serviço
 
 response = requests.post(url, data=json.dumps(data))
 

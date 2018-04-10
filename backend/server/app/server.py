@@ -3,7 +3,11 @@ Servidor, construído sobre Flask, que expõe uma REST API, cujos serviços se
 aplicam à identificação de imagens e recolha de informação pertinente sobre
 o que elas representam (ex: monumentos)
 '''
+import sys
+sys.path.append('../../../database')
+import models
 
+import requests
 from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
@@ -15,6 +19,7 @@ from img_utils import writeImage
 from prediction import predict_image
 
 import os
+import shutil
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -175,6 +180,32 @@ def get_events():
         events = fp.read()
     return events
 
+@app.route('/resources/topics', methods=['POST'])
+def create_topic():
+    if request.method == "POST":
+        topic = request.form['topic']
+        dest_folder = os.path.join(IMAGE_FOLDER, topic)
+        if not os.path.exists(dest_folder):
+            os.makedirs(dest_folder)
+    return redirect(url_for('index'))
+
+@app.route('/resources/topics/manage', methods=['POST'])
+def manage_topic():
+    res = request.get_json(force=True)
+    method = res['method']
+    topic = res['topic']
+    if method == 'GET':
+        print(topic)
+        return jsonify({
+                'url': url_for('show_gallery', query=topic)
+            })
+    elif method == 'POST':
+        dest_folder = os.path.join(IMAGE_FOLDER, topic)
+        if os.path.exists(dest_folder):
+            shutil.rmtree(dest_folder, ignore_errors=True)
+        return redirect(url_for('index'))
+
+
 @app.route('/requests')
 def show_requests():
     pending_requests = get_request_files()
@@ -202,7 +233,7 @@ def manage_requests():
     
     return redirect(url_for('show_requests'))
 
-
+# Background tasks
 scheduler = BackgroundScheduler()
 scheduler.start()
 scheduler.add_job(

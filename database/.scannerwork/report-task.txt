@@ -1,0 +1,6 @@
+projectKey=database
+serverUrl=http://localhost:9000
+serverVersion=6.7.2.37468
+dashboardUrl=http://localhost:9000/dashboard/index/database
+ceTaskId=AWKQUL63BKmRlHEpP0yo
+ceTaskUrl=http://localhost:9000/api/ce/task?id=AWKQUL63BKmRlHEpP0yo

@@ -1,5 +1,5 @@
 from flask import *
-from database.models import *
+from models import *
 
 app = Flask(__name__)
 
@@ -88,6 +88,7 @@ def main():
     # Obter todos os administradores
     #print(UtilizadoresQueSaoAdministradores())
     #print(TipoDeUtilizador('andre@ua.pt'))
+    addInfoExemplo()
     print(getFotosUser('joana@ua.pt'))
     return 'Done'
 

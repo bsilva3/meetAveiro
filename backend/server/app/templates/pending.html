@@ -27,8 +27,10 @@
                                 <option value="{{ t }}">{{ t }}</option>
                                 {% endfor %}
                             </select>
+                            <span class="input-group-btn">
+                                <button class="btn btn-warning" onclick="changeRequest('{{ image }}', '{{ key }}')">Change</button>
+                            </span>
                         </div>
-                        <button class="btn btn-warning" onclick="changeRequest('{{ image }}', '{{ key }}')">Change</button>
                     </div>
                 </div>
             </div>

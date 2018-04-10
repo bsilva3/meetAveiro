@@ -285,4 +285,3 @@ def infoPercursos():
         concs.append((indice, row[0], row[1], row[1], 0, row[2], 0))
         indice+=1
     return concs
-

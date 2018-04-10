@@ -19,7 +19,7 @@
                     <img src=" {{ url_for('send_image', topic='pending', filename=(key+':'+image)) }} "  class="img-thumbnail"
                     style="height:15em;width:100%;">
                     <div class="card-body">
-                        <button class="btn btn-primary" onclick="confirmRequest('{{ image }}', '{{ key }}', 'POST')">Confirm</a>
+                        <button class="btn btn-primary" onclick="confirmRequest('{{ image }}', '{{ key }}', 'POST')">Confirm</button>
                         <button class="btn btn-danger" onclick="confirmRequest('{{ image }}', '{{ key }}', 'DELETE')">Delete</button>
                     </div>
                 </div>

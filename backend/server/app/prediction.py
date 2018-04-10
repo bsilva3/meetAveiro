@@ -38,6 +38,12 @@ def predict_image(filename):
             if i == 3:
                 temp = line.split(' ')
                 break
+    if len(temp) > 2:
+        perc = temp[len(temp)-1]
+        name = ' '.join(temp[0:len(temp)-1])
+        temp = []
+        temp.append(name)
+        temp.append(perc)
     return temp
     
 

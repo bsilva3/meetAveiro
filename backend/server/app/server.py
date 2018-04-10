@@ -5,7 +5,7 @@ o que elas representam (ex: monumentos)
 '''
 import sys
 sys.path.append('../../../database')
-import models
+from models import *
 
 import requests
 from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
@@ -29,6 +29,7 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 app.config.from_object('_config')
+db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)
 
@@ -100,7 +101,10 @@ def show_gallery(query):
 
 @app.route('/stats', methods=['GET'])
 def show_stats():
-    return render_template('stats.html')
+    return render_template('stats.html',
+                           conceitos = infoConceitos(),
+                           percursos = infoPercursos(),
+                           totalfotos = nTotalFotos())
 
 @app.route('/sendimage/<string:topic>/<string:filename>')
 def send_image(filename, topic):

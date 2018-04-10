@@ -227,7 +227,27 @@ def manage_topic():
 @app.route('/requests')
 def show_requests():
     pending_requests = get_request_files()
-    return render_template('pending.html', requests=pending_requests)
+    return render_template('pending.html', requests=pending_requests, 
+        topics=next(os.walk(IMAGE_FOLDER))[1])
+
+@app.route('/requests/change', methods=['POST'])
+def change_request():
+    folder = './static/img'
+    res = request.get_json(force=True)
+    filename = res['filename']
+    concept = res['path']
+    old = res['old']
+    req_folder = os.path.join(folder, old, filename)
+
+    file_desc = filename.split('.')
+    dest_folder = os.path.join(IMAGE_FOLDER, concept)
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)
+    files = os.listdir(dest_folder)
+    new_file = str(len(files)) + '.' + file_desc[1]
+    os.rename(req_folder, os.path.join(dest_folder, new_file))
+
+    return redirect(url_for('show_requests'))
 
 @app.route('/requests/manage', methods=['POST', 'DELETE'])
 def manage_requests():

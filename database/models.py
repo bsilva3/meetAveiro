@@ -75,7 +75,7 @@ class Percurso(db.Model):
 
     titulo = db.Column('titulo', db.String(80), unique=True, nullable=False)
     descricao = db.Column('descricao', db.String(80))
-    classificacao = db.Column('classificacao', db.Float)
+
     estado = db.Column('estado', db.String(80), nullable=False)
 
     # O id do percurso é fk da tabela ponto
@@ -85,11 +85,10 @@ class Percurso(db.Model):
     concc = db.relationship('InstanciaPercurso', back_populates="idpercurso")
 
 
-    def __init__(self, emailc, titulo, estado, descricao=None, classificacao=None):
+    def __init__(self, emailc, titulo, estado, descricao=None):
         self.emailc=emailc
         self.titulo=titulo
         self.descricao=descricao
-        self.classificacao=classificacao
         self.estado=estado
 
 class Ponto(db.Model):
@@ -123,12 +122,15 @@ class InstanciaPercurso(db.Model):
     datainicio = db.Column('datainicio',db.Date)
     datafim = db.Column('datafim', db.Date)
 
+    classificacao = db.Column('classificacao', db.Float)
+
     instid = db.relationship('Fotografia', back_populates="idinstpercurso")
 
-    def __init__(self, emailc, idperc, datainicio, datafim):
+    def __init__(self, emailc, idperc, datainicio, datafim, classificacao=None):
         self.emailc=emailc
         self.idperc=idperc
         self.datafim=datafim
+        self.classificacao=classificacao
         self.datainicio=datainicio
 
 class Fotografia(db.Model):
@@ -153,7 +155,13 @@ class Fotografia(db.Model):
 
     feedback = db.Column('feedback', db.Float)
 
-    def __init__(self, nomeconc, emailinst, latitude, longitude, path, idinstperc, datafoto, feedback):
+    estado = db.Column('estado', db.String(80), nullable=False)
+
+    classificacaotensorflow = db.Column('classificacaotensorflow', db.Float)
+
+    tempotensorflow = db.Column('tempotensorflow', db.Float)
+
+    def __init__(self, nomeconc, emailinst, latitude, longitude, path, idinstperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
         self.nomeconc=nomeconc
         self.emailinst=emailinst
         self.latitude=latitude
@@ -162,6 +170,9 @@ class Fotografia(db.Model):
         self.idinstperc=idinstperc
         self.datafoto=datafoto
         self.feedback=feedback
+        self.estado=estado
+        self.classificacaotensorflow=classificacaotensorflow
+        self.tempotensorflow=tempotensorflow
 
 # Adição dos tipos de Utilizadores
 def addTipo(nome):
@@ -182,8 +193,8 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
     db.session.add(conceito)
     db.session.commit()
 
-def addPercurso(emailc, titulo, estado, descricao=None, classificacao=None):
-    percurso = Percurso(emailc, titulo, estado, descricao, classificacao)
+def addPercurso(emailc, titulo, estado, descricao=None):
+    percurso = Percurso(emailc, titulo, estado, descricao)
     db.session.add(percurso)
     db.session.commit()
 
@@ -192,20 +203,20 @@ def addPonto(latitude, longitude, idperc=None):
     db.session.add(ponto)
     db.session.commit()
 
-def addInstanciaPercurso(emailc, idperc, datainicio, datafim):
-    inst = InstanciaPercurso(emailc, idperc, datainicio, datafim)
+def addInstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao=None):
+    inst = InstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao)
     db.session.add(inst)
     db.session.commit()
 
-def addFotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback):
-    foto = Fotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback)
+def addFotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
+    foto = Fotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
     db.session.add(foto)
     db.session.commit()
 
-def countUtilizadores():
+def nTotalUsers():
     return Utilizador.query.count()
 
-def UtilizadoresQueSaoAdministradores():
+def TiposDeUtilizadores():
     sql = text('select id, nome from tipo')
     result = db.engine.execute(sql)
     tipos = []
@@ -214,7 +225,7 @@ def UtilizadoresQueSaoAdministradores():
     return tipos
 
 def TipoDeUtilizador(em):
-    sql = text('select tipo from utilizador where email=\'' + em + '\'')
+    sql = text('select tipo.nome from utilizador join tipo on tipo.id=utilizador.tipo where email=\'' + em + '\'')
     result = db.engine.execute(sql)
     for row in result:
         return row[0]
@@ -224,5 +235,54 @@ def getFotosUser(em):
     result = db.engine.execute(sql)
     fotos = []
     for row in result:
-        fotos.append((row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+        fotos.append((row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]))
     return fotos
+
+def nTotalConcepts():
+    return Conceito.query.count()
+
+def nTotalPath():
+    return Percurso.query.count()
+
+def nTotalFotos():
+    return Fotografia.query.count()
+
+def nTotalTipoUser(tipo):
+    sql = text('select count(utilizador.email) from utilizador join tipo on tipo.id=utilizador.tipo where tipo.nome=\'' + tipo + '\'')
+    result = db.engine.execute(sql)
+    for row in result:
+        return row[0]
+
+def infoConceitos():
+    sql = text('SELECT conceito.nomeconceito, count(fotografia.nomeconceito), avg(fotografia.classificacaotensorflow),'
+                   ' avg(fotografia.feedback), avg(fotografia.tempotensorflow) '
+                   ' FROM conceito'
+                   ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
+                   ' GROUP BY conceito.nomeconceito'
+                   ' ORDER BY count(fotografia.nomeconceito);')
+    result = db.engine.execute(sql)
+
+    totalfotos = nTotalFotos()
+    concs = []
+    indice = 1
+
+    for row in result:
+        concs.append((indice, row[0], row[1]/totalfotos*100, row[1], row[2], row[3], row[4]))
+        indice+=1
+    return concs
+
+def infoPercursos():
+    sql = text('SELECT percurso.titulo, count(instanciapercurso.idpercurso), avg(instanciapercurso.classificacao)'
+               ' FROM percurso'
+               ' JOIN instanciapercurso on instanciapercurso.idpercurso=percurso.id'
+               ' GROUP BY percurso.titulo'
+               ' ORDER BY count(instanciapercurso.idpercurso)')
+
+    result = db.engine.execute(sql)
+    concs = []
+    indice = 1
+    for row in result:
+        concs.append((indice, row[0], row[1], row[1], 0, row[2], 0))
+        indice+=1
+    return concs
+

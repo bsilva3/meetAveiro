@@ -55,9 +55,9 @@ def addConceitosExemplo():
     addConceito('Reitoria, Universidade de Aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 4.3)
 
 def addPercursosExemplo():
-    addPercurso('manel@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro', 4.6)
-    addPercurso('joana@ua.pt', 'Aveiro 1', 'Publico', 'Conhece a cidade de Aveiro', 4.4)
-    addPercurso('joana@ua.pt', 'Aveiro 2', 'Privado', 'Conhece a cidade de Aveiro', 4.4)
+    addPercurso('manel@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro')
+    addPercurso('joana@ua.pt', 'Aveiro 1', 'Publico', 'Conhece a cidade de Aveiro')
+    addPercurso('joana@ua.pt', 'Aveiro 2', 'Privado', 'Conhece a cidade de Aveiro')
 
 def addPontosExemplo():
     addPonto(40.5, -8.6)
@@ -66,11 +66,11 @@ def addPontosExemplo():
     addPonto(40.630349, -8.658214, 1)
 
 def addInstanciaPercursoExemplo():
-    addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00')
+    addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00', 4.4)
 
 def addFotografiaExemplo():
-    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5)
-    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5)
+    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
     addTiposExemplo()
@@ -81,16 +81,54 @@ def addInfoExemplo():
     addInstanciaPercursoExemplo()
     addFotografiaExemplo()
 
-@app.route('/')
-def main():
-    # Saber o número de utilizadores
-    #print(countUtilizadores())
-    # Obter todos os administradores
-    #print(UtilizadoresQueSaoAdministradores())
-    #print(TipoDeUtilizador('andre@ua.pt'))
-    addInfoExemplo()
+def queriesExemplo():
+    print("Número total de utlizadores:")
+    print(nTotalUsers())
+
+    print("\nTipos de Utilizadores que existem:")
+    print(TiposDeUtilizadores())
+
+    print("\nTipos de Utilizador que o andre@ua.pt é:")
+    print(TipoDeUtilizador('andre@ua.pt'))
+
+    print("\nFotografias que a joana@ua.pt tem:")
     print(getFotosUser('joana@ua.pt'))
-    return 'Done'
+
+    print("\nNúmero total de conceitos:")
+    print(nTotalConcepts())
+
+    print("\nNúmero total de percursos:")
+    print(nTotalPath())
+
+    print("\nNúmero total de fotografias:")
+    print(nTotalFotos())
+
+    print("\nNúmero total de turistas:")
+    print(nTotalTipoUser('Turista'))
+
+    print("\nNúmero total de admin:")
+    print(nTotalTipoUser('Administrador'))
+
+    print("\nNúmero total de ex - turistas:")
+    print(nTotalTipoUser('ExTurista'))
+
+    print("\nNúmero total de ex -admin:")
+    print(nTotalTipoUser('ExAdministrador'))
+
+    print("\nInformação sobre os conceitos:")
+    print(infoConceitos())
+
+    print("\nInformação sobre os percursos:")
+    print(infoPercursos())
+
+@app.route('/')
+def index():
+    # addInfoExemplo()
+    # queriesExemplo()
+    return render_template('index.html',
+                           conceitos = infoConceitos(),
+                           percursos = infoPercursos(),
+                           totalfotos = nTotalFotos())
 
 if __name__ == '__main__':
     app.run()

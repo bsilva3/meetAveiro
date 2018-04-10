@@ -7,11 +7,11 @@ Clarifai para a identificar e classificar
 
 from clarifai.rest import ClarifaiApp
 from clarifai.rest import Image as ClImage
-import json
+import subprocess
 
 API_KEY = 'e25c8e658b6e4594abd9403ee7ea2508' # chave do Bruno
 
-def predict_image(filename):
+def predict_image_clarifai(filename):
     '''
     Usa a API do Clarifai para identificar o conceito apresentado numa imagem
 
@@ -25,3 +25,16 @@ def predict_image(filename):
     image = ClImage(filename=filename)
     return model.predict([image])
  
+def predict_image(filename):
+    foto_teste = "/home/ana/Documents/PI/Fotografias/Teste/Biblioteca/1.jpg"
+    bashCommand = "./exec.sh " + foto_teste
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    file = open("/home/ana/Documents/PI/Tensorflow/tensorflow-for-poets-2/temp.txt", "r")
+
+    
+
+    print(file.read())
+    return file.read()
+
+predict_image('')

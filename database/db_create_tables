@@ -28,13 +28,12 @@ CREATE TABLE Percurso (
 	EmailUser text NOT NULL,
 	Titulo text NOT NULL,
 	Descricao text,
-	Classificacao float,
 	Estado text NOT NULL,												-- (*)
 	PRIMARY KEY (Id),
     FOREIGN KEY (EmailUser) REFERENCES Utilizador(Email)
 );
 
--- (*) Isto foi o que o Prof. Neves. Estados possíveis:
+-- (*) Isto foi o que o Prof. Neves disse. Estados possíveis:
 --        Validado (Criado por um administrador ou apesar de não o ter sido um administrador "validou-o") 
 --        Publico (Um utilizador criou-o e deu permissões para este ser público)
 --        Privado (Um utilizador criou-o e NÃO deu permissões para este ser público)
@@ -54,6 +53,7 @@ CREATE TABLE InstanciaPercurso (
 	IdPercurso integer NOT NULL,
 	DataInicio timestamp NOT NULL,
 	DataFim timestamp NOT NULL,
+	Classificacao float,
 	PRIMARY KEY (Id),
 	FOREIGN KEY (IdPercurso) REFERENCES Percurso(Id),
 	FOREIGN KEY (EmailUser) REFERENCES Utilizador(Email)
@@ -69,6 +69,9 @@ CREATE TABLE Fotografia (
 	DataFoto timestamp NOT NULL,
 	Feedback float,
 	Path text NOT NULL,
+	Estado text,
+	ClassificacaoTensorflow float,
+	tempotensorflow float,
 	PRIMARY KEY (IdFoto),
 	FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email),
 	FOREIGN KEY (NomeConceito) REFERENCES Conceito(NomeConceito),

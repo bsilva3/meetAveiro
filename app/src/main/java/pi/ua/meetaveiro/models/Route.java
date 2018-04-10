@@ -1,39 +1,51 @@
 package pi.ua.meetaveiro.models;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.Polyline;
+
 import java.util.List;
+import java.util.Map;
+
 import pi.ua.meetaveiro.R;
 
 public class Route {
     private static int COUNTER = 0;
-    private final List<LatLng> routePath;
-    private String routeTitle;
-    private String routeDescription;
+    private final Polyline routePath;
+    private final Map<Marker, Bitmap> routeMarkers;
+    private String routeTitle = "Unnamed"; //default
+    private String routeDescription = "No description"; //default
 
-    public Route(String routeTitle, List<LatLng> routePath, String routeDescription) {
+    public Route(String routeTitle, Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
         COUNTER++;
         this.routeTitle = routeTitle;
         this.routePath = routePath;
         this.routeDescription = routeDescription;
+        this.routeMarkers=routeMarkers;
     }
 
-    public Route(String routeTitle, List<LatLng> routePath) {
+    public Route(String routeTitle, Polyline routePath, Map<Marker, Bitmap> routeMarkers) {
         this.routeTitle = routeTitle;
         this.routePath = routePath;
+        this.routeMarkers = routeMarkers;
     }
 
-    public Route(List<LatLng> routePath) {
+    public Route(Polyline routePath, Map<Marker, Bitmap> routeMarkers) {
         COUNTER++;
         this.routeTitle = Resources.getSystem().getString(R.string.route) + " " + COUNTER;
         this.routePath = routePath;
+        this.routeMarkers = routeMarkers;
     }
 
-    public Route(List<LatLng> routePath, String routeDescription) {
+    public Route(Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
         COUNTER++;
         this.routeTitle = Resources.getSystem().getString(R.string.route) + " " + COUNTER;
         this.routePath = routePath;
         this.routeDescription = routeDescription;
+        this.routeMarkers = routeMarkers;
     }
 
     public String getRouteTitle() {
@@ -50,6 +62,18 @@ public class Route {
 
     public void setRouteDescription(String routeDescription) {
         this.routeDescription = routeDescription;
+    }
+
+    public Polyline getRoutePath() {
+        return routePath;
+    }
+
+    public Map<Marker, Bitmap> getRouteMarkers() {
+        return routeMarkers;
+    }
+
+    public List<LatLng> getRoutePoints(){
+        return routePath.getPoints();
     }
 
     @Override

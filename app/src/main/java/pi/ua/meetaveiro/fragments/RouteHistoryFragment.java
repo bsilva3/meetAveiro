@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
+import pi.ua.meetaveiro.Adapters.MyRouteRecyclerViewAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.models.Route;
 
@@ -29,6 +30,7 @@ public class RouteHistoryFragment extends Fragment {
     // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
+    private static MyRouteRecyclerViewAdapter adapter;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -71,10 +73,13 @@ public class RouteHistoryFragment extends Fragment {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
             List<Route> routes = new ArrayList<>();
+            routes.add(new Route("myRoute", null, "going through places", null));
+            routes.add(new Route("myRoute2", null, "trip to aveiro", null));
             recyclerView.setAdapter(new MyRouteRecyclerViewAdapter(routes, mListener));
         }
         return view;
     }
+
 
 
     @Override

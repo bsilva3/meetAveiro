@@ -1,6 +1,7 @@
-package pi.ua.meetaveiro.fragments;
+package pi.ua.meetaveiro.Adapters;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,8 +45,8 @@ public class MyRouteRecyclerViewAdapter extends RecyclerView.Adapter<MyRouteRecy
             @Override
             public void onClick(View v) {
                 if (null != mListener) {
-                    // Notify the active callbacks interface (the activity, if the
-                    // fragment is attached to one) that an item has been selected.
+                    Log.d("clicked!", holder.mItem+"");
+                    //GO TO MAP AND SHOW THE ROUTE HERE
                     mListener.onListFragmentInteraction(holder.mItem);
                 }
             }

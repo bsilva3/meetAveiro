@@ -19,6 +19,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -29,8 +30,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,9 +65,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.maps.android.PolyUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -77,10 +84,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import pi.ua.meetaveiro.Adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
@@ -91,12 +101,14 @@ import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
 /**
  * Photo logging and route making {@link Fragment} subclass.
  */
-public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, DataReceiver {
+public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
+        DataReceiver{
+
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
     private static final String TAG = "ERRO";
-    private static final int DEFAULT_ZOOM = 10;
+    private static final int DEFAULT_ZOOM = 17;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
@@ -145,10 +157,22 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     // To delete the shared preferences use : SharedPreferences.Editor.clear();
     //following a commit();
 
-    //to draw the lines for the tour path
+    //to draw the lines for the tour (== route) path
     private ArrayList<LatLng> points;
     Polyline line;
     LocationsReceiver locationsReceiver;
+    //stores the tours currently showing on the map
+    private List<Route> routes;
+    //bottom sheet
+    private BottomSheetBehavior mBottomSheetBehavior;
+    //bottom sheet's list of options
+    private ListView tourOptionsListView;
+    private TextView tourTitleText;
+    private TextView tourDescriptionText;
+    //name of the option
+    private String[] optionsText;
+    //icon for the option
+    private Integer[] optionsImages;
 
 
     // Used for selecting the current place.
@@ -180,7 +204,15 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         mSettingsClient = LocationServices.getSettingsClient(getContext());
 
-        points = new ArrayList<LatLng>(); //stores all points during the tour so that a trajectory line can be drawn using those points
+        points = new ArrayList<>(); //stores all points during the tour so that a trajectory line can be drawn using those points
+        routes = new ArrayList<>();
+        //for now, there's only the options to remove the tour from the marker
+        // and to rename tours....
+        optionsText = new String[]{getContext().getString(R.string.remove_tour_from_map_btn),
+                getContext().getString(R.string.edit_tour_name)}; //options
+        optionsImages = new Integer[]{R.drawable.ic_highlight_off_black_24dp,
+                R.drawable.ic_edit_black_24dp}; //icons for the options
+
     }
 
 
@@ -221,7 +253,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
-
         buttonAddPhoto = view.findViewById(R.id.search);
         buttonStartRoute = view.findViewById(R.id.start);
         buttonPauseRoute = view.findViewById(R.id.pause);
@@ -247,6 +278,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 ((RouteStateListener) activity).onRouteStateChanged(false);
                 buttonsState = ROUTE_STATE.STOPPED;
                 updateRouteButtons(buttonsState);
+                endRoute();
+                //save route to store
             }catch (ClassCastException e){
                 Log.e("Exception: %s", e.getMessage());
             }
@@ -261,10 +294,19 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
                 Log.e("Exception: %s", e.getMessage());
             }
         });
+        //start bottom sheet
+        mBottomSheetBehavior = BottomSheetBehavior.from(getActivity().findViewById(R.id.bottom_sheet_tour));
+        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        mBottomSheetBehavior.setPeekHeight(0);//completely hide bottom sheet on not expanded
+        //start listview for bottom sheet
+        TourOptionsAdapter adapter = new TourOptionsAdapter(getActivity(), optionsText, optionsImages);
+        tourOptionsListView = (ListView) getActivity().findViewById(R.id.list_view_tour_options);
+        tourTitleText = (TextView) getActivity().findViewById(R.id.tour_name);
+        tourDescriptionText = (TextView) getActivity().findViewById(R.id.tour_description);
+        tourOptionsListView.setAdapter(adapter);
 
         updateValuesFromBundle(savedInstanceState);
         updateRouteButtons(buttonsState);
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         mapFragment.getMapAsync(this);
@@ -319,6 +361,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         //Initialize Preferences*
         prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
+
 
 
         /*While we have markers stored iterate trough.
@@ -493,7 +536,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
 
         mLastKnownLocation = location;
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
 
     }
 
@@ -712,7 +755,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
         }
     }
 
-
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;
         @Override
@@ -920,11 +962,156 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback, Da
     private void redrawLine(){
         if (line != null)
             line.remove(); //delete all polylines
-        PolylineOptions options = new PolylineOptions().width(8).color(Color.BLUE).geodesic(true);
+        PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
         for (int i = 0; i < points.size(); i++) {
             LatLng point = points.get(i);
             options.add(point);
         }
+        /*for (Route r : routes){
+            for (LatLng latLng : r.getRoutePoints()){
+                mMap.addPolyline(options);
+            }
+        }*/
         line = mMap.addPolyline(options); //add Polyline
+        line.setClickable(true);
+        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener()
+        {
+            @Override
+            public void onPolylineClick(Polyline polyline) {
+                if (ROUTE_STATE.STOPPED.equals(buttonsState)) {
+                    Route route = checkWhatTourPolyBelongs(polyline);
+                    if (route != null){
+                        if (mBottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                            tourTitleText.setText(route.getRouteTitle());
+                            tourDescriptionText.setText(route.getRouteDescription());
+                            tourOptionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view,
+                                                        int position, long id) {
+                                    String selecteditem = optionsText[+position];
+                                    //Toast.makeText(getContext(), selecteditem, Toast.LENGTH_SHORT).show();
+                                    if (selecteditem.equals(getContext().getString(R.string.remove_tour_from_map_btn))){
+                                        routes.remove(route);
+                                        route.getRoutePath().remove();//delete the line from map
+                                    }
+                                    else if(selecteditem.equals(getContext().getString(R.string.edit_tour_name))){
+                                        LayoutInflater li = LayoutInflater.from(getContext());
+                                        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
+                                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+                                        alertDialogBuilder.setView(promptsView);
+
+                                        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
+                                        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
+                                        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
+                                        dialogTitle.setText(getString(R.string.edit_tour_dialog_title));
+
+                                        routeTitleBox.setText(route.getRouteTitle());
+                                        routeDescriptionBox.setText(route.getRouteDescription());
+
+                                        alertDialogBuilder
+                                                .setCancelable(false)
+                                                .setPositiveButton("OK",
+                                                        new DialogInterface.OnClickListener() {
+                                                            public void onClick(DialogInterface dialog,int id) {
+                                                                routes.remove(route);
+                                                                route.setRouteTitle(routeTitleBox.getText().toString());
+                                                                route.setRouteDescription(routeDescriptionBox.getText().toString());
+                                                                routes.add(route);
+                                                                //update route in the array that has all routes on the map
+                                                                //and update info in bottom sheet
+                                                                tourTitleText.setText(route.getRouteTitle());
+                                                                tourDescriptionText.setText(route.getRouteDescription());
+                                                            }
+                                                        })
+                                                .setNegativeButton(getString(R.string.cancel),
+                                                        new DialogInterface.OnClickListener() {
+                                                            public void onClick(DialogInterface dialog,int id) {
+                                                                dialog.cancel();
+                                                            }
+                                                        });
+
+                                        // create alert dialog
+                                        AlertDialog alertDialog = alertDialogBuilder.create();
+                                        // show it
+                                        alertDialog.show();
+                                    }
+                                    //Toast.makeText(getContext(), selecteditem, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                    } else {
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        //mButton1.setText(R.string.button1);
+                    }
+                }
+
+            }
+        });
     }
+
+    //used to check to which route these points belong to
+    //returns null if these points are not in any current path show on map
+    private Route checkWhatTourPolyBelongs(Polyline polyline){
+        for (Route rout : routes){
+            if (rout.getRoutePath().equals(polyline))
+                return rout;
+        }
+        return null;
+    }
+
+    //used to check to which route this Marker belongs to
+    //returns null if this marker is not in any current path show on map
+    private Route checkWhatTourPolyBelongs(Marker marker){
+        for (Route rout : routes){
+            if (rout.getRouteMarkers().containsKey(marker))
+                return rout;
+        }
+        return null;
+    }
+
+
+    //show dialog to name route and save it
+    private void endRoute(){
+        LayoutInflater li = LayoutInflater.from(getContext());
+        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+        // set prompts.xml to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
+        //Log.d("box", routeTitleBox.toString()+"");
+        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
+        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
+        dialogTitle.setText(getString(R.string.save_tour_dialog_title));
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+
+                                // get user input and create a route object
+                                Route route = new Route (routeTitleBox.getText().toString(), line,
+                                        routeDescriptionBox.getText().toString(), imageMarkers);
+                                //save this route...
+                                routes.add(route);
+                                line = null;
+                                points.clear();//reset points
+                            }
+                        })
+                .setNegativeButton(getString(R.string.save_tour_discard),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        // show it
+        alertDialog.show();
+
+    }
+
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">meetAveiro</string>
+    <string name="close_string">Fechar</string>
+    <string name="scanning_image_string">A analisar imagem...</string>
+    <string name="action_sign_in_short">Registar</string>
+    <string name="minimum_password">Password demasiado curta, por favor introduza um minímo de 6 carateres.</string>
+    <string name="auth_failed">Falha na autenticação</string>
+    <string name="change_email">Mudar Email</string>
+    <string name="change_password">Mudar password</string>
+    <string name="save_tour">Guardar</string>
+    <string name="save_tour_discard">Descartar tour</string>
+    <string name="save_tour_description">Descrever passeio</string>
+    <string name="save_tour_title">Dê um nome a este passeio</string>
+    <string name="save_tour_dialog_title">Pode agora guardar este passeio, mas primeiro deverá dar-lhe um nome e descrição</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="cancel">Cancelar</string>
+    <string name="remove_tour_from_map_btn">Remover passeio do mapa</string>
+    <string name="feedback">Acha que a nossa app foi capaz de indentificar a imagem com sucesso?</string>
+    <string name="tour_save">Gostaria de partilhar e/ou guardar este passeio</string>
+    <string name="pause_route">Pausar Passeio</string>
+    <string name="settings">Definições</string>
+    <string name="permission_denied_explanation">Permissão negada, mas é necessária para as funcionalidades básicas da app</string>
+    <string name="permission_rationale">É necessário permição para usar localização para as funcionalidades básicas da app</string>
+    <string name="insufficient_permissions">Permissões insuficientes</string>
+    <string name="take_picture">Tirar Foto</string>
+    <string name="stop_route">Parar Passeio</string>
+    <string name="ok">Ok</string>
+    <string name="nav_about_us">Sobre nós</string>
+    <string name="option_route_history">Histórico de passeios</string>
+    <string name="prompt_password">Introduzir password</string>
+</resources>

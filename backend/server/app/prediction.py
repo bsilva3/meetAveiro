@@ -32,7 +32,7 @@ def predict_image(filename):
     output, error = process.communicate()
     file = open("/home/ana/Documents/PI/Tensorflow/tensorflow-for-poets-2/temp.txt", "r")
 
-    
+
 
     print(file.read())
     return file.read()

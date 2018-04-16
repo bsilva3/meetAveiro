@@ -137,7 +137,7 @@ class Fotografia(db.Model):
     __tablename__ = 'fotografia'
     id = db.Column('idfoto', db.Integer, primary_key=True)
 
-    nomeconc = db.Column('nomeconceito', db.String(80), ForeignKey('conceito.nomeconceito'))
+    nomeconc = db.Column('nomeconceito', db.String(80), ForeignKey('conceito.nomeconceito'), primary_key=True)
     nomeconceito = relationship('Conceito')
 
     emailinst = db.Column('emailcriador', db.String(80), ForeignKey('utilizador.email'))
@@ -161,7 +161,8 @@ class Fotografia(db.Model):
 
     tempotensorflow = db.Column('tempotensorflow', db.Float)
 
-    def __init__(self, nomeconc, emailinst, latitude, longitude, path, idinstperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
+    def __init__(self, id, nomeconc, emailinst, latitude, longitude, path, idinstperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
+        self.id=id
         self.nomeconc=nomeconc
         self.emailinst=emailinst
         self.latitude=latitude
@@ -208,8 +209,8 @@ def addInstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao=None
     db.session.add(inst)
     db.session.commit()
 
-def addFotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
-    foto = Fotografia(nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
+def addFotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
+    foto = Fotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
     db.session.add(foto)
     db.session.commit()
 
@@ -285,3 +286,62 @@ def infoPercursos():
         concs.append((indice, row[0], row[1], row[1], 0, row[2], 0))
         indice+=1
     return concs
+
+def updateFotografia(id, newid, conceito, newconceito, newpath):
+    sql = text('update fotografia set idfoto = \'' + str(id) + '\', nomeconceito = \'' + conceito + '\', path = \'' + newpath + '\' where idfoto = \'' + str(newid) + '\' and nomeconceito = \'' + newconceito + '\'')
+    db.engine.execute(sql)
+    return
+
+def getTodasInstPercursoUser(em):
+    sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \
+        instanciapercurso.classificacao, percurso.estado \
+        from instanciapercurso \
+        join percurso on instanciapercurso.idpercurso = percurso.id \
+        where instanciapercurso.emailuser=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    inst = []
+    for row in result:
+        inst.append((row[0], row[1], row[2], row[3], row[4], row[5]))
+    return inst
+
+def reconstruirPontosPercurso(id):
+    sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
+        join percurso on ponto.idpercurso = percurso.id \
+        where percurso.id =\'' + str(id) + '\'')
+    result = db.engine.execute(sql)
+    pnt = []
+    for row in result:
+        pnt.append((row[0], row[1], row[2]))
+    return pnt
+
+def updateEstadoPercurso(id, novoestado):
+    sql = text('update percurso set estado=\'' + novoestado + '\' where id=\'' + str(id) + '\'')
+    db.engine.execute(sql)
+    return
+
+def getFotografiasDeUmaInstPercurso(id):
+    sql = text('select * from fotografia where idinstpercurso=\'' + str(id) + '\'')
+    result = db.engine.execute(sql)
+    temp = []
+    for row in result:
+        temp.append(( row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]))
+    return temp
+
+def reconstruirPontosInstPercurso(id):
+    sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
+        join percurso on ponto.idpercurso = percurso.id \
+        join instanciapercurso on instanciapercurso.idpercurso = percurso.id \
+        where instanciapercurso.id = \'' + str(id) + '\'')
+    result = db.engine.execute(sql)
+    pnt = []
+    for row in result:
+        pnt.append((row[0], row[1], row[2]))
+    return pnt
+
+def todosPercursosDoTipo(estado):
+    sql = text('select * from percurso where estado = \'' + estado + '\'')
+    result = db.engine.execute(sql)
+    pnt = []
+    for row in result:
+        pnt.append((row[0], row[1], row[2], row[3], row[4]))
+    return pnt

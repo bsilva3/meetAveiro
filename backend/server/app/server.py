@@ -102,6 +102,13 @@ def show_gallery(query):
 @app.route('/stats', methods=['GET'])
 def show_stats():
     return render_template('stats.html',
+                           totalusers = nTotalUsers(),
+                           #totalAdmin = nTotalTipoUser('Administrador'),
+                           #totalTuristas = nTotalTipoUser('Turista'),
+                           totalAdmin=10,
+                           totalTuristas = 80,
+                           totalconcepts = nTotalConcepts(),
+                           totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
                            percursos = infoPercursos(),
                            totalfotos = nTotalFotos())

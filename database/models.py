@@ -345,3 +345,11 @@ def todosPercursosDoTipo(estado):
     for row in result:
         pnt.append((row[0], row[1], row[2], row[3], row[4]))
     return pnt
+
+def searchTodosPercursoContemSubString(substring):
+    sql = text('SELECT * FROM percurso WHERE titulo LIKE \'%' + substring + '%\'')
+    result = db.engine.execute(sql)
+    pnt = []
+    for row in result:
+        pnt.append((row[0], row[1], row[2], row[3], row[4]))
+    return pnt

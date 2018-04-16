@@ -137,6 +137,10 @@ def queriesChico():
     print("\nObter todos os percursos públicos:")
     print(todosPercursosDoTipo('Publico'))
 
+    print("\nObter todos os percursos que contêm a substring a no título:")
+    print(searchTodosPercursoContemSubString('a'))
+
+
 @app.route('/')
 def index():
     # addInfoExemplo()

@@ -20,4 +20,5 @@
     <color name="success">#5cb85c</color>
     <color name="danger">#d9534f</color>
     <color name="warning">#ffff00</color>
+    <color name="bgBottomNavigation">#fe485a</color>
 </resources>

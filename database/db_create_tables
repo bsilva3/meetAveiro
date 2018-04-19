@@ -60,7 +60,7 @@ CREATE TABLE InstanciaPercurso (
 );
 
 CREATE TABLE Fotografia (
-	IdFoto SERIAL,
+	IdFoto integer,
 	NomeConceito text,
 	EmailCriador text NOT NULL,
 	Latitude float NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE Fotografia (
 	Estado text,
 	ClassificacaoTensorflow float,
 	tempotensorflow float,
-	PRIMARY KEY (IdFoto),
+	PRIMARY KEY (IdFoto, NomeConceito),
 	FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email),
 	FOREIGN KEY (NomeConceito) REFERENCES Conceito(NomeConceito),
 	FOREIGN KEY (IdInstPercurso) REFERENCES InstanciaPercurso(ID)

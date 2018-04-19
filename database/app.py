@@ -21,8 +21,6 @@ def addTiposExemplo():
     ## Adição dos tipos de Utilizadores ##
     addTipo('Administrador')
     addTipo('Turista')
-    addTipo('ExAdministrador')  # Quando um administrador elimina a conta
-    addTipo('ExTurista')  # Quando um turista elimina a conta
 
 def addUtilizadoresExemplo():
     ## Adição dos Utilizadores ##
@@ -36,15 +34,11 @@ def addUtilizadoresExemplo():
     addUtilizador('joana@ua.pt', 2)
     addUtilizador('joao@ua.pt', 2)
     addUtilizador('carlos@ua.pt', 2)
-
-    # Adição de ExAdministrador
-    addUtilizador('andre@ua.pt',3)
-
-    # Adição de ExTurista
-    addUtilizador('andreia',4)
+    addUtilizador('andre@ua.pt',2)
+    addUtilizador('andreia',2)
 
     # Adição - tipo inválidp
-    #addUtilizador('carlos@ua.pt', 3)            # sqlalchemy.exc.IntegrityError
+    #addUtilizador('carlos@ua.pt', 1)            # sqlalchemy.exc.IntegrityError
     #addUtilizador('abc@ua.pt', 7)               # sqlalchemy.exc.IntegrityError
 
 def addConceitosExemplo():
@@ -69,8 +63,8 @@ def addInstanciaPercursoExemplo():
     addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00', 4.4)
 
 def addFotografiaExemplo():
-    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
-    addFotografia('Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(1, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(2, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
     addTiposExemplo()
@@ -121,11 +115,45 @@ def queriesExemplo():
     print("\nInformação sobre os percursos:")
     print(infoPercursos())
 
+def queriesChico():
+    print("\nUpdate fotografia - id, conceito, path:")
+    print(updateFotografia(3, 1, 'DETI, Universidade de Aveiro', 'Biblioteca, Universidade de Aveiro', 'novopath'))
+
+    print("\nObter todas as instancias de percurso feitas por um utilizador:")
+    print(getTodasInstPercursoUser('joana@ua.pt'))
+
+    print("\nObter todos os pontos de um percurso:")
+    print(reconstruirPontosPercurso(1))
+
+    print("\nUpdate estado de um percurso:")
+    print(updateEstadoPercurso(1, 'Validado'))
+
+    print("\nObter todas as fotografias associadas a uma instancia de um percurso")
+    print(getFotografiasDeUmaInstPercurso(1))
+
+    print("\nObter todos os pontos de uma instancia de um percurso:")
+    print(reconstruirPontosInstPercurso(1))
+
+    print("\nObter todos os percursos públicos:")
+    print(todosPercursosDoTipo('Publico'))
+
+    print("\nObter todos os percursos que contêm a substring a no título:")
+    print(searchTodosPercursoContemSubString('a'))
+
+
 @app.route('/')
 def index():
     # addInfoExemplo()
     # queriesExemplo()
+    queriesChico()
     return render_template('index.html',
+                           totalusers = nTotalUsers(),
+                           #totalAdmin = nTotalTipoUser('Administrador'),
+                           #totalTuristas = nTotalTipoUser('Turista'),
+                           totalAdmin=10,
+                           totalTuristas = 80,
+                           totalconcepts = nTotalConcepts(),
+                           totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
                            percursos = infoPercursos(),
                            totalfotos = nTotalFotos())

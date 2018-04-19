@@ -7,175 +7,197 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>SB Admin - Start Bootstrap Template</title>
-    <!-- Bootstrap core CSS-->
-    <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom fonts for this template-->
-    <link href="/static/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <!-- Page level plugin CSS-->
-    <link href="/static/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
-    <!-- Custom styles for this template-->
-    <link href="/static/css/sb-admin.css" rel="stylesheet">
-    <!-- MetisMenu CSS -->
-    <link href="/static/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
-    <!-- Morris Charts CSS -->
-    <link href="/static/vendor/morrisjs/morris.css" rel="stylesheet">
+    <title>Estatísticas</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
     <script>
-        window.onload = function () {
+        // Contas criadas
+        (function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","https://code.highcharts.com/modules/funnel.js","https://code.highcharts.com/modules/solid-gauge.js"],loaded = 0;if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) { try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[];each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1;});function cl() {if(typeof window["Highcharts"] !== "undefined"){Highcharts.setOptions({lang:{}});
+        var options={"chart":{"type":"pie","polar":false},
+                     "plotOptions":{"pie":{"allowPointSelect":true,"cursor":true,"innerSize":"60%","dataLabels":{"enabled":true}},
+                     "series":{"animation":false}},
+                     "title":{"text":"Contas criadas"},
+                     "subtitle":{"text":""},
+                     "exporting":{},
+                     "yAxis":[{"title":{"text":""},"labels":{}}],
+                     "series":[{"name":"Value","turboThreshold":0}],
+                     "data":{"csv":"\"Column 1\";\"Value\"\n\"Administradores\";{{totalAdmin}}\n\"Turistas\";{{totalTuristas}}",
+                     "googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false},
+                     "credits":{"text":"","href":"","enabled":false},
+                     "lang":{},
+                     "legend":{},
+                     "xAxis":[{"title":{"style":{"fontFamily":"\"Lucida Grande\", \"Lucida Sans Unicode\", Verdana, Arial, Helvetica, sans-serif","color":"#666666","fontSize":"14px","fontWeight":"normal","fontStyle":"normal"}},
+                     "labels":{}}]
+        };
+        new Highcharts.Chart("highcharts-c16284ce-5cc6-4f55-885b-8f0b36ddc8dd", options);}}})();
+        // Fim contas criadas
 
-        var chart = new CanvasJS.Chart("chartContainer", {
-            animationEnabled: true,
-            title:{
-                text: "Contas Criadas"
-            },
-            legend:{
-                cursor: "pointer",
-                itemclick: explodePie
-            },
-            data: [{
-                type: "doughnut",
-                innerRadius: 75,
-                showInLegend: true,
-                toolTipContent: "<b>{name}</b>: {y} (#percent%)",
-                indexLabel: "{name} - #percent%",
-                dataPoints: [
-                    { y: 450, name: "Turistas" },
-                    { y: 120, name: "Administradores" }
-                ]
-            }]
-        });
-        chart.render();
+        // Contas criadas ao longo do tempo
+        (function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","http://code.highcharts.com/modules/funnel.js","http://code.highcharts.com/modules/solid-gauge.js"],loaded = 0; if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) {try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[]; each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1; }); function cl() {if(typeof window["Highcharts"] !== "undefined"){
+        var options={
+        "title":{"text":"Contas criadas ao longo do tempo"},
+        "subtitle":{"text":""},"exporting":{},
+        "yAxis":[{"title":{}}],
+        "series":[{
+        "name":"Administradores","turboThreshold":0,"_colorIndex":0,"_symbolIndex":0},{
+        "name":"Turistas","turboThreshold":0,"_colorIndex":1,"_symbolIndex":1},{
+        "name":"Total","turboThreshold":0,"_colorIndex":2,"_symbolIndex":2}],
+        "plotOptions":{"series":{"animation":false}},
+        "credits":{"href":"","text":""},
+        "data":{"csv":"Categories,Administradores,Turistas,Total\nJan,1,7,8\nFeb,3,6,9\nMar,4,8,12\nApr,2,4,6","googleSpreadsheetKey":false,"googleSpreadsheetWorksheet":false}};
+        new Highcharts.Chart("highcharts-edebc074-fbdf-4739-85b1-6cdcfffb1e4b", options);}}})();
+        // Fim contas criadas ao longo do tempo
 
-        function explodePie (e) {
-            if(typeof (e.dataSeries.dataPoints[e.dataPointIndex].exploded) === "undefined" || !e.dataSeries.dataPoints[e.dataPointIndex].exploded) {
-                e.dataSeries.dataPoints[e.dataPointIndex].exploded = true;
-            } else {
-                e.dataSeries.dataPoints[e.dataPointIndex].exploded = false;
-            }
-            e.chart.render();
-        }
+        // Table
+        var grid = $("#grid-command-buttons").bootgrid({ajax: true,post: function (){return {id: "b0df282a-0d67-40e5-8558-c9e93b7befed"};},url: "/api/data/basic",formatters: {"commands": function(column, row){return "<button type=\"button\" class=\"btn btn-xs btn-default command-edit\" data-row-id=\"" + row.id + "\"><span class=\"fa fa-pencil\"></span></button> " + "<button type=\"button\" class=\"btn btn-xs btn-default command-delete\" data-row-id=\"" + row.id + "\"><span class=\"fa fa-trash-o\"></span></button>";}}}).on("loaded.rs.jquery.bootgrid", function(){/* Executes after data is loaded and rendered */grid.find(".command-edit").on("click", function(e){alert("You pressed edit on row: " + $(this).data("row-id"));}).end().find(".command-delete").on("click", function(e){alert("You pressed delete on row: " + $(this).data("row-id"));});});
+        // Fim table
 
-        }
+
     </script>
+
 </head>
 
-<body class="fixed-nav sticky-footer bg-dark" id="page-top">
-
+<body>
+<div class="row"><br><br></div>
 <div class="row">
     <div class="col-xs-0 col-sm-1 col-md-1 col-lg-1">
     </div>
 
     <div class="col-xs-12 col-sm-10 col-md-10 col-lg-10">
-        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-            <div id="chartContainer" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
-            <br><br>
+        <div style="clear:both">
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+                <div class="thumbnail" style="text-align: center; vertical-align: middle;background-color:GhostWhite">
+                    <h3><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Número total de utilizadores:
+                    </h3>
+                    <p>{{totalusers}}</p>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+                <div class="thumbnail" style="text-align: center; vertical-align: middle;background-color:GhostWhite">
+                    <h3><span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> Número total de
+                        conceitos:</h3>
+                    <p>{{totalconcepts}}</p>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+                <div class="thumbnail" style="text-align: center; vertical-align: middle;background-color:GhostWhite">
+                    <h3><span class="glyphicon glyphicon-road" aria-hidden="true"></span> Número total de percursos:
+                    </h3>
+                    <p>{{totalPaths}}</p>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+                <div class="thumbnail" style="text-align: center; vertical-align: middle;background-color:GhostWhite">
+                    <h3><span class="glyphicon glyphicon-picture" aria-hidden="true"></span> Número total de
+                        fotografias:</h3>
+                    <p>{{totalfotos}}</p>
+                </div>
+            </div>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+        <br>
 
-            <br><br>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-            <!-- Tabela dos conceitos -->
-            <div class="card mb-3">
-                <div class="card-header" style="font-size:14px">
-                    <i class="fa fa-table"></i>Conceitos
-                </div>
-                <div class="card-body" style="font-size:12px">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                            <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Nome do Conceito</th>
-                                <th>Percentagem Fotografias</th>
-                                <th>Nº de fotografias</th>
-                                <th>Precisão/Exatidão</th>
-                                <th>Classificação</th>
-                                <th>Tempo reconhecimento</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {%- for conceito in conceitos %}
-                            <tr>
-                                <td>{{conceito[0]}}</td>
-                                <td>{{conceito[1]}}</td>
-                                <td>{{conceito[2]}}</td>
-                                <td>{{conceito[3]}}</td>
-                                <td>{{conceito[4]}}</td>
-                                <td>{{conceito[5]}}</td>
-                                <td>{{conceito[6]}}</td>
-                            </tr>
-                            {%- endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Fim da tabela dos conceitos -->
+        <div>
+            <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
+                <div id="highcharts-c16284ce-5cc6-4f55-885b-8f0b36ddc8dd"></div>
+            </div>
+            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
+                <div id="highcharts-edebc074-fbdf-4739-85b1-6cdcfffb1e4b"></div>
             </div>
         </div>
 
-        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-            <!-- Tabela dos percursos -->
-            <div class="card mb-3">
-                <div class="card-header" style="font-size:14px">
-                    <i class="fa fa-table"></i>Percursos
-                </div>
-                <div class="card-body" style="font-size:10px">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
-                            <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Nome do Percurso</th>
-                                <th>Frequência absoluta</th>
-                                <th>Frequência relativa (%)</th>
-                                <th>Classificação</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {%- for percurso in percursos %}
-                            <tr>
-                                <td>{{percurso[0]}}</td>
-                                <td>{{percurso[1]}}</td>
-                                <td>{{percurso[2]}}</td>
-                                <td>{{percurso[3]}}</td>
-                                <td>{{percurso[4]}}</td>
 
-                            </tr>
-                            {%- endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Fim da Tabela dos percursos -->
-            </div>
+        <di>
+            <br><br><h3></h3>
+            <h3><span class="glyphicon glyphicon-map-marker"></span> Conceitos</h3>
+        </di>
+        <div>
+            <table id="grid-data2" class="table table-condensed table-hover table-striped" data-ajax="true"
+                   data-url="/api/data/basic">
+                <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Nome do Conceito</th>
+                    <th>Percentagem Fotografias</th>
+                    <th>Nº de fotografias</th>
+                    <th>Precisão/Exatidão</th>
+                    <th>Classificação</th>
+                    <th>Tempo reconhecimento</th>
+                </tr>
+                </thead>
+                <tbody>
+                {%- for conceito in conceitos %}
+                <tr>
+                    <td>{{conceito[0]}}</td>
+                    <td>{{conceito[1]}}</td>
+                    <td>{{conceito[2]}}</td>
+                    <td>{{conceito[3]}}</td>
+                    <td>{{conceito[4]}}</td>
+                    <td>{{conceito[5]}}</td>
+                    <td>{{conceito[6]}}</td>
+                </tr>
+                {%- endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <br>
+            <h3><span class="glyphicon glyphicon-road"></span> Percursos</h3>
+        </div>
+        <div>
+            <table id="grid-data" class="table table-condensed table-hover table-striped" data-ajax="true"
+                   data-url="/api/data/basic">
+                <thead>
+                <tr>
+                    <th data-column-id="Rank">Rank</th>
+                    <th data-column-id="NomedoPercurso">Nome do Percurso</th>
+                    <th data-column-id="Frequênciaabsoluta">Frequência absoluta</th>
+                    <th data-column-id="Frequênciarelativa">Frequência relativa (%)</th>
+                    <th data-column-id="Classificacao">Classificação</th>
+                </tr>
+                </thead>
+                <tbody>
+                {%- for percurso in percursos %}
+                <tr>
+                    <td>{{percurso[0]}}</td>
+                    <td>{{percurso[1]}}</td>
+                    <td>{{percurso[2]}}</td>
+                    <td>{{percurso[3]}}</td>
+                    <td>{{percurso[4]}}</td>
+                </tr>
+                {%- endfor %}
+                <tr>
+                    <td>2</td>
+                    <td>Um passeio pela ria</td>
+                    <td>400</td>
+                    <td>10</td>
+                    <td>4.5</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Aveiro Tour</td>
+                    <td>160</td>
+                    <td>40</td>
+                    <td>4.5</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <div class="col-xs-0 col-sm-1 col-md-1 col-lg-1">
     </div>
 
 </div>
-<!-- Bootstrap core JavaScript-->
-<script src="/static/vendor/jquery/jquery.min.js"></script>
-<script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- Core plugin JavaScript-->
-<script src="/static/vendor/jquery-easing/jquery.easing.min.js"></script>
-<!-- Page level plugin JavaScript-->
-<script src="/static/vendor/chart.js/Chart.min.js"></script>
-<script src="/static/vendor/datatables/jquery.dataTables.js"></script>
-<script src="/static/vendor/datatables/dataTables.bootstrap4.js"></script>
-<!-- Custom scripts for all pages-->
-<script src="/static/js/sb-admin.min.js"></script>
-<!-- Custom scripts for this page-->
-<script src="/static/js/sb-admin-datatables.min.js"></script>
-<script src="/static/js/sb-admin-charts.min.js"></script>
-<!-- Morris Charts JavaScript -->
-<script src="/static/vendor/raphael/raphael.min.js"></script>
-<script src="/static/vendor/morrisjs/morris.min.js"></script>
-<script src="/static/data/morris-data.js"></script>
-<!-- Doughnut Chart-->
-<script src="/static/js/canvasjs.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+<script src="static/jquery.steps.js"></script>
+<script src="static/jquery.steps.min.js"></script>
 </body>
-
 </html>

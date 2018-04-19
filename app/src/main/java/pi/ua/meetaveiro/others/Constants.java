@@ -10,6 +10,10 @@ public class Constants {
     }
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
     public final static String API_URL = "http://192.168.54.155:8080/search";
+
+    // url to fetch routes history json
+    public static final String URL_ROUTE_HISTORY = "https://localhost..blahblah";
+
     public final static String PREFERENCES_FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
 
     private static final String PACKAGE_NAME = "com.google.android.gms.location.Geofence";

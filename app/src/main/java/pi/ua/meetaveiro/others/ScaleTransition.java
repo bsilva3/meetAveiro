@@ -1,4 +1,4 @@
-package pi.ua.meetaveiro.fragments;
+package pi.ua.meetaveiro.others;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;

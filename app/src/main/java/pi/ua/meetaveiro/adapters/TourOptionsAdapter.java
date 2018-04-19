@@ -1,4 +1,4 @@
-package pi.ua.meetaveiro.Adapters;
+package pi.ua.meetaveiro.adapters;
 
 import android.app.Activity;
 import android.view.LayoutInflater;

@@ -8,14 +8,14 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
-public class VolleyInitiator extends Application {
+public class MyApplication extends Application {
 
-    public static final String TAG = VolleyInitiator.class
+    public static final String TAG = MyApplication.class
             .getSimpleName();
 
     private RequestQueue mRequestQueue;
 
-    private static VolleyInitiator mInstance;
+    private static MyApplication mInstance;
 
     @Override
     public void onCreate() {
@@ -23,7 +23,7 @@ public class VolleyInitiator extends Application {
         mInstance = this;
     }
 
-    public static synchronized VolleyInitiator getInstance() {
+    public static synchronized MyApplication getInstance() {
         return mInstance;
     }
 

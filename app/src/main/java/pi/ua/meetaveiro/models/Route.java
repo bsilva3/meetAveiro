@@ -14,8 +14,8 @@ import pi.ua.meetaveiro.R;
 
 public class Route {
     private static int COUNTER = 0;
-    private final Polyline routePath;
-    private final Map<Marker, Bitmap> routeMarkers;
+    private Polyline routePath;
+    private Map<Marker, Bitmap> routeMarkers;
     private String routeTitle = "Unnamed"; //default
     private String routeDescription = "No description"; //default
 
@@ -31,6 +31,11 @@ public class Route {
         this.routeTitle = routeTitle;
         this.routePath = routePath;
         this.routeMarkers = routeMarkers;
+    }
+
+    public Route(String routeTitle, String routeDescription) {
+        this.routeTitle = routeTitle;
+        this.routeDescription = routeDescription;
     }
 
     public Route(Polyline routePath, Map<Marker, Bitmap> routeMarkers) {

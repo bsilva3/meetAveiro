@@ -1,19 +1,15 @@
 package pi.ua.meetaveiro.fragments;
 
-import android.app.ListFragment;
 import android.app.SearchManager;
 import android.content.Context;
-import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,35 +26,30 @@ import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.List;
 
-import pi.ua.meetaveiro.Adapters.RouteAdapter;
+import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.others.VolleyInitiator;
+import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
- * A fragment representing a list of Items.
- * <p/>
+ * A fragment representing a list of routes
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class RouteHistoryFragment extends Fragment {
-
-    // Argument names
-    private static final String ARG_COLUMN_COUNT = "column-count";
-    // Parameters
-    private int mColumnCount = 1;
-
-    private OnListFragmentInteractionListener mListener;
-    private static RouteAdapter adapter;
+public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
-    private RecyclerView recyclerView;
+
+    private OnListFragmentInteractionListener mListener;
+
     private List<Route> routeList;
     private RouteAdapter mAdapter;
+    private RecyclerView recyclerView;
     private SearchView searchView;
-
-    // url to fetch contacts json
-    private static final String URL = "https://api.androidhive.info/json/contacts.json";
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -68,54 +59,46 @@ public class RouteHistoryFragment extends Fragment {
     }
 
 
-    public static RouteHistoryFragment newInstance(int columnCount) {
-        RouteHistoryFragment fragment = new RouteHistoryFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
-        fragment.setArguments(args);
-        return fragment;
+    public static RouteHistoryFragment newInstance() {
+        return new RouteHistoryFragment();
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
-        }
-
+        setHasOptionsMenu(true);
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
-
         // Set the adapter
-        if (view instanceof RecyclerView) {
-            Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            List<Route> routes = new ArrayList<>();
-            recyclerView.setAdapter(new RouteAdapter(getContext(),routes, mListener));
+
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        /**
+         * Showing Swipe Refresh animation on activity create
+         * As animation won't start on onCreate, post runnable is used
+         */
+        swipeRefreshLayout.post(() -> {
+            swipeRefreshLayout.setRefreshing(true);
+
+            fetchRoutes();
         }
+        );
 
         recyclerView = view.findViewById(R.id.recycler_view);
+
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
-
-        // white background notification bar
-        whiteNotificationBar(recyclerView);
+        recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
 
         fetchRoutes();
@@ -146,7 +129,7 @@ public class RouteHistoryFragment extends Fragment {
      * fetches json by making http calls
      */
     private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(URL,
+        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
                 response -> {
                     if (response == null) {
                         Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
@@ -162,17 +145,30 @@ public class RouteHistoryFragment extends Fragment {
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
-                    // error in getting json
-                    Log.e(TAG, "Error: " + error.getMessage());
-                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+            // error in getting json
+            Log.e(TAG, "Error: " + error.getMessage());
+            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            // stopping swipe refresh
+            swipeRefreshLayout.setRefreshing(false);
+        });
 
-        VolleyInitiator.getInstance().addToRequestQueue(request);
+        MyApplication.getInstance().addToRequestQueue(request);
+    }
+
+    public void onBackPressed() {
+        // close search view on back button pressed
+        if (!searchView.isIconified()) {
+            searchView.setIconified(true);
+            return;
+        }
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.search_menu, menu);
 
         // Associate searchable configuration with the SearchView
@@ -215,6 +211,11 @@ public class RouteHistoryFragment extends Fragment {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onRefresh() {
+        fetchRoutes();
+    }
 /*
     @Override
     public void onBackPressed() {
@@ -225,15 +226,6 @@ public class RouteHistoryFragment extends Fragment {
         }
         super.onBackPressed();
     }*/
-
-    private void whiteNotificationBar(View view) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int flags = view.getSystemUiVisibility();
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            view.setSystemUiVisibility(flags);
-            getActivity().getWindow().setStatusBarColor(Color.WHITE);
-        }
-    }
 
     /**
      * This interface must be implemented by activities that contain this

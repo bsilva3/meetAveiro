@@ -144,4 +144,8 @@
     <string name="toolbar_title">Contacts</string>
     <string name="action_search">Search</string>
     <string name="search_hint">Type name…</string>
+    <string name="title_history">History</string>
+    <string name="title_most_recent">Most Recent</string>
+    <string name="title_top_rated">Top Rated</string>
+    <string name="title_most_traveled">Most Traveled</string>
 </resources>

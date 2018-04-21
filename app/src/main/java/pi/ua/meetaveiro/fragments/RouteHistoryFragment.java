@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -50,6 +51,8 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     private RecyclerView recyclerView;
     private SearchView searchView;
     private SwipeRefreshLayout swipeRefreshLayout;
+
+    private ShimmerFrameLayout mShimmerViewContainer;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -89,6 +92,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         }
         );
 
+        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
 
         routeList = new ArrayList<>();
@@ -145,10 +149,16 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
             // error in getting json
+            // stop animating Shimmer and hide the layout
+            mShimmerViewContainer.stopShimmerAnimation();
+            mShimmerViewContainer.setVisibility(View.GONE);
             Log.e(TAG, "Error: " + error.getMessage());
             Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             // stopping swipe refresh
@@ -214,6 +224,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
     @Override
     public void onRefresh() {
+        mShimmerViewContainer.startShimmerAnimation();
         fetchRoutes();
     }
 /*
@@ -226,6 +237,18 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         }
         super.onBackPressed();
     }*/
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mShimmerViewContainer.startShimmerAnimation();
+    }
+
+    @Override
+    public void onPause() {
+        mShimmerViewContainer.stopShimmerAnimation();
+        super.onPause();
+    }
 
     /**
      * This interface must be implemented by activities that contain this

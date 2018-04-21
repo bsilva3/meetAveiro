@@ -21,4 +21,5 @@
     <color name="danger">#d9534f</color>
     <color name="warning">#ffff00</color>
     <color name="bgBottomNavigation">#fe485a</color>
+    <color name="placeholder_bg">#dddddd</color>
 </resources>

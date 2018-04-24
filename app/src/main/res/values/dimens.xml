@@ -27,4 +27,6 @@
 
     <dimen name="placeholder_text_height">8dp</dimen>
     <dimen name="activity_padding">16dp</dimen>
+    <dimen name="collapsing_toolbar_subtitle_size">18dp</dimen>
+    <dimen name="collapsing_toolbar_title_size">30dp</dimen>
 </resources>

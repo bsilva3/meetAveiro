@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -34,6 +35,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,20 +43,28 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
+import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
+import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
-public class NavigationDrawerActivity extends AppCompatActivity implements PhotoLogFragment.RouteStateListener ,RouteHistoryFragment.OnListFragmentInteractionListener, SharedPreferences.OnSharedPreferenceChangeListener {
+public class NavigationDrawerActivity extends AppCompatActivity implements
+        PhotoLogFragment.RouteStateListener ,
+        AttractionListFragment.OnAttractionSelectedListener,
+        RouteHistoryFragment.OnListFragmentInteractionListener,
+        SharedPreferences.OnSharedPreferenceChangeListener {
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
 
@@ -62,8 +72,10 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
     private DrawerLayout drawer;
     private View navHeader;
     private ImageView imgNavHeaderBg;
+    private RelativeLayout collapseContent;
     private TextView txtName, txtWebsite;
     private Toolbar toolbar;
+    private CollapsingToolbarLayout collapsingToolbar;
 
     // urls to load navigation header background image
     // and profile image
@@ -77,8 +89,10 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
 
     // tags used to attach the fragments
     private static final String TAG_PHOTO_LOG = "home";
-    private static final String TAG_ACCOUNT_SETTINGS = "photos";
+    private static final String TAG_ATTRACTIONS = "attractions";
+    private static final String TAG_ROUTES = "routes";
     private static final String TAG_ROUTE_HISTORY = "history";
+    private static final String TAG_ACCOUNT_SETTINGS = "photos";
     public static String CURRENT_TAG = TAG_PHOTO_LOG;
 
     // toolbar titles respected to selected nav menu item
@@ -127,6 +141,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
         //get firebase auth instance
         auth = FirebaseAuth.getInstance();
         setContentView(R.layout.activity_navigation_drawer);
+        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -140,6 +155,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
         txtName = (TextView) navHeader.findViewById(R.id.name);
         txtWebsite = (TextView) navHeader.findViewById(R.id.website);
         imgNavHeaderBg = (ImageView) navHeader.findViewById(R.id.img_header_bg);
+
+        //Collapse content
+        collapseContent = findViewById(R.id.collapse_content);
 
         // load toolbar titles from string resources
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
@@ -168,6 +186,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
     @Override
     protected void onResume() {
         super.onResume();
+        setToolbarTitle();
+        handleCollapse();
         LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
     }
 
@@ -196,6 +216,11 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
         if (s.equals(Utils.KEY_REQUESTING_LOCATION_UPDATES)) {
             //on(sharedPreferences.getBoolean(Utils.KEY_REQUESTING_LOCATION_UPDATES, false));
         }
+    }
+
+    @Override
+    public void onAttractionSelected(Attraction item) {
+
     }
 
     /**
@@ -402,15 +427,45 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
 
     }
 
+    private void handleCollapse(){
+        switch (navItemIndex) {
+            case 0:
+                disableCollapse();
+                break;
+            case 1:
+                enableCollapse();
+                break;
+            case 2:
+                disableCollapse();
+                break;
+            case 3:
+                disableCollapse();
+                break;
+            case 4:
+                disableCollapse();
+                break;
+            default:
+                disableCollapse();
+                break;
+        }
+    }
+
     private Fragment getHomeFragment() {
+        handleCollapse();
         switch (navItemIndex) {
             case 0:
                 // Photo log fragment
                 return new PhotoLogFragment();
             case 1:
+                // Attraction list fragment
+                return new AttractionListFragment();
+            case 2:
+                // Route List fragment
+                return new RouteHistoryFragment();
+            case 3:
                 // Route history fragment
                 return new RouteHistoryFragment();
-            case 2:
+            case 4:
                 // Account settings fragment
                 return new AccountSettingsFragment();
             default:
@@ -418,8 +473,22 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
         }
     }
 
+    public void disableCollapse() {
+        collapseContent.setVisibility(View.GONE);
+    }
+
+    public void enableCollapse() {
+        collapseContent.setVisibility(View.VISIBLE);
+    }
+
     private void setToolbarTitle() {
-        getSupportActionBar().setTitle(activityTitles[navItemIndex]);
+        if (navItemIndex != 1) {
+            collapsingToolbar.setTitleEnabled(false);
+            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
+        } else {
+            collapsingToolbar.setTitleEnabled(true);
+            collapsingToolbar.setTitle(activityTitles[navItemIndex]);
+        }
     }
 
     private void selectNavMenu() {
@@ -441,12 +510,20 @@ public class NavigationDrawerActivity extends AppCompatActivity implements Photo
                         navItemIndex = 0;
                         CURRENT_TAG = TAG_PHOTO_LOG;
                         break;
-                    case R.id.option_route_history:
+                    case R.id.option_attractions:
                         navItemIndex = 1;
+                        CURRENT_TAG = TAG_ATTRACTIONS;
+                        break;
+                    case R.id.option_routes:
+                        navItemIndex = 2;
+                        CURRENT_TAG = TAG_ROUTES;
+                        break;
+                    case R.id.option_route_history:
+                        navItemIndex = 3;
                         CURRENT_TAG = TAG_ROUTE_HISTORY;
                         break;
                     case R.id.option_account_settings:
-                        navItemIndex = 2;
+                        navItemIndex = 4;
                         CURRENT_TAG = TAG_ACCOUNT_SETTINGS;
                         break;
                     case R.id.option_logout:

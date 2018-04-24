@@ -33,31 +33,37 @@
     <string name="lbl_forgot_password">Forgot password?</string>
     <string name="forgot_password_msg">We just need your registered Email Id to sent you password reset instructions.</string>
     <string name="prompt_password">Enter Password</string>
-    <string name="option_account_settings">Account Settings</string>
-    <string name="option_logout">Logout</string>
-    <string name="option_photo_log">Photo Log</string>
 
-    <!--Navigation Drawer Strings -->
+    <!--Navigation Drawer -->
+    <string name="title_activity_navigation_drawer">meetAveiro</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="openDrawer">open_drawer</string>
     <string name="closeDrawer">close_drawer</string>
 
+    <!--Navigation Drawer Labels -->
+    <string name="option_photo_log">Photo Log</string>
+    <string name="option_attractions">Attractions</string>
+    <string name="option_routes">Routes</string>
+    <string name="option_route_history">Route History</string>
+    <string name="option_account_settings">Account Settings</string>
+    <string name="option_logout">Logout</string>
+
     <!-- Navigation Drawer menu labels -->
     <string name="nav_home">Home</string>
-    <string name="nav_photos">Account Settings</string>
+    <string name="nav_account_settings">Account Settings</string>
     <string name="nav_about_us">About Us</string>
 
     <!-- Toolbar titles when navigation menu item is selected -->
     <string-array name="nav_item_activity_titles">
         <item>Photo Logging</item>
+        <item>Aveiro Attractions</item>
+        <item>Routes</item>
         <item>Route History</item>
         <item>Account Settings</item>
     </string-array>
-
     <string name="activity_title_about_us">About Us</string>
-    <string name="title_activity_navigation_drawer">meetAveiro</string>
-    <string name="option_route_history">Route History</string>
+
     <string name="route">Route</string>
 
     <string name="launch_activity">Launch activity</string>

@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -50,9 +51,12 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     private RouteAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
+
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private ShimmerFrameLayout mShimmerViewContainer;
+
+    private FastScroller fastScroller;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -94,6 +98,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
         mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
+        fastScroller = view.findViewById(R.id.fastscroll);
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
@@ -104,6 +109,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
+        fastScroller.setRecyclerView(recyclerView);
 
         fetchRoutes();
 

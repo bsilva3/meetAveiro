@@ -10,6 +10,8 @@ import android.widget.TextView;
 import android.widget.Filter;
 import android.widget.Filterable;
 
+import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
+
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteHistoryFragment.OnListFragmentInteractionListener;
 import pi.ua.meetaveiro.models.Route;
@@ -21,12 +23,17 @@ import java.util.List;
  * {@link RecyclerView.Adapter} that can display a {@link Route} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
  */
-public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements Filterable{
+public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements Filterable, SectionTitleProvider {
 
     private Context context;
     private List<Route> routeList;
     private List<Route> routeListFiltered;
     private OnListFragmentInteractionListener listener;
+
+    @Override
+    public String getSectionTitle(int position) {
+        return routeList.get(position).getRouteTitle().substring(0, 1);
+    }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public final View mView;

@@ -14,6 +14,9 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_ROUTE_HISTORY = "https://localhost..blahblah";
 
+    // url to fetch routes history json
+    public static final String URL_ATTRACTIONS = "https://localhost..blahblah";
+
     public final static String PREFERENCES_FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
 
     private static final String PACKAGE_NAME = "com.google.android.gms.location.Geofence";

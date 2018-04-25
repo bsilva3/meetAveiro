@@ -45,6 +45,11 @@ public class Route {
         this.routeMarkers = routeMarkers;
     }
 
+    public Route(String routeTitle) {
+        COUNTER++;
+        this.routeTitle = routeTitle;
+    }
+
     public Route(Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
         COUNTER++;
         this.routeTitle = Resources.getSystem().getString(R.string.route) + " " + COUNTER;

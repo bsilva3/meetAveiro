@@ -3,12 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://C:\Users\joaos\Documents\GitHub\pi_2017_2018_g02\app\app.iml" filepath="C:\Users\joaos\Documents\GitHub\pi_2017_2018_g02\app\app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/meetAveiro.iml" filepath="$PROJECT_DIR$/meetAveiro.iml" />
-      <module fileurl="file://C:\Users\bjpsi\AndroidStudioProjects\pi_2017_2018_g02\meetAveiro.iml" filepath="C:\Users\bjpsi\AndroidStudioProjects\pi_2017_2018_g02\meetAveiro.iml" />
-      <module fileurl="file://C:\Users\bjpsi\AndroidStudioProjects\pi_2017_2018_g02\.idea\pi_2017_2018_g02.iml" filepath="C:\Users\bjpsi\AndroidStudioProjects\pi_2017_2018_g02\.idea\pi_2017_2018_g02.iml" />
       <module fileurl="file://$PROJECT_DIR$/pi_2017_2018_g02.iml" filepath="$PROJECT_DIR$/pi_2017_2018_g02.iml" />
-      <module fileurl="file://C:\Users\joaos\Documents\GitHub\pi_2017_2018_g02\pi_2017_2018_g02.iml" filepath="C:\Users\joaos\Documents\GitHub\pi_2017_2018_g02\pi_2017_2018_g02.iml" />
     </modules>
   </component>
 </project>

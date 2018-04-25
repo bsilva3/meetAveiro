@@ -65,12 +65,16 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -170,6 +174,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
     private String[] optionsText;
     //icon for the option
     private Integer[] optionsImages;
+
 
 
     // Used for selecting the current place.
@@ -742,14 +747,9 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
      * @return bitmap (from given string)
      */
     public Bitmap StringToBitMap(String encodedString){
-        try {
-            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
-            Bitmap bitmap= BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
-            return bitmap;
-        } catch(Exception e) {
-            e.getMessage();
-            return null;
-        }
+        byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        return decodedByte;
     }
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
@@ -1015,6 +1015,9 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
                                                                 route.setRouteTitle(routeTitleBox.getText().toString());
                                                                 route.setRouteDescription(routeDescriptionBox.getText().toString());
                                                                 routes.add(route);
+                                                                saveRouteToFile(route);
+
+
                                                                 //update route in the array that has all routes on the map
                                                                 //and update info in bottom sheet
                                                                 tourTitleText.setText(route.getRouteTitle());
@@ -1093,6 +1096,9 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
                                         routeDescriptionBox.getText().toString(), imageMarkers);
                                 //save this route...
                                 routes.add(route);
+
+                                saveRouteToFile(route);
+
                                 line = null;
                                 points.clear();//reset points
                             }
@@ -1110,5 +1116,91 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
         alertDialog.show();
 
     }
+
+
+    /**
+     * Saving in JSON format:
+     * { Title : "",
+     *   Description : "",
+     *   Markers :[
+     *
+     *      {
+     *      Titl : "" ,
+     *      Snippet  : "",
+     *      Latitude : "",
+     *      Longitude : " " ,
+     *      Icon : "bitmaptostring replaced / with // "
+     *      }
+     *
+     *      ]
+     * }
+     * @param route Route to save
+     */
+    private void saveRouteToFile(Route route){
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n");
+        //Title and description
+        sb.append("\"Title\" : " + "\"" + route.getRouteTitle() +"\",\n");
+        sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
+        sb.append("\"Markers\" : [\n");
+        //Markers
+        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        int tmp = 0;
+        List<LatLng> polyPoints  = route.getRoutePath().getPoints();
+
+        for (Map.Entry<Marker, Bitmap> entry : temp.entrySet())
+        {
+            if (polyPoints.contains(entry.getKey().getPosition())){
+                //Marker number
+                if (tmp > 0)
+                    sb.append(",\n");
+                sb.append("{");
+                //Marker information
+                sb.append("\"Titl\" : " + "\"" + entry.getKey().getTitle() + "\",\n");
+                sb.append("\"Snippet\" : " + "\"" + entry.getKey().getSnippet() + "\",\n");
+                sb.append("\"Latitude\" : " + "\"" + entry.getKey().getPosition().latitude + "\",\n");
+                sb.append("\"Longitude\" : " + "\"" + entry.getKey().getPosition().longitude + "\",\n");
+                String tmpo = bitMapToBase64(entry.getValue());
+                String imageFix = tmpo.replaceAll("/","//");
+                sb.append("\"Icon\" : " + "\"" + imageFix + "\"");
+                //End marker
+                sb.append("}");
+                tmp++;
+            }
+        }
+        sb.append("],\n");
+        sb.append("\"Poly\" : [\n");
+
+        //Poly points
+        Iterator<LatLng> it = polyPoints.iterator();
+        tmp = 0;
+        while (it.hasNext()){
+            if (tmp>0){
+                sb.append(",\n");
+            }
+            sb.append("{");
+            LatLng l = it.next();
+            sb.append("\"Longitude\" : " + "\"" +l.longitude + "\", ");
+            sb.append("\"Latitude\" : " + "\"" +l.latitude + "\"");
+            sb.append("}");
+            tmp++;
+        }
+        sb.append("]\n");
+        sb.append("\n}");
+
+        String filename = "route"+ route.getRouteTitle() +".json";
+        FileOutputStream outputStream;
+        try {
+            outputStream = getContext().openFileOutput(filename, Context.MODE_PRIVATE);
+            outputStream.write(sb.toString().getBytes());
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+
 
 }

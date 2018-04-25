@@ -1,7 +1,7 @@
 <resources>
-    <string name ="unknown_string"> Unknown </string>
-    <string name ="close_string"> Close </string>
-    <string name ="scanning_image_string">"Scanning image… "</string>
+    <string name="unknown_string"> Unknown </string>
+    <string name="close_string"> Close </string>
+    <string name="scanning_image_string">"Scanning image… "</string>
     <string name="app_name">meetAveiro</string>
     <string name="title_activity_photo_log_map">Photo Log</string>
     <string name="action_sign_in_short">Register</string>
@@ -154,4 +154,7 @@
     <string name="title_most_recent">Most Recent</string>
     <string name="title_top_rated">Top Rated</string>
     <string name="title_most_traveled">Most Traveled</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -35,12 +35,11 @@ import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
  * A fragment representing a list of Items.
  * <p/>
- * Activities containing this fragment MUST implement the {@link OnAttractionSelectedListener}
+ * Activities containing this fragment MUST implement the {@link AttractionAdapter.OnAttractionSelectedListener}
  * interface.
  */
 public class AttractionListFragment extends Fragment {
@@ -50,7 +49,7 @@ public class AttractionListFragment extends Fragment {
     private static final String ARG_COLUMN_COUNT = "column-count";
 
     private int mColumnCount = 2;
-    private OnAttractionSelectedListener mListener;
+    private AttractionAdapter.OnAttractionSelectedListener mListener;
     private RecyclerView recyclerView;
     private List<Attraction> attractionList;
     private AttractionAdapter adapter;
@@ -213,8 +212,8 @@ public class AttractionListFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnAttractionSelectedListener) {
-            mListener = (OnAttractionSelectedListener) context;
+        if (context instanceof AttractionAdapter.OnAttractionSelectedListener) {
+            mListener = (AttractionAdapter.OnAttractionSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnAttractionSelectedListener");
@@ -235,17 +234,4 @@ public class AttractionListFragment extends Fragment {
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnAttractionSelectedListener {
-        void onAttractionSelected(Attraction item);
-    }
 }

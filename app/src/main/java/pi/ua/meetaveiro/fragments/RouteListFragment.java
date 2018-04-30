@@ -25,16 +25,11 @@ import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
@@ -46,9 +41,9 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
  * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
  * interface.
  */
-public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+public class RouteListFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
 
-    private static final String TAG = RouteHistoryFragment.class.getSimpleName();
+    private static final String TAG = RouteListFragment.class.getSimpleName();
 
     private RouteAdapter.OnRouteItemSelectedListener mListener;
 
@@ -67,12 +62,12 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public RouteHistoryFragment() {
+    public RouteListFragment() {
     }
 
 
-    public static RouteHistoryFragment newInstance() {
-        return new RouteHistoryFragment();
+    public static RouteListFragment newInstance() {
+        return new RouteListFragment();
     }
 
     @Override
@@ -97,8 +92,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
 
-            fetchLocalRoutes();
-            //fetchRoutes();
+            fetchRoutes();
         }
         );
 
@@ -117,8 +111,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
-        //fetchRoutes();
-        fetchLocalRoutes();
+        fetchRoutes();
 
         return view;
     }
@@ -181,52 +174,6 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         MyApplication.getInstance().addToRequestQueue(request);
     }
 
-    /**
-     * Gets all the route names saved in the phone.
-     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
-     *
-     */
-    private void fetchLocalRoutes(){
-        List<Route> items = new ArrayList<>();
-        try {
-            File directory = getActivity().getFilesDir();
-            File[] files = directory.listFiles();
-            Route r;
-            for (int i = 0; i < files.length; i++) {
-                if(files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route","");
-                    r = new Route(title);
-                    items.add(r);
-                }
-            }
-
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        // adding contacts to contacts list
-        routeList.clear();
-        routeList.addAll(items);
-
-        // refreshing recycler view
-        mAdapter.notifyDataSetChanged();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-        // stopping swipe refresh
-        swipeRefreshLayout.setRefreshing(false);
-
-    }
-
-
-    public void onBackPressed() {
-        // close search view on back button pressed
-        if (!searchView.isIconified()) {
-            searchView.setIconified(true);
-            return;
-        }
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -276,19 +223,8 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     @Override
     public void onRefresh() {
         mShimmerViewContainer.startShimmerAnimation();
-        fetchLocalRoutes();
-        //fetchRoutes();
+        fetchRoutes();
     }
-/*
-    @Override
-    public void onBackPressed() {
-        // close search view on back button pressed
-        if (!searchView.isIconified()) {
-            searchView.setIconified(true);
-            return;
-        }
-        super.onBackPressed();
-    }*/
 
     @Override
     public void onResume() {
@@ -301,39 +237,5 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         mShimmerViewContainer.stopShimmerAnimation();
         super.onPause();
     }
-
-    /**
-     * Opens the file with the route and reconctructs it
-     * File name format: route+++.json
-     * +++ = route name
-     * @param filename
-     * @return String (json format) with all the information
-     *
-     * Must be sent to RouteDetais as an argument
-     */
-    private String getRouteFromFile(String filename){
-
-        StringBuffer datax = new StringBuffer("");
-        try {
-            FileInputStream fIn = getContext().openFileInput ( filename ) ;
-            InputStreamReader isr = new InputStreamReader ( fIn ) ;
-            BufferedReader buffreader = new BufferedReader ( isr ) ;
-            String readString = buffreader.readLine ( ) ;
-            while ( readString != null ) {
-                datax.append(readString);
-                readString = buffreader.readLine ( ) ;
-            }
-            isr.close ( ) ;
-
-        } catch (IOException ioe ) {
-            ioe.printStackTrace() ;
-        }
-
-        return datax.toString();
-
-
-    }
-
-
 
 }

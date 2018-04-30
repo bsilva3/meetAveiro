@@ -43,18 +43,19 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pi.ua.meetaveiro.adapters.AttractionAdapter;
+import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
+import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
+import pi.ua.meetaveiro.fragments.RouteListFragment;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
@@ -62,9 +63,10 @@ import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         PhotoLogFragment.RouteStateListener ,
-        AttractionListFragment.OnAttractionSelectedListener,
-        RouteHistoryFragment.OnListFragmentInteractionListener,
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        AttractionAdapter.OnAttractionSelectedListener,
+        RouteAdapter.OnRouteItemSelectedListener,
+        SharedPreferences.OnSharedPreferenceChangeListener,
+        HistoryFragment.OnBottomHistoryNavigationInteractionListener {
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
 
@@ -91,7 +93,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private static final String TAG_PHOTO_LOG = "home";
     private static final String TAG_ATTRACTIONS = "attractions";
     private static final String TAG_ROUTES = "routes";
-    private static final String TAG_ROUTE_HISTORY = "history";
+    private static final String TAG_HISTORY = "history";
     private static final String TAG_ACCOUNT_SETTINGS = "photos";
     public static String CURRENT_TAG = TAG_PHOTO_LOG;
 
@@ -218,9 +220,21 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         }
     }
 
+    //Called when a item is clicked on the attraction list fragment
     @Override
     public void onAttractionSelected(Attraction item) {
 
+    }
+
+    //Called when a item is clicked on the route list fragment
+    @Override
+    public void onRouteSelected(Route item) {
+
+    }
+
+    @Override
+    public void onBottomHistoryItemSelected(Fragment fragment) {
+        this.loadFragment(R.id.frame_container, fragment);
     }
 
     /**
@@ -461,10 +475,10 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 return new AttractionListFragment();
             case 2:
                 // Route List fragment
-                return new RouteHistoryFragment();
+                return new RouteListFragment();
             case 3:
-                // Route history fragment
-                return new RouteHistoryFragment();
+                // History fragment
+                return new HistoryFragment();
             case 4:
                 // Account settings fragment
                 return new AccountSettingsFragment();
@@ -518,9 +532,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                         navItemIndex = 2;
                         CURRENT_TAG = TAG_ROUTES;
                         break;
-                    case R.id.option_route_history:
+                    case R.id.option_history:
                         navItemIndex = 3;
-                        CURRENT_TAG = TAG_ROUTE_HISTORY;
+                        CURRENT_TAG = TAG_HISTORY;
                         break;
                     case R.id.option_account_settings:
                         navItemIndex = 4;
@@ -591,11 +605,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         auth.signOut();
     }
 
-    //Called when a item is clicked on the route list fragment
-    @Override
-    public void onListFragmentInteraction(Route item) {
-
-    }
 
     //Called when Start/Stop route button is pressed
     public void onRouteStateChanged(boolean started){
@@ -603,5 +612,13 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
             mService.requestLocationUpdates();
         else
             mService.removeLocationUpdates();
+    }
+
+    public void loadFragment(int id, Fragment fragment) {
+        // load fragment
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(id, fragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 }

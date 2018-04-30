@@ -6,16 +6,19 @@ import java.util.HashMap;
 
 public class Constants {
 
-    private Constants() {
-    }
+    private Constants() {}
+
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
     public final static String API_URL = "http://192.168.54.155:8080/search";
 
+    // url to fetch all routes
+    public static final String URL_ROUTES = "https://localhost..blahblah";
     // url to fetch routes history json
     public static final String URL_ROUTE_HISTORY = "https://localhost..blahblah";
-
     // url to fetch routes history json
     public static final String URL_ATTRACTIONS = "https://localhost..blahblah";
+    // url to fetch routes history json
+    public static final String URL_ATTRACTION_HISTORY = "https://localhost..blahblah";
 
     public final static String PREFERENCES_FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
 

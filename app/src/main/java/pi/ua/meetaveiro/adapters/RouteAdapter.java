@@ -13,7 +13,6 @@ import android.widget.Filterable;
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.fragments.RouteHistoryFragment.OnListFragmentInteractionListener;
 import pi.ua.meetaveiro.models.Route;
 
 import java.util.ArrayList;
@@ -21,14 +20,14 @@ import java.util.List;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Route} and makes a call to the
- * specified {@link OnListFragmentInteractionListener}.
+ * specified {@link OnRouteItemSelectedListener}.
  */
 public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements Filterable, SectionTitleProvider {
 
     private Context context;
     private List<Route> routeList;
     private List<Route> routeListFiltered;
-    private OnListFragmentInteractionListener listener;
+    private OnRouteItemSelectedListener listener;
 
     @Override
     public String getSectionTitle(int position) {
@@ -43,14 +42,11 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         public MyViewHolder(View view) {
             super(view);
             mView = view;
-            mTitleView = (TextView) view.findViewById(R.id.route_title);
-            mDescriptionView = (TextView) view.findViewById(R.id.route_description);
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    // send selected Route in callback
-                    listener.onListFragmentInteraction(routeListFiltered.get(getAdapterPosition()));
-                }
+            mTitleView = view.findViewById(R.id.route_title);
+            mDescriptionView = view.findViewById(R.id.route_description);
+            view.setOnClickListener(view1 -> {
+                // send selected Route in callback
+                listener.onRouteSelected(routeListFiltered.get(getAdapterPosition()));
             });
         }
 
@@ -60,7 +56,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         }
     }
 
-    public RouteAdapter(Context context, List<Route> routeList, OnListFragmentInteractionListener listener) {
+    public RouteAdapter(Context context, List<Route> routeList, OnRouteItemSelectedListener listener) {
         this.context = context;
         this.listener = listener;
         this.routeList = routeList;
@@ -80,14 +76,11 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         holder.mTitleView.setText(routeList.get(position).getRouteTitle());
         holder.mDescriptionView.setText(routeList.get(position).getRouteDescription());
 
-        holder.mView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (null != listener) {
-                    Log.d("clicked!", holder.mItem+"");
-                    //GO TO MAP AND SHOW THE ROUTE HERE
-                    listener.onListFragmentInteraction(holder.mItem);
-                }
+        holder.mView.setOnClickListener(v -> {
+            if (null != listener) {
+                Log.d("clicked!", holder.mItem+"");
+                //GO TO MAP AND SHOW THE ROUTE HERE
+                listener.onRouteSelected(holder.mItem);
             }
         });
     }
@@ -131,4 +124,15 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
     public int getItemCount() {
         return routeListFiltered.size();
     }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     */
+    public interface OnRouteItemSelectedListener {
+        void onRouteSelected(Route item);
+    }
+
 }

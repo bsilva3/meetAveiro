@@ -2,13 +2,19 @@ package pi.ua.meetaveiro.models;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+
+import java.io.Serializable;
+import java.net.URI;
 
 /**
  * A simple shared tourist attraction class to easily pass data around.
  */
-public class Attraction {
+public class Attraction implements Parcelable {
     private String name;
     private String description;
     private String longDescription;
@@ -92,7 +98,23 @@ public class Attraction {
         this.secondaryImage = secondaryImage;
     }
 
-    public Attraction(){}
+    public Attraction() {
+    }
+
+    //for parcelable
+    public Attraction(Parcel in) {
+        try {
+            name = in.readString();
+            description = in.readString();
+            longDescription = in.readString();
+            imageUrl = in.readParcelable(getClass().getClassLoader());
+            secondaryImage = in.readParcelable(getClass().getClassLoader());
+            location = in.readParcelable(getClass().getClassLoader());
+            city = in.readString();
+        } catch (Exception e) {
+            Log.e("parcelable error", "There were some problemas creating parcelable object (some elements may be null)");
+        }
+    }
 
     public Attraction(String name, String description, String longDescription, Uri imageUrl,
                       Uri secondaryImageUrl, LatLng location, String city) {
@@ -104,4 +126,32 @@ public class Attraction {
         this.location = location;
         this.city = city;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        // Write data in any order
+        dest.writeString(name);
+        dest.writeString(description);
+        dest.writeParcelable(imageUrl, flags);
+        dest.writeParcelable(secondaryImageUrl, flags);
+        dest.writeParcelable(location, flags);
+        dest.writeString(city);
+    }
+
+    // de-serialize the object
+    public static final Parcelable.Creator<Attraction> CREATOR = new Parcelable.Creator<Attraction>() {
+        public Attraction createFromParcel(Parcel in) {
+            return new Attraction(in);
+        }
+
+            @Override
+            public Attraction[] newArray(int size) {
+                return new Attraction[0];
+            }
+        };
 }

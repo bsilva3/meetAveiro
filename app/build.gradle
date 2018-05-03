@@ -50,6 +50,9 @@ dependencies {
     // Shimmer
     implementation 'com.facebook.shimmer:shimmer:0.1.0@aar'
     // Fast scroll (and alphabetical scroll)
+    compile 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
+    //circle indicator for image slider
+    compile 'me.relex:circleindicator:1.2.2@aar'
     implementation 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
     // Testing
     testImplementation 'junit:junit:4.12'

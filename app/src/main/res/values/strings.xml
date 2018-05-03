@@ -33,7 +33,7 @@
     <string name="lbl_forgot_password">Forgot password?</string>
     <string name="forgot_password_msg">We just need your registered Email Id to sent you password reset instructions.</string>
     <string name="prompt_password">Enter Password</string>
-
+    <string name="go_back">Go Back</string>
     <!--Navigation Drawer -->
     <string name="title_activity_navigation_drawer">meetAveiro</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
@@ -157,6 +157,21 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- for testing -->
+    <string name="loremipsum">Lorem ipsum dolor sit amet,
+        consectetur adipiscing elit. Nulla eu sagittis mi, id tristique mi.
+        Praesent quis leo vitae enim maximus sodales vitae non sem.
+        Vestibulum cursus metus in urna elementum, vitae ullamcorper arcu porttitor.
+        Vestibulum sit amet massa commodo, feugiat mi non, porta risus. Nulla porttitor,
+        dolor ac placerat malesuada, dolor lectus aliquam nisl, a eleifend libero turpis in ligula.
+        Suspendisse ac vulputate urna. Suspendisse condimentum arcu tortor. Quisque finibus,
+        justo id rhoncus ullamcorper, lorem turpis pretium purus,
+        vitae euismod lectus neque ut odio. Vivamus dignissim bibendum faucibus.
+        Duis at egestas sapien. Curabitur pretium magna tellus, eget rutrum nunc consectetur eget.
+        In volutpat metus eu gravida ornare. Duis non blandit augue. Nam ut lacus et dui congue blandit eget et nunc.
+
+</string>
+    <string name="title_activity_attraction_map">Map</string>
     <string name="title_activity_route_details">RouteDetailsActivity</string>
     <string name="large_text">
         "Material is the metaphor.\n\n"

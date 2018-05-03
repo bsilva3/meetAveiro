@@ -2,6 +2,9 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -10,6 +13,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,10 +24,15 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.facebook.shimmer.ShimmerFrameLayout;
-import com.futuremind.recyclerviewfastscroll.FastScroller;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,7 +40,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
@@ -46,7 +57,7 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
  * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
  * interface.
  */
-public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
 
@@ -56,12 +67,10 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     private RouteAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    private ShimmerFrameLayout mShimmerViewContainer;
-
-    private FastScroller fastScroller;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -85,8 +94,12 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
-        // Set the adapter
+        recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        recyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(this.getContext());
+        recyclerView.setLayoutManager(mLayoutManager);
 
+        // Set the adapter
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
 
@@ -95,27 +108,21 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-            swipeRefreshLayout.setRefreshing(true);
-
-            fetchLocalRoutes();
-            //fetchRoutes();
-        }
+                    swipeRefreshLayout.setRefreshing(true);
+                    fetchLocalRoutes();
+                    //fetchRoutes();
+                }
         );
-
-        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
-        recyclerView = view.findViewById(R.id.recycler_view);
-        fastScroller = view.findViewById(R.id.fastscroll);
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
-        recyclerView.setLayoutManager(mLayoutManager);
+        //RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
+        //recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
-        recyclerView.setAdapter(mAdapter);
-        fastScroller.setRecyclerView(recyclerView);
+        //recyclerView.setAdapter(mAdapter);
 
         //fetchRoutes();
         fetchLocalRoutes();
@@ -162,16 +169,11 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
             // error in getting json
             // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
             Log.e(TAG, "Error: " + error.getMessage());
             Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             // stopping swipe refresh
@@ -183,39 +185,40 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
     /**
      * Gets all the route names saved in the phone.
-     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
-     *
+     * The file name is route (name of route).json
      */
-    private void fetchLocalRoutes(){
+    private void fetchLocalRoutes() {
         List<Route> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
             File[] files = directory.listFiles();
             Route r;
             for (int i = 0; i < files.length; i++) {
-                if(files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route","");
+                //Get all the files that are routes
+                if (files[i].getName().startsWith("route")) {
+                    String title = files[i].getName().replaceFirst("route", "").replaceFirst(".json","");
                     r = new Route(title);
                     items.add(r);
                 }
             }
 
-        }catch (Exception e){
+            // adding contacts to contacts list
+            routeList.clear();
+            routeList.addAll(items);
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
+            // stop animating Shimmer and hide the layout
+            //mShimmerViewContainer.stopShimmerAnimation();
+            //mShimmerViewContainer.setVisibility(View.GONE);
+            // stopping swipe refresh
+            swipeRefreshLayout.setRefreshing(false);
+
+
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        // adding contacts to contacts list
-        routeList.clear();
-        routeList.addAll(items);
-
-        // refreshing recycler view
-        mAdapter.notifyDataSetChanged();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-        // stopping swipe refresh
-        swipeRefreshLayout.setRefreshing(false);
-
     }
 
 
@@ -275,7 +278,6 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
     @Override
     public void onRefresh() {
-        mShimmerViewContainer.startShimmerAnimation();
         fetchLocalRoutes();
         //fetchRoutes();
     }
@@ -293,12 +295,10 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     @Override
     public void onResume() {
         super.onResume();
-        mShimmerViewContainer.startShimmerAnimation();
     }
 
     @Override
     public void onPause() {
-        mShimmerViewContainer.stopShimmerAnimation();
         super.onPause();
     }
 
@@ -306,32 +306,124 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
      * Opens the file with the route and reconctructs it
      * File name format: route+++.json
      * +++ = route name
+     *
      * @param filename
      * @return String (json format) with all the information
-     *
+     * <p>
      * Must be sent to RouteDetais as an argument
      */
-    private String getRouteFromFile(String filename){
+    private String getRouteFromFile(String filename) {
 
         StringBuffer datax = new StringBuffer("");
         try {
-            FileInputStream fIn = getContext().openFileInput ( filename ) ;
-            InputStreamReader isr = new InputStreamReader ( fIn ) ;
-            BufferedReader buffreader = new BufferedReader ( isr ) ;
-            String readString = buffreader.readLine ( ) ;
-            while ( readString != null ) {
+            FileInputStream fIn = getContext().openFileInput(filename);
+            InputStreamReader isr = new InputStreamReader(fIn);
+            BufferedReader buffreader = new BufferedReader(isr);
+            String readString = buffreader.readLine();
+            while (readString != null) {
                 datax.append(readString);
-                readString = buffreader.readLine ( ) ;
+                readString = buffreader.readLine();
             }
-            isr.close ( ) ;
+            isr.close();
 
-        } catch (IOException ioe ) {
-            ioe.printStackTrace() ;
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
 
         return datax.toString();
 
 
+    }
+
+
+    /**
+     * Reconstructs the Route with all the markers
+     *
+     * @param datax
+     */
+    private Route reconstructRoute(String datax) {
+
+
+        Route r;
+        Map<Marker, Bitmap> tempMap = new HashMap<>();
+        try {
+
+            JSONObject json = new JSONObject(datax.toString());
+            JSONArray arr = json.getJSONArray("Markers");
+
+            r = new Route(json.get("Title").toString());
+            r.setRouteDescription(json.get("Description").toString());
+
+            //Iterate trough the array of markers
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject gfg = arr.getJSONObject(i);
+                String title = gfg.get("Titl").toString();
+                String snippet = gfg.get("Snippet").toString();
+
+                String lat = gfg.get("Latitude").toString();
+                String longi = gfg.get("Longitude").toString();
+                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+
+
+                String icon = gfg.get("Icon").toString();
+                String newIcon = icon.replaceAll("//", "/");
+                Bitmap image = StringToBitMap(newIcon);
+
+               /* Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                        .icon(BitmapDescriptorFactory.fromBitmap(image))
+                        .title(title)
+                        .snippet(snippet));
+
+                //Put in the map of markers
+                tempMap.put(m,image);
+*/
+            }
+            /*r.setRouteMarkers(tempMap);*/
+
+            //Reconstruct the polilyne
+            arr = json.getJSONArray("Poly");
+            PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
+            LatLng l = new LatLng(0, 0);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject gfg = arr.getJSONObject(i);
+                String lat = gfg.get("Latitude").toString();
+                String longi = gfg.get("Longitude").toString();
+                l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                options.add(l);
+            }
+
+            return r;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    /**
+     * Get the description from a json file without the need to go trough it all
+     * @param datax
+     * @return
+     */
+    private String getRouteDesc(String datax){
+        try {
+            JSONObject json = new JSONObject(datax.toString());
+            return json.get("Description").toString();
+        } catch (JSONException e) {
+            return null;
+        }
+
+    }
+
+
+    /**
+     * @param encodedString
+     * @return bitmap (from given string)
+     */
+    public Bitmap StringToBitMap(String encodedString) {
+        byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        return decodedByte;
     }
 
 

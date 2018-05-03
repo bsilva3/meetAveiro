@@ -90,4 +90,12 @@ public class Route {
     public String toString() {
         return routeTitle + (routeDescription == null ? "" : routeDescription);
     }
+
+    public void setRoutePath(Polyline routePath) {
+        this.routePath = routePath;
+    }
+
+    public void setRouteMarkers(Map<Marker, Bitmap> routeMarkers) {
+        this.routeMarkers = routeMarkers;
+    }
 }

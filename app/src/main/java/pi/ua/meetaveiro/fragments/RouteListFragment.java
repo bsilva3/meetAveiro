@@ -2,6 +2,9 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -10,6 +13,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -19,14 +23,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.facebook.shimmer.ShimmerFrameLayout;
-import com.futuremind.recyclerviewfastscroll.FastScroller;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
@@ -53,10 +68,6 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
     private SearchView searchView;
 
     private SwipeRefreshLayout swipeRefreshLayout;
-
-    private ShimmerFrameLayout mShimmerViewContainer;
-
-    private FastScroller fastScroller;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -92,13 +103,12 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
 
-            fetchRoutes();
+                    fetchLocalRoutes();
+
         }
         );
 
-        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
-        fastScroller = view.findViewById(R.id.fastscroll);
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
@@ -109,9 +119,8 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
-        fastScroller.setRecyclerView(recyclerView);
 
-        fetchRoutes();
+        fetchLocalRoutes();
 
         return view;
     }
@@ -138,7 +147,7 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
     /**
      * fetches json by making http calls
      */
-    private void fetchRoutes() {
+    /*private void fetchRoutes() {
         JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
                 response -> {
                     if (response == null) {
@@ -172,7 +181,50 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         });
 
         MyApplication.getInstance().addToRequestQueue(request);
+    }*/
+
+
+    /**
+     * Gets all the route names saved in the phone.
+     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
+     *
+     */
+    private void fetchLocalRoutes(){
+        List<Route> items = new ArrayList<>();
+        try {
+            File directory = getActivity().getFilesDir();
+            File[] files = directory.listFiles();
+            Route r;
+            for (int i = 0; i < files.length; i++) {
+                if(files[i].getName().startsWith("route")) {
+                    String title = files[i].getName().replaceFirst("route","");
+                    getRouteFromFile(title);
+                    r = new Route(title);
+                    items.add(r);
+                }
+            }
+
+            // adding contacts to contacts list
+            routeList.clear();
+            routeList.addAll(items);
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
+
+            // stopping swipe refresh
+            swipeRefreshLayout.setRefreshing(false);
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
     }
+
+
+
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -222,20 +274,51 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Override
     public void onRefresh() {
-        mShimmerViewContainer.startShimmerAnimation();
-        fetchRoutes();
+        fetchLocalRoutes();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mShimmerViewContainer.startShimmerAnimation();
     }
 
     @Override
     public void onPause() {
-        mShimmerViewContainer.stopShimmerAnimation();
         super.onPause();
+    }
+
+
+
+    /**
+     * Opens the file with the route and reconctructs it
+     * File name format: route+++.json
+     * +++ = route name
+     * @param filename
+     * @return String (json format) with all the information
+     *
+     * Must be sent to RouteDetais as an argument
+     */
+    private String getRouteFromFile(String filename){
+
+        StringBuffer datax = new StringBuffer("");
+        try {
+            FileInputStream fIn = getContext().openFileInput ( filename ) ;
+            InputStreamReader isr = new InputStreamReader ( fIn ) ;
+            BufferedReader buffreader = new BufferedReader ( isr ) ;
+            String readString = buffreader.readLine ( ) ;
+            while ( readString != null ) {
+                datax.append(readString);
+                readString = buffreader.readLine ( ) ;
+            }
+            isr.close ( ) ;
+
+        } catch (IOException ioe ) {
+            ioe.printStackTrace() ;
+        }
+
+        return datax.toString();
+
+
     }
 
 }

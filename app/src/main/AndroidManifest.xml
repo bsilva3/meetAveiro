@@ -37,6 +37,7 @@
 
         <activity android:name=".activities.SignupActivity" />
         <activity android:name=".activities.LoginActivity">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -77,6 +78,7 @@
                 android:value="pi.ua.meetaveiro.activities.NavigationDrawerActivity" />
         </activity>
         <activity android:name=".activities.RouteHistoryDetailsActivity"></activity>
+        <activity android:name=".activities.POIDetails"></activity>
     </application>
 
 </manifest>

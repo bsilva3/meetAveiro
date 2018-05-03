@@ -1096,6 +1096,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
             if (currentDrawingLine.getPoints().equals(points))
                 currentDrawingLine.remove();
         }
+
         PolylineOptions options = new PolylineOptions().width(10)
                 .color(getNextColor(nextColor)).geodesic(true);
         for (int i = 0; i < points.size(); i++) {

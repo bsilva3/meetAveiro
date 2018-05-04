@@ -15,9 +15,13 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
@@ -38,6 +42,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -65,15 +70,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,6 +88,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
@@ -102,8 +105,10 @@ import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
 /**
  * Photo logging and route making {@link Fragment} subclass.
  */
-public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
-        DataReceiver{
+public class PhotoLogFragment extends Fragment implements
+        OnMapReadyCallback,
+        DataReceiver,
+        TextToSpeech.OnInitListener{
 
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -123,6 +128,8 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
     private Location mLastKnownLocation;
     // Map Object
     private GoogleMap mMap;
+    //Text to speech converter
+    private TextToSpeech tts;
 
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
@@ -539,7 +546,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
         mLastKnownLocation = location;
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
-
     }
 
     public String bitMapToBase64 (Bitmap image){
@@ -579,7 +585,6 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
         }
         markers.put(markerToUpdate, true);
 
-
         //update the marker in the map that stores every marker and the image in the marker
         final String idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
@@ -607,93 +612,55 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void createAndShowInfoDialog(Marker m, String id){
-        final Dialog dialog = new Dialog(getContext());
         String name = m.getTitle();
         String description = m.getSnippet();
-        dialog.setContentView(R.layout.point_info_dialog);
-        dialog.setTitle(name);
-        dialog.setCancelable(true);
-        ImageView image = (ImageView) dialog.findViewById(R.id.point_image);
-        TextView descriptionText = (TextView) dialog.findViewById(R.id.point_description);
-        Button btn = (Button) dialog.findViewById(R.id.close_info_dialog);
-        image.setImageBitmap(imageMarkers.get(m));
-        descriptionText.setText(description);
-        //******************************************************
-        btn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                dialog.dismiss();
-            }
+        Drawable d = new BitmapDrawable(getResources(), imageMarkers.get(m));
 
-        });
-        //******************************************************
-        dialog.show();
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("name", name);
+            jsonRequest.put("id", id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         //when the dialog with the description is closed, we show a feedback box;
         //the user says if the app was able to identify the image succesfully, or close the dialog
         //without providing an answer
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(final DialogInterface arg0) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        JSONObject jsonRequest = new JSONObject();
-                        try {
-                            jsonRequest.put("name", name);
-                            jsonRequest.put("id", id);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+        final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
+                .setHeaderDrawable(d)
+                .setIcon(R.drawable.ic_check_circle_black_24dp)
+                .withDialogAnimation(true)
+                .setTitle(name)
+                .setDescription(getResources().getString(R.string.feedback))
+                .setCancelable(true)
+                .setPositiveText("Yes")
+                .onPositive(
+                        (dialog12, which) -> {
+                            //Yes button clicked
+                            try {
+                                jsonRequest.put("feedback", 1);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
                         }
-                        switch (which){
-                            case DialogInterface.BUTTON_POSITIVE:
-                                //Yes button clicked
-                                try {
-                                    jsonRequest.put("feedback", 1);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                                break;
-
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                //No button clicked
-                                try {
-                                    jsonRequest.put("feedback", 0);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                                break;
+                )
+                .setNegativeText("No")
+                .onNegative(
+                        (dialog12, which) -> {
+                            //Yes button clicked
+                            try {
+                                jsonRequest.put("feedback", 0);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
                         }
-                    }
-                };
+                )
+                .onNeutral((dialog1, which) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/javiersantos"))))
+                .setNeutralText("Show More");
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setMessage(getResources().getString(R.string.feedback)).setPositiveButton(getResources().getString(R.string.yes), dialogClickListener)
-                        .setNegativeButton(getResources().getString(R.string.no), dialogClickListener).show();
-            }
-        });
-    }
-
-    private void createAndShowSaveTourDialog(Marker m){
-        final Dialog dialog = new Dialog(getContext());
-        dialog.setContentView(R.layout.point_info_dialog);
-        dialog.setTitle(m.getTitle());
-        dialog.setCancelable(true);
-        ImageView image = (ImageView) dialog.findViewById(R.id.point_image);
-        TextView description = (TextView) dialog.findViewById(R.id.point_description);
-        Button btn = (Button) dialog.findViewById(R.id.close_info_dialog);
-        image.setImageBitmap(imageMarkers.get(m));
-        description.setText(m.getSnippet());
-        //******************************************************
-        btn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                dialog.dismiss();
-            }
-
-        });
-        //******************************************************
         dialog.show();
+        speakOut(name+". "+ description);
     }
 
 
@@ -752,6 +719,36 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
         return decodedByte;
     }
 
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+
+            int result = tts.setLanguage(new Locale("pt", "PT"));
+
+            if (result == TextToSpeech.LANG_MISSING_DATA
+                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTS", "This Language is not supported");
+            }
+
+        } else {
+            Log.e("TTS", "Initilization Failed!");
+        }
+    }
+
+    private void speakOut(String text) {
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+    }
+
+    @Override
+    public void onDestroy() {
+        // Don't forget to shutdown tts!
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onDestroy();
+    }
+
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;
         @Override
@@ -761,7 +758,7 @@ public class PhotoLogFragment extends Fragment implements OnMapReadyCallback,
             progDailog.setMessage(getContext().getString(R.string.scanning_image_string));
             progDailog.setIndeterminate(false);
             progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progDailog.setCancelable(true);
+            progDailog.setCancelable(false);
             progDailog.show();
         }
 

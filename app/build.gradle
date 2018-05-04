@@ -51,6 +51,8 @@ dependencies {
     implementation 'com.facebook.shimmer:shimmer:0.1.0@aar'
     // Fast scroll (and alphabetical scroll)
     implementation 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
+    // Nice Dialog
+    implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
     // Testing
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

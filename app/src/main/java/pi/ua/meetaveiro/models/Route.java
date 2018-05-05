@@ -20,7 +20,7 @@ public class Route implements Parcelable {
     private List<LatLng> routePathPoints; //when we cant use polyline just for the parcelable
     private Map<Marker, Bitmap> routeMarkers;
     private String routeTitle = "Unnamed"; //default
-    private String routeDescription = "No description"; //default
+    private String routeDescription = ""; //default
 
     public Route(String routeTitle, Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
         COUNTER++;

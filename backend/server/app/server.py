@@ -24,6 +24,10 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
+import firebase_admin
+from firebase_admin import db
+import flask
+
 IMAGE_FOLDER = '../../../../treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,6 +53,9 @@ infos = {
     'complexo pedagógico' : 'Complexo Pedagógico, Tecnológico e Científico da Universidade de Aveiro'
 }
 
+firebase_admin.initialize_app(options={
+    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
+})
 
 def get_request_files():
     folder = './static/img'

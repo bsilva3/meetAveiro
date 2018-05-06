@@ -1,0 +1,46 @@
+{% extends "structure.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="page-header">
+        <h2>Manage concepts</h2>
+    </div>
+
+    <h2>Create concept</h2>
+    <form action="{{ url_for('create_topic') }}" method="POST" role="form">
+        <div class="form-group">
+            <input type="text" name="topic" class="form-control" placeholder="Topic name here...">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+    
+
+    <h2>Manage concept</h2>
+
+    <div class="form-group">
+        <select id="conceptlist" class="selectpicker form-control">
+            {% for t in topics %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button class="btn btn-primary" onclick="getConcept()">Go</button>
+    <button class="btn btn-danger" onclick="delConcept()">Delete</button>
+    
+</div>
+
+{% if pending > 0 %}
+<div class="container">
+    <div class="page-header">
+        <h2>{{ pending }} Pending requests</h2>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/index.js')}}"></script>
+{{super()}}
+{% endblock %}

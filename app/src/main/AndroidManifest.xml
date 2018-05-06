@@ -76,6 +76,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="pi.ua.meetaveiro.activities.NavigationDrawerActivity" />
         </activity>
+        <activity
+            android:name=".activities.RouteActivity"
+            android:label="@string/title_activity_route">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="pi.ua.meetaveiro.activities.NavigationDrawerActivity" />
+        </activity>
     </application>
 
 </manifest>

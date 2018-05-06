@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -78,6 +79,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private TextView txtName, txtWebsite;
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
+    private FloatingActionButton newRouteFab;
 
     // urls to load navigation header background image
     // and profile image
@@ -143,20 +145,25 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         //get firebase auth instance
         auth = FirebaseAuth.getInstance();
         setContentView(R.layout.activity_navigation_drawer);
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        collapsingToolbar = findViewById(R.id.collapsing_toolbar);
+        newRouteFab = findViewById(R.id.new_route_fab);
+        newRouteFab.setOnClickListener(v -> {
+            Intent myIntent = new Intent(NavigationDrawerActivity.this, RouteActivity.class);
+            NavigationDrawerActivity.this.startActivity(myIntent);
+        });
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mHandler = new Handler();
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
 
         // Navigation view header
         navHeader = navigationView.getHeaderView(0);
-        txtName = (TextView) navHeader.findViewById(R.id.name);
-        txtWebsite = (TextView) navHeader.findViewById(R.id.website);
-        imgNavHeaderBg = (ImageView) navHeader.findViewById(R.id.img_header_bg);
+        txtName = navHeader.findViewById(R.id.name);
+        txtWebsite = navHeader.findViewById(R.id.website);
+        imgNavHeaderBg = navHeader.findViewById(R.id.img_header_bg);
 
         //Collapse content
         collapseContent = findViewById(R.id.collapse_content);
@@ -445,21 +452,27 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         switch (navItemIndex) {
             case 0:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 1:
                 enableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 2:
-                disableCollapse();
+                enableCollapse();
+                newRouteFab.setVisibility(View.VISIBLE);
                 break;
             case 3:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 4:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             default:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
         }
     }
@@ -496,12 +509,12 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     }
 
     private void setToolbarTitle() {
-        if (navItemIndex != 1) {
-            collapsingToolbar.setTitleEnabled(false);
-            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
-        } else {
+        if (navItemIndex == 1 || navItemIndex == 2) {
             collapsingToolbar.setTitleEnabled(true);
             collapsingToolbar.setTitle(activityTitles[navItemIndex]);
+        } else {
+            collapsingToolbar.setTitleEnabled(false);
+            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
         }
     }
 

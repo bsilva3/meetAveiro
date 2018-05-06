@@ -248,4 +248,5 @@
         "when a user tries to pick up one of cards.\n\n"
     </string>
     <string name="more_info_attraction">Would you like to know more about this attraction?</string>
+    <string name="title_activity_route">Route</string>
 </resources>

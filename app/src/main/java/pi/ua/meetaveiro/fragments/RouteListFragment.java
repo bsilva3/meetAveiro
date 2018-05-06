@@ -3,6 +3,7 @@ package pi.ua.meetaveiro.fragments;
 import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -17,9 +18,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
@@ -172,6 +176,19 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         });
 
         MyApplication.getInstance().addToRequestQueue(request);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
+        TextView collTitlteView = getActivity().findViewById(R.id.collapsing_toolbar_title);
+        TextView collSubtitleView = getActivity().findViewById(R.id.collapsing_toolbar_subtitle);
+        try {
+            Glide.with(getActivity()).load(R.drawable.agueda).into(collImgView);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

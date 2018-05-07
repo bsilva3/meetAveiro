@@ -8,6 +8,11 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import pi.ua.meetaveiro.models.Route;
+
 public class MyApplication extends Application {
 
     public static final String TAG = MyApplication.class
@@ -15,12 +20,15 @@ public class MyApplication extends Application {
 
     private RequestQueue mRequestQueue;
 
+    private List<Route> routes;
+
     private static MyApplication mInstance;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mInstance = this;
+        routes = new ArrayList<>();
     }
 
     public static synchronized MyApplication getInstance() {
@@ -50,5 +58,13 @@ public class MyApplication extends Application {
         if (mRequestQueue != null) {
             mRequestQueue.cancelAll(tag);
         }
+    }
+
+    public List<Route> getRoutes() {
+        return routes;
+    }
+
+    public void setRoutes(List<Route> routes) {
+        this.routes = routes;
     }
 }

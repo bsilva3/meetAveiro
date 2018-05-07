@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <android.support.v4.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -30,22 +31,31 @@
         </LinearLayout>
 
     </com.facebook.shimmer.ShimmerFrameLayout>
-    <android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.support.v4.widget.NestedScrollView
+        xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/recycler_view"
-        android:name="pi.ua.meetaveiro.fragments.RouteHIstoryFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        app:layoutManager="LinearLayoutManager"
-        tools:context="pi.ua.meetaveiro.fragments.RouteHistoryFragment"
-        tools:listitem="@layout/item_route" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/recycler_view"
+            android:name="pi.ua.meetaveiro.fragments.RouteHIstoryFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            app:layoutManager="LinearLayoutManager"
+            tools:context="pi.ua.meetaveiro.fragments.RouteHistoryFragment"
+            tools:listitem="@layout/item_route" />
+    </android.support.v4.widget.NestedScrollView>
     <com.futuremind.recyclerviewfastscroll.FastScroller
         android:id="@+id/fastscroll"
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"/>
+
 </android.support.v4.widget.SwipeRefreshLayout>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="pi.ua.meetaveiro.activities.RouteHistoryDetailsActivity"
+    android:orientation="horizontal">
+
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_map_simple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimaryDark">
+
+        <TextView
+            android:id="@+id/toolbar_map_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:background="@color/colorPrimaryDark"
+            android:textColor="@color/white"
+            android:textSize="@dimen/collapsing_toolbar_subtitle_size"/>
+
+    </android.support.v7.widget.Toolbar>
+
+
+    <TextView
+        android:id="@+id/routeDescriptionOpened"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/toolbar_map_simple"
+        android:layout_marginTop="11dp"
+        android:text=""
+        android:textSize="@dimen/collapsing_toolbar_subtitle_size"
+        app:layout_anchor="@+id/toolbar_map_simple"
+        tools:text="fsdfsdf" />
+
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/view_images"
+        android:layout_width="wrap_content"
+        android:layout_height="222dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/routeDescriptionOpened"
+        android:layout_marginTop="29dp"
+        app:layout_anchor="@+id/routeTitleOpened"
+        tools:ignore="UnknownId"
+        tools:layout_editor_absoluteY="49dp">
+
+    </android.support.v4.view.ViewPager>
+
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/view_images"
+        tools:context="pi.ua.meetaveiro.activities.RouteHistoryDetailsActivity" />
+
+
+
+
+
+
+</RelativeLayout>
+

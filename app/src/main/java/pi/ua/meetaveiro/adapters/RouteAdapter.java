@@ -1,6 +1,8 @@
 package pi.ua.meetaveiro.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +15,8 @@ import android.widget.Filterable;
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.activities.RouteHistoryDetailsActivity;
+import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.models.Route;
 
 import java.util.ArrayList;
@@ -36,14 +40,13 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mTitleView, mDescriptionView;
+        public final TextView mTitleView;
         public Route mItem;
 
         public MyViewHolder(View view) {
             super(view);
             mView = view;
             mTitleView = view.findViewById(R.id.route_title);
-            mDescriptionView = view.findViewById(R.id.route_description);
             view.setOnClickListener(view1 -> {
                 // send selected Route in callback
                 listener.onRouteSelected(routeListFiltered.get(getAdapterPosition()));
@@ -52,9 +55,10 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
 
         @Override
         public String toString() {
-            return super.toString() + " '" + mDescriptionView.getText() + "'";
+            return super.toString();
         }
     }
+
 
     public RouteAdapter(Context context, List<Route> routeList, OnRouteItemSelectedListener listener) {
         this.context = context;
@@ -74,11 +78,19 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
     public void onBindViewHolder(final MyViewHolder holder, int position) {
         holder.mItem = routeList.get(position);
         holder.mTitleView.setText(routeList.get(position).getRouteTitle());
-        holder.mDescriptionView.setText(routeList.get(position).getRouteDescription());
 
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {
-                Log.d("clicked!", holder.mItem+"");
+                Log.d("clicked!", "route"+holder.mItem +".json" );
+
+                //context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
+
+                Intent intent = new Intent(context, RouteHistoryDetailsActivity.class);
+                Bundle b = new Bundle();
+                b.putString("name", "route"+holder.mItem +".json" ); //Your id
+                intent.putExtras(b); //Put your id to your next Intent
+                context.startActivity(intent);
+
                 //GO TO MAP AND SHOW THE ROUTE HERE
                 listener.onRouteSelected(holder.mItem);
             }

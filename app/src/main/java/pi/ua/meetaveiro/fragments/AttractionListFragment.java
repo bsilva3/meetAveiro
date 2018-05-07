@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -186,10 +187,14 @@ public class AttractionListFragment extends Fragment {
         attraction.setName("Moliceiro");
         attraction.setCity("Aveiro");
         attraction.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        //attraction.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        attraction.setLocation(new LatLng(40.6442700, -8.6455400));
         Attraction attraction2 = new Attraction();
         attraction2.setName("Moliceiro");
         attraction2.setCity("Porto");
         attraction2.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        //attraction2.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        attraction2.setLocation(new LatLng(40.6442700, -8.6455400));
         attractionList.add(attraction);
         attractionList.add(attraction2);
         adapter.notifyDataSetChanged();

@@ -2,6 +2,9 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,6 +14,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,6 +26,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -29,15 +36,29 @@ import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTES;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
@@ -45,7 +66,9 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
  * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
  * interface.
  */
-public class RouteListFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+public class RouteListFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        NetworkCheckResponse{
 
     private static final String TAG = RouteListFragment.class.getSimpleName();
 
@@ -95,10 +118,8 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
          */
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
-
-            fetchRoutes();
-        }
-        );
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
+        });
 
         mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
@@ -115,7 +136,7 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
-        fetchRoutes();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
 
         return view;
     }
@@ -165,17 +186,57 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-        });
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+        );
 
         MyApplication.getInstance().addToRequestQueue(request);
+    }
+
+
+    /**
+     * Gets all the route names saved in the phone.
+     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
+     *
+     */
+    private void fetchLocalRoutes(){
+        List<Route> items = new ArrayList<>();
+        try {
+            File directory = getActivity().getFilesDir();
+            File[] files = directory.listFiles();
+            Route r;
+            for (int i = 0; i < files.length; i++) {
+                if(files[i].getName().startsWith("route")) {
+                    String title = files[i].getName().replaceFirst("route","");
+                    getRouteFromFile(title);
+                    r = new Route(title);
+                    items.add(r);
+                }
+            }
+
+            // adding contacts to contacts list
+            routeList.clear();
+            routeList.addAll(items);
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
+
+            // stopping swipe refresh
+            swipeRefreshLayout.setRefreshing(false);
+            mShimmerViewContainer.setVisibility(View.GONE);
+            mShimmerViewContainer.stopShimmerAnimation();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
     }
 
     @Override
@@ -239,20 +300,64 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Override
     public void onRefresh() {
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
-        fetchRoutes();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
     }
 
     @Override
     public void onPause() {
+        mShimmerViewContainer.setVisibility(View.GONE);
         mShimmerViewContainer.stopShimmerAnimation();
         super.onPause();
     }
 
+
+
+    /**
+     * Opens the file with the route and reconctructs it
+     * File name format: route+++.json
+     * +++ = route name
+     * @param filename
+     * @return String (json format) with all the information
+     *
+     * Must be sent to RouteDetais as an argument
+     */
+    private String getRouteFromFile(String filename){
+
+        StringBuffer datax = new StringBuffer("");
+        try {
+            FileInputStream fIn = getContext().openFileInput ( filename ) ;
+            InputStreamReader isr = new InputStreamReader ( fIn ) ;
+            BufferedReader buffreader = new BufferedReader ( isr ) ;
+            String readString = buffreader.readLine ( ) ;
+            while ( readString != null ) {
+                datax.append(readString);
+                readString = buffreader.readLine ( ) ;
+            }
+            isr.close ( ) ;
+
+        } catch (IOException ioe ) {
+            ioe.printStackTrace() ;
+        }
+
+        return datax.toString();
+
+    }
+
+    @Override
+    public void onProcessFinished(boolean hasNetworkConnection) {
+        if (hasNetworkConnection)
+            fetchRoutes();
+        else {
+            fetchLocalRoutes();
+        }
+    }
 }

@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -230,7 +231,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     //Called when a item is clicked on the attraction list fragment
     @Override
     public void onAttractionSelected(Attraction item) {
-
+        Intent intent = new Intent(NavigationDrawerActivity.this, POIDetails.class);
+        intent.putExtra("attraction", (Parcelable) item);
+        startActivity(intent);
     }
 
     //Called when a item is clicked on the route list fragment
@@ -252,8 +255,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             if (location != null) {
-                Toast.makeText(NavigationDrawerActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();
+                /*Toast.makeText(NavigationDrawerActivity.this, Utils.getLocationText(location),
+                        Toast.LENGTH_SHORT).show();*/
                 onNewLocation(location);
             }
         }

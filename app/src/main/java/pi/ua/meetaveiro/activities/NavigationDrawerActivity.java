@@ -1,16 +1,13 @@
 package pi.ua.meetaveiro.activities;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,7 +22,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -62,14 +58,13 @@ import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
-import static pi.ua.meetaveiro.others.Constants.*;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
-        PhotoLogFragment.RouteStateListener ,
         AttractionAdapter.OnAttractionSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener {
+
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
 
@@ -114,9 +109,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     private Bundle savedState;
     private boolean mPermissionsGranted = false;
-
-    // The BroadcastReceiver used to listen from broadcasts from the service.
-    private MyReceiver myReceiver;
 
     // A reference to the service used to get location updates.
     private LocationUpdatesService mService = null;
@@ -175,8 +167,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
         savedState = savedInstanceState;
 
-        myReceiver = new MyReceiver();
-
         // First and foremost get permissions
         getPermissions();
 
@@ -199,25 +189,15 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         super.onResume();
         setToolbarTitle();
         handleCollapse();
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(ACTION_BROADCAST));
     }
 
     @Override
     protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        if (mBound) {
-            // Unbind from the service. This signals to the service that this activity is no longer
-            // in the foreground, and the service can respond by promoting itself to a foreground
-            // service.
-            unbindService(mServiceConnection);
-            mBound = false;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
         super.onStop();
     }
 
@@ -246,25 +226,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onBottomHistoryItemSelected(Fragment fragment) {
         this.loadFragment(R.id.frame_container, fragment);
-    }
-
-    /**
-     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
-     */
-    private class MyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
-            if (location != null) {
-                /*Toast.makeText(NavigationDrawerActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();*/
-                onNewLocation(location);
-            }
-        }
-    }
-
-    public void onNewLocation(Location localtion){
-
     }
 
     private void setupNavigationFragments(){
@@ -620,15 +581,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     //sign out method
     public void signOut() {
         auth.signOut();
-    }
-
-
-    //Called when Start/Stop route button is pressed
-    public void onRouteStateChanged(boolean started){
-        if(started)
-            mService.requestLocationUpdates();
-        else
-            mService.removeLocationUpdates();
     }
 
     public void loadFragment(int id, Fragment fragment) {

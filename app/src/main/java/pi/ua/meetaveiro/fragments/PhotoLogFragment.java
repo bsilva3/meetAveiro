@@ -4,11 +4,9 @@ package pi.ua.meetaveiro.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -43,7 +41,6 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
@@ -94,7 +91,6 @@ import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
-import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static android.content.Context.MODE_PRIVATE;
 import static pi.ua.meetaveiro.others.Constants.*;
@@ -115,7 +111,6 @@ public class PhotoLogFragment extends Fragment implements
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
-    private static final String KEY_ROUTE_STATE = "routeState";
 
     // Default location
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
@@ -138,35 +133,21 @@ public class PhotoLogFragment extends Fragment implements
     private SettingsClient mSettingsClient;
     //Tracks the status of the location updates request. Value changes when the user presses the Start Updates and Stop Updates buttons.
     private Boolean mRequestingLocationUpdates;
-    //Callback for Location events.
-    private LocationCallback mLocationCallback;
 
     //map to store marker that are not yet updated with information
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
     private Map<Marker, Bitmap> imageMarkers = new HashMap<>();
 
-    //Parent Activity
-    private Activity activity;
-
-    private FloatingActionButton buttonStopRoute;
     private FloatingActionButton buttonAddPhoto;
-    private FloatingActionButton buttonStartRoute;
-    private FloatingActionButton buttonPauseRoute;
-
-    //Current start/pause/stop buttons state
-    private ROUTE_STATE buttonsState;
 
     //To store in local
     private SharedPreferences prefs = null;
-    // To delete the shared preferences use : SharedPreferences.Editor.clear();
-    //following a commit();
 
     //to store the points obtained for the path being drawn at the moment
     private ArrayList<LatLng> points;
     //used to store the line being drawn at the moment
     private Polyline currentDrawingLine;
-    LocationsReceiver locationsReceiver;
     //stores the tours currently showing on the map
     private List<Route> routes;
     private int[] lineColors = {Color.BLUE, Color.GREEN, Color.RED, Color.GRAY, Color.CYAN, Color.YELLOW,
@@ -199,12 +180,9 @@ public class PhotoLogFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        locationsReceiver = new LocationsReceiver();
-
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
         mRequestingLocationUpdates = false;
-        buttonsState = ROUTE_STATE.STOPPED;
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(getContext());
@@ -255,11 +233,6 @@ public class PhotoLogFragment extends Fragment implements
             if (savedInstanceState.keySet().contains(KEY_CAMERA_POSITION)) {
                 mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
             }
-
-            // Update the value of mLastUpdateTime from the Bundle and update the UI.
-            if (savedInstanceState.keySet().contains(KEY_ROUTE_STATE)) {
-                buttonsState = (ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
-            }
         }
     }
 
@@ -268,46 +241,12 @@ public class PhotoLogFragment extends Fragment implements
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
         buttonAddPhoto = view.findViewById(R.id.search);
-        buttonStartRoute = view.findViewById(R.id.start);
-        buttonPauseRoute = view.findViewById(R.id.pause);
-        buttonStopRoute = view.findViewById(R.id.stop);
 
         buttonAddPhoto.setOnClickListener(v -> {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         });
 
-        buttonStartRoute.setOnClickListener(v -> {
-            try{
-                ((RouteStateListener) activity).onRouteStateChanged(true);
-                buttonsState = ROUTE_STATE.STARTED;
-                updateRouteButtons(buttonsState);
-            }catch (ClassCastException e){
-                Log.e("Exception: %s", e.getMessage());
-            }
-        });
-
-        buttonStopRoute.setOnClickListener(v -> {
-            try{
-                ((RouteStateListener) activity).onRouteStateChanged(false);
-                buttonsState = ROUTE_STATE.STOPPED;
-                updateRouteButtons(buttonsState);
-                endRoute();
-                //save route to store
-            }catch (ClassCastException e){
-                Log.e("Exception: %s", e.getMessage());
-            }
-        });
-
-        buttonPauseRoute.setOnClickListener(v -> {
-            try{
-                ((RouteStateListener) activity).onRouteStateChanged(false);
-                buttonsState = ROUTE_STATE.PAUSED;
-                updateRouteButtons(buttonsState);
-            }catch (ClassCastException e){
-                Log.e("Exception: %s", e.getMessage());
-            }
-        });
         //start bottom sheet
         mBottomSheetBehavior = BottomSheetBehavior.from(getActivity().findViewById(R.id.bottom_sheet_tour));
         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -321,7 +260,7 @@ public class PhotoLogFragment extends Fragment implements
         myApp = (MyApplication) getActivity().getApplicationContext();
 
         updateValuesFromBundle(savedInstanceState);
-        updateRouteButtons(buttonsState);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         mapFragment.getMapAsync(this);
@@ -335,11 +274,7 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(
-                getContext())
-                .registerReceiver(locationsReceiver,
-                        new IntentFilter(ACTION_BROADCAST)
-                );
+
         routes = myApp.getRoutes();
         if (routes == null)
             routes = new ArrayList<>();
@@ -378,7 +313,6 @@ public class PhotoLogFragment extends Fragment implements
             @Override
             public void onPolylineClick(Polyline polyline) {
                 Log.d("clicked", "line clicked");
-                if (ROUTE_STATE.STOPPED.equals(buttonsState)) {
                     Route route = checkWhatTourPolyBelongs(polyline);
                     if (route != null) {
                         if (mBottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
@@ -442,26 +376,9 @@ public class PhotoLogFragment extends Fragment implements
                         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                         //mButton1.setText(R.string.button1);
                     }
-                }
+
              }
         });
-    }
-
-
-    public void updateRouteButtons(ROUTE_STATE state){
-        if(ROUTE_STATE.STARTED.equals(state)){
-            buttonStartRoute.setVisibility( View.GONE );
-            buttonPauseRoute.setVisibility( View.VISIBLE );
-            buttonStopRoute.setVisibility( View.VISIBLE );
-        }else if(ROUTE_STATE.PAUSED.equals(state)){
-            buttonStopRoute.setVisibility( View.VISIBLE );
-            buttonPauseRoute.setVisibility( View.GONE );
-            buttonStartRoute.setVisibility( View.VISIBLE );
-        }else if(ROUTE_STATE.STOPPED.equals(state)){
-            buttonStopRoute.setVisibility( View.GONE );
-            buttonPauseRoute.setVisibility( View.GONE );
-            buttonStartRoute.setVisibility( View.VISIBLE );
-        }
     }
 
     /**
@@ -646,36 +563,8 @@ public class PhotoLogFragment extends Fragment implements
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
-            outState.putSerializable(KEY_ROUTE_STATE, buttonsState);
-            //save the current routes on the map
-            /*Log.d("saved", "hu");
-            outState.putParcelableArrayList("routes", (ArrayList<? extends Parcelable>) routes);
-            */
             super.onSaveInstanceState(outState);
         }
-    }
-
-    /*@Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if (savedInstanceState != null) {
-            Log.d("saved", "i am here");
-            routes = savedInstanceState.getParcelableArrayList("routes");
-            redrawLine();
-        }
-    }*/
-
-    public void onNewLocation(Location location){
-        if (location == null) {
-            return;
-        }
-
-        Log.i("PhotoLogActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
-
-        mLastKnownLocation = location;
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
-
     }
 
     public String bitMapToBase64 (Bitmap image){
@@ -718,17 +607,14 @@ public class PhotoLogFragment extends Fragment implements
         //update the marker in the map that stores every marker and the image in the marker
         final String idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker m) {
-                Log.d("markerClick", "clicked");
-                if (m != null) {
-                    Log.d("markerClickI", "clicked with info");
-                    createAndShowInfoDialog(m, idFinal);
-                    return true;
-                }
-                return false;
+        mMap.setOnMarkerClickListener(m -> {
+            Log.d("markerClick", "clicked");
+            if (m != null) {
+                Log.d("markerClickI", "clicked with info");
+                createAndShowInfoDialog(m, idFinal);
+                return true;
             }
+            return false;
         });
         //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
         createAndShowInfoDialog(markerToUpdate, id);
@@ -807,7 +693,6 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
-        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(locationsReceiver);
         //Iterate trough all saved markers.
         int i = 0;
         Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
@@ -1055,34 +940,6 @@ public class PhotoLogFragment extends Fragment implements
                 .show();
     }
 
-    @Override
-    public void onAttach(Context context)
-    {
-        super.onAttach(context);
-        this.activity = (Activity) context;
-    }
-
-    public interface RouteStateListener{
-        void onRouteStateChanged(boolean started);
-    }
-
-    /**
-     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
-     */
-    private class LocationsReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
-            if (location != null && !ROUTE_STATE.PAUSED.equals(buttonsState)) {
-                //add points and redraw the trajectory line only if the route is not paused
-                points.add(new LatLng(location.getLatitude(), location.getLongitude()));
-                //keep drawing the line, but dont change its color
-                redrawLine(points, false);
-                onNewLocation(location);
-            }
-        }
-    }
-
     private Polyline redrawLine(List<LatLng> points, boolean nextColor){
         if (currentDrawingLine!=null) {
             if (currentDrawingLine.getPoints().equals(points))
@@ -1123,67 +980,6 @@ public class PhotoLogFragment extends Fragment implements
         }
         return null;
     }
-
-    //used to check to which route this Marker belongs to
-    //returns null if this marker is not in any current path show on map
-    private Route checkWhatTourPolyBelongs(Marker marker){
-        for (Route rout : routes){
-            if (rout.getRouteMarkers().containsKey(marker))
-                return rout;
-        }
-        return null;
-    }
-
-
-    //show dialog to name route and save it
-    private void endRoute(){
-        LayoutInflater li = LayoutInflater.from(getContext());
-        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-        // set prompts.xml to alertdialog builder
-        alertDialogBuilder.setView(promptsView);
-
-        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
-        //Log.d("box", routeTitleBox.toString()+"");
-        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
-        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
-        dialogTitle.setText(getString(R.string.save_tour_dialog_title));
-        alertDialogBuilder
-                .setCancelable(false)
-                .setPositiveButton("OK",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,int id) {
-
-                                // get user input and create a route object
-                                //obter a ultima line adicionada (isto pode n ser boa ideia..
-                                Route route = new Route (routeTitleBox.getText().toString(), currentDrawingLine,
-                                        routeDescriptionBox.getText().toString(), imageMarkers);
-                                //save this route...
-                                routes.add(route);
-
-                                saveRouteToFile(route);
-
-                                currentDrawingLine = null;
-                                points.clear();//reset points
-                                placeRoutesOnMap(routes);
-                            }
-                        })
-                .setNegativeButton(getString(R.string.save_tour_discard),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,int id) {
-                                dialog.cancel();
-                                points.clear();
-                                placeRoutesOnMap(routes);
-                            }
-                        });
-
-        // create alert dialog
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        // show it
-        alertDialog.show();
-
-    }
-
 
     /**
      * Saving in JSON format:
@@ -1266,8 +1062,5 @@ public class PhotoLogFragment extends Fragment implements
         }
 
     }
-
-
-
 
 }

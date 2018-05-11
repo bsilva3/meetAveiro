@@ -3,7 +3,6 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,9 +21,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -37,9 +34,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,15 +67,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,8 +97,7 @@ import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static android.content.Context.MODE_PRIVATE;
-import static pi.ua.meetaveiro.others.Constants.API_URL;
-import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
+import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
  * Photo logging and route making {@link Fragment} subclass.
@@ -323,9 +314,9 @@ public class PhotoLogFragment extends Fragment implements
         mBottomSheetBehavior.setPeekHeight(0);//completely hide bottom sheet on not expanded
         //start listview for bottom sheet
         TourOptionsAdapter adapter = new TourOptionsAdapter(getActivity(), optionsText, optionsImages);
-        tourOptionsListView = (ListView) getActivity().findViewById(R.id.list_view_tour_options);
-        tourTitleText = (TextView) getActivity().findViewById(R.id.tour_name);
-        tourDescriptionText = (TextView) getActivity().findViewById(R.id.tour_description);
+        tourOptionsListView = getActivity().findViewById(R.id.list_view_tour_options);
+        tourTitleText = getActivity().findViewById(R.id.tour_name);
+        tourDescriptionText = getActivity().findViewById(R.id.tour_description);
         tourOptionsListView.setAdapter(adapter);
         myApp = (MyApplication) getActivity().getApplicationContext();
 
@@ -344,7 +335,11 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(locationsReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+        LocalBroadcastManager.getInstance(
+                getContext())
+                .registerReceiver(locationsReceiver,
+                        new IntentFilter(ACTION_BROADCAST)
+                );
         routes = myApp.getRoutes();
         if (routes == null)
             routes = new ArrayList<>();
@@ -813,7 +808,6 @@ public class PhotoLogFragment extends Fragment implements
     public void onPause() {
         super.onPause();  // Always call the superclass method first
         LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(locationsReceiver);
-        super.onPause();
         //Iterate trough all saved markers.
         int i = 0;
         Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
@@ -1078,7 +1072,7 @@ public class PhotoLogFragment extends Fragment implements
     private class LocationsReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
             if (location != null && !ROUTE_STATE.PAUSED.equals(buttonsState)) {
                 //add points and redraw the trajectory line only if the route is not paused
                 points.add(new LatLng(location.getLatitude(), location.getLongitude()));

@@ -30,8 +30,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
+import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.Utils;
+
+import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
  * A bound and started service that is promoted to a foreground service when location updates have
@@ -49,19 +51,12 @@ import pi.ua.meetaveiro.others.Utils;
  */
 public class LocationUpdatesService extends Service {
 
-    private static final String PACKAGE_NAME = "pi.ua.meetaveiro";
-
     private static final String TAG = LocationUpdatesService.class.getSimpleName();
 
     /**
      * The name of the channel for notifications.
      */
     private static final String CHANNEL_ID = "channel_01";
-
-    public static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
-
-    public static final String EXTRA_LOCATION = PACKAGE_NAME + ".location";
-    private static final String EXTRA_STARTED_FROM_NOTIFICATION = PACKAGE_NAME + ".started_from_notification";
 
     private final IBinder mBinder = new LocalBinder();
 
@@ -248,22 +243,29 @@ public class LocationUpdatesService extends Service {
      * Returns the {@link NotificationCompat} used as part of the foreground service.
      */
     private Notification getNotification() {
-        Intent intent = new Intent(this, LocationUpdatesService.class);
-
-        CharSequence text = "On a Route";
-
+        Intent serviceIntent = new Intent(this, LocationUpdatesService.class);
         // Extra to help us figure out if we arrived in onStartCommand via the notification or not.
-        intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
+        serviceIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
+        Intent activityIntent = new Intent(this, RouteActivity.class);
+        activityIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
 
         // The PendingIntent that leads to a call to onStartCommand() in this service.
-        PendingIntent servicePendingIntent = PendingIntent.getService(this, 0, intent,
+        PendingIntent pauseServicePendingIntent = PendingIntent.getService(
+                this,
+                0,
+                serviceIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         // The PendingIntent to launch activity.
-        PendingIntent activityPendingIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, NavigationDrawerActivity.class), 0);
+        PendingIntent activityPendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                activityIntent,
+                0);
 
-        Notification notification = null;
+        CharSequence text = "On a Route";
+
+        Notification notification;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             notification = new Notification.Builder(this)
                     .setContentTitle(text)
@@ -272,15 +274,13 @@ public class LocationUpdatesService extends Service {
                     .setWhen(System.currentTimeMillis())
                     .setOngoing(true)
                     .setChannelId(CHANNEL_ID)
+                    //.setStyle(new Notification.MediaStyle())
                     .addAction(new Notification.Action.Builder(R.drawable.ic_add_photo,
                             getString(R.string.take_picture),
                             activityPendingIntent).build())
                     .addAction(new Notification.Action.Builder(R.drawable.ic_pause,
                             getString(R.string.pause_route),
-                            servicePendingIntent).build())
-                    .addAction(new Notification.Action.Builder(R.drawable.ic_stop,
-                            getString(R.string.stop_route),
-                            servicePendingIntent).build())
+                            pauseServicePendingIntent).build())
                     .build();
         }
         else{
@@ -289,9 +289,8 @@ public class LocationUpdatesService extends Service {
                     .setContentTitle(text)
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setOngoing(true)
-                       .addAction(R.drawable.ic_add_photo, getString(R.string.take_picture), activityPendingIntent)
-                       .addAction(R.drawable.ic_pause, getString(R.string.pause_route), servicePendingIntent)
-                       .addAction(R.drawable.ic_stop, getString(R.string.stop_route), servicePendingIntent)
+                    .addAction(R.drawable.ic_add_photo, getString(R.string.take_picture), activityPendingIntent)
+                    .addAction(R.drawable.ic_pause, getString(R.string.pause_route), pauseServicePendingIntent)
                     .setVisibility(Notification.VISIBILITY_PUBLIC).build();
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

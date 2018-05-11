@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -18,20 +20,20 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +41,6 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
@@ -84,13 +85,12 @@ import java.util.Locale;
 import java.util.Map;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
-import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.*;
 
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -156,11 +156,40 @@ public class RouteActivity extends FragmentActivity implements
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
 
+    // A reference to the service used to get location updates.
+    private LocationUpdatesService mService = null;
+
+    // Tracks the bound state of the service.
+    private boolean mBound = false;
+
+    // Monitors the state of the connection to the service.
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+            mBound = false;
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
 
+        if (getIntent().getBooleanExtra(
+                EXTRA_STARTED_FROM_NOTIFICATION,
+                false)) {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
         locationsReceiver = new LocationsReceiver();
 
         markers = new HashMap<>();
@@ -193,11 +222,13 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         buttonStartRoute.setOnClickListener(v -> {
+            onRouteStateChanged(true);
             buttonsState = Constants.ROUTE_STATE.STARTED;
             updateRouteButtons(buttonsState);
         });
 
         buttonStopRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
             buttonsState = Constants.ROUTE_STATE.STOPPED;
             updateRouteButtons(buttonsState);
             endRoute();
@@ -205,6 +236,7 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         buttonPauseRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
             buttonsState = Constants.ROUTE_STATE.PAUSED;
             updateRouteButtons(buttonsState);
         });
@@ -213,10 +245,41 @@ public class RouteActivity extends FragmentActivity implements
         updateRouteButtons(buttonsState);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.route_map);
         mapFragment.getMapAsync(this);
     }
 
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Bind to the service. If the service is in foreground mode, this signals to the service
+        // that since this activity is in the foreground, the service can exit foreground mode.
+        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("resume", "onresumecalled");
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(
+                        locationsReceiver,
+                        new IntentFilter(ACTION_BROADCAST)
+                );
+    }
+
+    //Called when Start/Stop route button is pressed
+    public void onRouteStateChanged(boolean started){
+        if(started)
+            mService.requestLocationUpdates();
+        else
+            mService.removeLocationUpdates();
+    }
 
     /**
      * Updates fields based on data stored in the bundle.
@@ -249,12 +312,6 @@ public class RouteActivity extends FragmentActivity implements
                 buttonsState = (Constants.ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
             }
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(locationsReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
     }
 
     public void updateRouteButtons(Constants.ROUTE_STATE state){
@@ -564,7 +621,10 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationsReceiver);
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(locationsReceiver);
+        super.onPause();
 
         //Iterate trough all saved markers.
         int i = 0;
@@ -585,6 +645,18 @@ public class RouteActivity extends FragmentActivity implements
 
         }
         //saveMarkersOnStorage(FILENAME, imageMarkers);
+    }
+
+    @Override
+    protected void onStop() {
+        if (mBound) {
+            // Unbind from the service. This signals to the service that this activity is no longer
+            // in the foreground, and the service can respond by promoting itself to a foreground
+            // service.
+            unbindService(mServiceConnection);
+            mBound = false;
+        }
+        super.onStop();
     }
 
     /*Encodes the Image to a string*/
@@ -815,7 +887,7 @@ public class RouteActivity extends FragmentActivity implements
     private class LocationsReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
             if (location != null) {
                 //add routePoints and redraw the trajectory line
                 routePoints.add(new LatLng(location.getLatitude(), location.getLongitude()));

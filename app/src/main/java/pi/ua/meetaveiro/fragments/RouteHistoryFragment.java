@@ -52,6 +52,7 @@ import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
@@ -87,11 +88,6 @@ public class RouteHistoryFragment extends Fragment implements
     public RouteHistoryFragment() {
     }
 
-
-    public static RouteHistoryFragment newInstance() {
-        return new RouteHistoryFragment();
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,24 +116,21 @@ public class RouteHistoryFragment extends Fragment implements
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-                    swipeRefreshLayout.setRefreshing(true);
-                    fetchLocalRoutes();
-                    fetchRoutes();
-                }
-        );
+            swipeRefreshLayout.setRefreshing(true);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
+        });
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
-        //RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
-        //recyclerView.setLayoutManager(mLayoutManager);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
-        //recyclerView.setAdapter(mAdapter);
+        recyclerView.setAdapter(mAdapter);
 
-        //fetchRoutes();
-        fetchLocalRoutes();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
 
         return view;
     }
@@ -181,16 +174,22 @@ public class RouteHistoryFragment extends Fragment implements
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-        });
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+        );
 
         MyApplication.getInstance().addToRequestQueue(request);
     }
@@ -307,11 +306,19 @@ public class RouteHistoryFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.startShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
     }
 
     /**
@@ -343,7 +350,6 @@ public class RouteHistoryFragment extends Fragment implements
         }
 
         return datax.toString();
-
 
     }
 
@@ -390,7 +396,6 @@ public class RouteHistoryFragment extends Fragment implements
                 tempMap.put(m,image);
 */
             }
-            /*r.setRouteMarkers(tempMap);*/
 
             //Reconstruct the polilyne
             arr = json.getJSONArray("Poly");
@@ -427,20 +432,22 @@ public class RouteHistoryFragment extends Fragment implements
 
     }
 
-
     /**
      * @param encodedString
      * @return bitmap (from given string)
      */
     public Bitmap StringToBitMap(String encodedString) {
         byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
-        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-        return decodedByte;
+        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
     }
-
 
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
-
+        if (hasNetworkConnection) {
+            fetchRoutes();
+        }else {
+            fetchLocalRoutes();
+        }
     }
+
 }

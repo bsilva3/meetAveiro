@@ -40,7 +40,17 @@ public class Constants {
      */
     static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
-    static final float GEOFENCE_RADIUS_IN_METERS = 500; // 500 meters
+    static final float GEOFENCE_RADIUS_IN_METERS = 500; // meters
+
+    // LocationUpdatesServiceConstants
+
+    private static final String SERVICES_PACKAGE_NAME = "pi.ua.meetaveiro.services";
+
+    public static final String EXTRA_STARTED_FROM_NOTIFICATION = SERVICES_PACKAGE_NAME + ".started_from_notification";
+
+    public static final String ACTION_BROADCAST = SERVICES_PACKAGE_NAME + ".broadcast";
+
+    public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
 
     public enum ROUTE_STATE{
         STARTED, PAUSED, STOPPED

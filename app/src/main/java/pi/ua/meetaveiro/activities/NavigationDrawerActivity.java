@@ -62,6 +62,7 @@ import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
+import static pi.ua.meetaveiro.others.Constants.*;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         PhotoLogFragment.RouteStateListener ,
@@ -198,7 +199,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         super.onResume();
         setToolbarTitle();
         handleCollapse();
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(ACTION_BROADCAST));
     }
 
     @Override
@@ -253,7 +254,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
             if (location != null) {
                 /*Toast.makeText(NavigationDrawerActivity.this, Utils.getLocationText(location),
                         Toast.LENGTH_SHORT).show();*/

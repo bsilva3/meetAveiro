@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -20,11 +21,16 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,9 +60,11 @@ import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.others.MyApplication;
 
 import static pi.ua.meetaveiro.activities.NavigationDrawerActivity.navItemIndex;
 import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
 /*
@@ -84,10 +92,12 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     private List<Integer> imagesArray = new ArrayList<Integer>();
     private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
+    private ShimmerFrameLayout mShimmerViewContainer;
     RouteExpandable listAdapter;
     ExpandableListView expListView;
     List<String> listDataHeader;
     HashMap<String, List<Route>> listDataChild;
+    private List<Route> routeList;
 
 
     @Override
@@ -109,6 +119,8 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                 onBackPressed();
             }
         });
+
+        mShimmerViewContainer = findViewById(R.id.shimmer_view_container);
         //collapsingToolbar.post() { collapsingToolbar.requestLayout(); }
 
         //toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
@@ -130,7 +142,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
         // get the listview
         expListView = (ExpandableListView) findViewById(R.id.routes_with_attraction);
-
+        routeList = new ArrayList<>();
         // preparing list data
         prepareListData();
 
@@ -180,8 +192,9 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     @Override
     protected void onStart() {
         super.onStart();
-        //requestRoutes();
+        requestRoutes();
     }
+
 
 
     private void initImageSlider() {
@@ -212,6 +225,43 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         }, 2500, 2500);
     }
 
+    /*private void fetchAttractions() {
+        JsonObjectRequest request = new JsonObjectRequest(URL_ROUTES_ATTRACTION,
+                response -> {
+                    if (response == null) {
+                        Toast.makeText(this, "Couldn't fetch the routes! Please try again.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
+                    }.getType());
+
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
+
+                    // refreshing recycler view
+                    listAdapter.notifyDataSetChanged();
+                    listDataChild.put(listDataHeader.get(0), routeList);
+
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    // stopping swipe refresh
+                }, error -> {
+            // error in getting json
+            // stop animating Shimmer and hide the layout
+            mShimmerViewContainer.stopShimmerAnimation();
+            mShimmerViewContainer.setVisibility(View.GONE);
+
+
+            //Log.e("fetch error", "Error: " + error.getMessage());
+            //Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            // stopping swipe refresh
+        });
+        MyApplication.getInstance().addToRequestQueue(request);
+    }*/
+
     private void prepareListData() {
         listDataHeader = new ArrayList<String>();
         listDataChild = new HashMap<String, List<Route>>();
@@ -220,7 +270,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         listDataHeader.add("Routes that pass in this place");
 
         // Adding child data
-        List<Route> routeList = new ArrayList<Route>();
+        routeList = new ArrayList<Route>();
         routeList.add(new Route("Salreu", "Nice wal in salreu's corn"));
         routeList.add(new Route("Aveiro city", "Beatifull tour in Aveiro"));
         routeList.add(new Route("UA", "Route that goes around UA"));
@@ -282,6 +332,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            mShimmerViewContainer.startShimmerAnimation();
         }
 
         @Override
@@ -363,6 +414,9 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             Toast.makeText(POIDetails.this, "Connection error", Toast.LENGTH_LONG).show();
             return;
         }
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
         //.... recriar aqui objetos route e colocá-los numa lista
         //List<LatLng> trajectory = json.get("trajectory");
     }

@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteHistoryDetailsActivity;
+import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.models.Route;
 
 import java.util.ArrayList;
@@ -79,9 +81,15 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
 
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {
-                Log.d("clicked!", holder.mItem+"");
+                Log.d("clicked!", "route"+holder.mItem +".json" );
 
-                context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
+                //context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
+
+                Intent intent = new Intent(context, RouteHistoryDetailsActivity.class);
+                Bundle b = new Bundle();
+                b.putString("name", "route"+holder.mItem +".json" ); //Your id
+                intent.putExtras(b); //Put your id to your next Intent
+                context.startActivity(intent);
 
                 //GO TO MAP AND SHOW THE ROUTE HERE
                 listener.onRouteSelected(holder.mItem);

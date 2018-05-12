@@ -65,6 +65,8 @@ def addInstanciaPercursoExemplo():
 def addFotografiaExemplo():
     addFotografia(1, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
     addFotografia(2, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(3, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt', 40.6310030, -8.65964259999998, 'path3.png',
+                  1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
     addTiposExemplo()
@@ -145,7 +147,9 @@ def queriesChico():
 def index():
     # addInfoExemplo()
     # queriesExemplo()
-    queriesChico()
+    #queriesChico()
+    print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
+    print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
     return render_template('index.html',
                            totalusers = nTotalUsers(),
                            #totalAdmin = nTotalTipoUser('Administrador'),

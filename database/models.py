@@ -353,3 +353,40 @@ def searchTodosPercursoContemSubString(substring):
     for row in result:
         pnt.append((row[0], row[1], row[2], row[3], row[4]))
     return pnt
+
+def getInfoConceito(nomeConceito):
+    sql = text('SELECT conceito.descricao, fotografia.path'
+               ' FROM conceito'
+               ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
+               ' WHERE conceito.nomeconceito= \'' + nomeConceito + '\''
+               ' LIMIT 3;')
+
+    result = db.engine.execute(sql)
+
+    totalfotos = nTotalFotos()
+    concs = []
+    indice = 1
+
+    for row in result:
+        if(indice==1):
+            concs.append(row[0])
+            concs.append(row[1])
+        else:
+            concs.append(row[1])
+        indice+=1
+    return concs
+
+def getConceptRoutes(nomeConceito):
+    sql = text('SELECT distinct percurso.id, percurso.titulo, percurso.descricao, percurso.estado'
+               ' FROM percurso'
+               ' JOIN instanciapercurso on instanciapercurso.idpercurso = percurso.id'
+               ' JOIN fotografia on fotografia.idinstpercurso = instanciapercurso.id'
+               ' WHERE fotografia.nomeconceito= \'' + nomeConceito + '\'' + ';')
+
+    result = db.engine.execute(sql)
+
+    concs = []
+
+    for row in result:
+        concs.append((row[0], row[1], row[2], row[3]))
+    return concs

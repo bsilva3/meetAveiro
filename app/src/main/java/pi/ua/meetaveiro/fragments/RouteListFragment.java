@@ -2,10 +2,8 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -13,7 +11,6 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,17 +18,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.PolylineOptions;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.bumptech.glide.Glide;
+import com.facebook.shimmer.ShimmerFrameLayout;
+import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,24 +35,26 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
+import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
  * A fragment representing a list of routes
  * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
  * interface.
  */
-public class RouteListFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+public class RouteListFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        NetworkCheckResponse{
 
     private static final String TAG = RouteListFragment.class.getSimpleName();
 
@@ -68,6 +66,10 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
     private SearchView searchView;
 
     private SwipeRefreshLayout swipeRefreshLayout;
+
+    private ShimmerFrameLayout mShimmerViewContainer;
+
+    private FastScroller fastScroller;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -102,13 +104,12 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
          */
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
+        });
 
-                    fetchLocalRoutes();
-
-        }
-        );
-
+        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
+        fastScroller = view.findViewById(R.id.fastscroll);
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
@@ -119,8 +120,9 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
+        fastScroller.setRecyclerView(recyclerView);
 
-        fetchLocalRoutes();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
 
         return view;
     }
@@ -147,7 +149,7 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
     /**
      * fetches json by making http calls
      */
-    /*private void fetchRoutes() {
+    private void fetchRoutes() {
         JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
                 response -> {
                     if (response == null) {
@@ -170,18 +172,19 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-        });
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+        );
 
         MyApplication.getInstance().addToRequestQueue(request);
-    }*/
+    }
 
 
     /**
@@ -213,8 +216,8 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
             // stopping swipe refresh
             swipeRefreshLayout.setRefreshing(false);
-
-
+            mShimmerViewContainer.setVisibility(View.GONE);
+            mShimmerViewContainer.stopShimmerAnimation();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -222,9 +225,18 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
     }
 
-
-
-
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
+        TextView collTitlteView = getActivity().findViewById(R.id.collapsing_toolbar_title);
+        TextView collSubtitleView = getActivity().findViewById(R.id.collapsing_toolbar_subtitle);
+        try {
+            Glide.with(getActivity()).load(R.drawable.agueda).into(collImgView);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -274,16 +286,22 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Override
     public void onRefresh() {
-        fetchLocalRoutes();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
     }
 
     @Override
     public void onPause() {
+        mShimmerViewContainer.setVisibility(View.GONE);
+        mShimmerViewContainer.stopShimmerAnimation();
         super.onPause();
     }
 
@@ -318,7 +336,14 @@ public class RouteListFragment extends Fragment implements SwipeRefreshLayout.On
 
         return datax.toString();
 
-
     }
 
+    @Override
+    public void onProcessFinished(boolean hasNetworkConnection) {
+        if (hasNetworkConnection)
+            fetchRoutes();
+        else {
+            fetchLocalRoutes();
+        }
+    }
 }

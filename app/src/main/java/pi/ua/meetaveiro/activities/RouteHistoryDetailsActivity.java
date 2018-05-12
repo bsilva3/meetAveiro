@@ -9,12 +9,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
@@ -33,26 +42,61 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.models.Route;
 
-public class RouteHistoryDetailsActivity extends AppCompatActivity {
+public class RouteHistoryDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 
 
     ViewPager viewPager;
     RouteHistoryDetailAdapter adapter;
     ArrayList<Bitmap> images = new ArrayList<>();
+    private Toolbar mTopToolbar;
+    private String routeTitle = "",routeDesc = "",value ="";
+    TextView descTitle;
 
+
+    private GoogleMap mMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route_history_details);
-        viewPager = (ViewPager)findViewById(R.id.view_images);
 
-        //Get all info
-        reconstructRoute( getRouteFromFile("routereal.json"));
-        adapter = new RouteHistoryDetailAdapter(this,images);
-        viewPager.setAdapter(adapter);
-        System.out.println("I WORKEDDDDDDDDDDDD BITVH");
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+
+
+    }
+
+
+
+    private int test(){
+        try {
+            viewPager = (ViewPager) findViewById(R.id.view_images);
+            descTitle = (TextView) findViewById(R.id.routeDescriptionOpened);
+
+            Bundle b = getIntent().getExtras();
+            if (b != null)
+                value = b.getString("name");
+
+            //Get all info
+            reconstructRoute(getRouteFromFile(value));
+            adapter = new RouteHistoryDetailAdapter(this, images);
+            viewPager.setAdapter(adapter);
+
+            mTopToolbar = (Toolbar) findViewById(R.id.toolbar_map_simple);
+            TextView appTitl = (TextView) findViewById(R.id.toolbar_map_title);
+            appTitl.setText(routeTitle);
+            descTitle.setText(routeDesc);
+
+            setSupportActionBar(mTopToolbar);
+            return 0;
+        }catch (Exception e){
+            return 1;
+        }
+
     }
 
 
@@ -96,7 +140,7 @@ public class RouteHistoryDetailsActivity extends AppCompatActivity {
      * @param datax
      */
     private Route reconstructRoute(String datax) {
-
+        System.out.println(datax);
 
         Route r;
         Map<Marker, Bitmap> tempMap = new HashMap<>();
@@ -106,7 +150,12 @@ public class RouteHistoryDetailsActivity extends AppCompatActivity {
             JSONArray arr = json.getJSONArray("Markers");
 
             r = new Route(json.get("Title").toString());
+
+            routeTitle = json.get("Title").toString();
+
             r.setRouteDescription(json.get("Description").toString());
+            routeDesc = json.get("Description").toString();
+            LatLng markLar = null;
 
             //Iterate trough the array of markers
             for (int i = 0; i < arr.length(); i++) {
@@ -116,23 +165,26 @@ public class RouteHistoryDetailsActivity extends AppCompatActivity {
 
                 String lat = gfg.get("Latitude").toString();
                 String longi = gfg.get("Longitude").toString();
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                markLar = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
 
 
                 String icon = gfg.get("Icon").toString();
                 String newIcon = icon.replaceAll("//", "/");
                 Bitmap image = StringToBitMap(newIcon);
                 images.add(image);
-               /* Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                Marker m = mMap.addMarker(new MarkerOptions().position(markLar)
                         .icon(BitmapDescriptorFactory.fromBitmap(image))
                         .title(title)
                         .snippet(snippet));
 
                 //Put in the map of markers
                 tempMap.put(m,image);
-*/
+
+
             }
             /*r.setRouteMarkers(tempMap);*/
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markLar, 17));
+
 
             //Reconstruct the polilyne
             arr = json.getJSONArray("Poly");
@@ -145,7 +197,7 @@ public class RouteHistoryDetailsActivity extends AppCompatActivity {
                 l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
                 options.add(l);
             }
-
+            mMap.addPolyline(options);
             return r;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -165,5 +217,43 @@ public class RouteHistoryDetailsActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-}
+        if (id == R.id.go_back) {
+            finish();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.app_menu_simplified, menu);
+        return true;
+    }
+
+
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Sydney, Australia.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        test();
+    }
+
+
+
+    }

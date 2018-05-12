@@ -1,0 +1,5 @@
+virtualenv -p python3 firebase
+source firebase/bin/activate 
+pip install firebase-admin flask
+
+pip3 install --upgrade google-api-python-client

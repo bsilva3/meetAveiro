@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="pi.ua.meetaveiro.activities.RouteActivity">
+
+    <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/route_map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        map:mapType="satellite" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:orientation="vertical">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:padding="0dp"
+            android:src="@drawable/ic_stop"
+            android:visibility="gone"
+            app:backgroundTint="@color/danger" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:padding="0dp"
+            android:src="@drawable/ic_pause"
+            android:visibility="gone"
+            app:backgroundTint="@color/warning" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:padding="0dp"
+            android:src="@android:drawable/ic_media_play"
+            android:visibility="visible"
+            app:backgroundTint="@color/success" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/take_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_add_photo"
+            app:backgroundTint="@color/colorPrimary" />
+    </LinearLayout>
+</FrameLayout>

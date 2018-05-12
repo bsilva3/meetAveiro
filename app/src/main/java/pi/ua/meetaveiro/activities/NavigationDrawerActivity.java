@@ -1,16 +1,13 @@
 package pi.ua.meetaveiro.activities;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,12 +16,12 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -63,11 +60,11 @@ import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
-        PhotoLogFragment.RouteStateListener ,
         AttractionAdapter.OnAttractionSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener {
+
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
 
@@ -79,6 +76,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private TextView txtName, txtWebsite;
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
+    private FloatingActionButton newRouteFab;
 
     // urls to load navigation header background image
     // and profile image
@@ -112,9 +110,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private Bundle savedState;
     private boolean mPermissionsGranted = false;
 
-    // The BroadcastReceiver used to listen from broadcasts from the service.
-    private MyReceiver myReceiver;
-
     // A reference to the service used to get location updates.
     private LocationUpdatesService mService = null;
 
@@ -144,20 +139,25 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         //get firebase auth instance
         auth = FirebaseAuth.getInstance();
         setContentView(R.layout.activity_navigation_drawer);
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        collapsingToolbar = findViewById(R.id.collapsing_toolbar);
+        newRouteFab = findViewById(R.id.new_route_fab);
+        newRouteFab.setOnClickListener(v -> {
+            Intent myIntent = new Intent(NavigationDrawerActivity.this, RouteActivity.class);
+            NavigationDrawerActivity.this.startActivity(myIntent);
+        });
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mHandler = new Handler();
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
 
         // Navigation view header
         navHeader = navigationView.getHeaderView(0);
-        txtName = (TextView) navHeader.findViewById(R.id.name);
-        txtWebsite = (TextView) navHeader.findViewById(R.id.website);
-        imgNavHeaderBg = (ImageView) navHeader.findViewById(R.id.img_header_bg);
+        txtName = navHeader.findViewById(R.id.name);
+        txtWebsite = navHeader.findViewById(R.id.website);
+        imgNavHeaderBg = navHeader.findViewById(R.id.img_header_bg);
 
         //Collapse content
         collapseContent = findViewById(R.id.collapse_content);
@@ -166,8 +166,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
 
         savedState = savedInstanceState;
-
-        myReceiver = new MyReceiver();
 
         // First and foremost get permissions
         getPermissions();
@@ -191,25 +189,15 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         super.onResume();
         setToolbarTitle();
         handleCollapse();
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
     }
 
     @Override
     protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        if (mBound) {
-            // Unbind from the service. This signals to the service that this activity is no longer
-            // in the foreground, and the service can respond by promoting itself to a foreground
-            // service.
-            unbindService(mServiceConnection);
-            mBound = false;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
         super.onStop();
     }
 
@@ -238,25 +226,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onBottomHistoryItemSelected(Fragment fragment) {
         this.loadFragment(R.id.frame_container, fragment);
-    }
-
-    /**
-     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
-     */
-    private class MyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
-            if (location != null) {
-                /*Toast.makeText(NavigationDrawerActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();*/
-                onNewLocation(location);
-            }
-        }
-    }
-
-    public void onNewLocation(Location localtion){
-
     }
 
     private void setupNavigationFragments(){
@@ -448,21 +417,27 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         switch (navItemIndex) {
             case 0:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 1:
                 enableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 2:
-                disableCollapse();
+                enableCollapse();
+                newRouteFab.setVisibility(View.VISIBLE);
                 break;
             case 3:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             case 4:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
             default:
                 disableCollapse();
+                newRouteFab.setVisibility(View.GONE);
                 break;
         }
     }
@@ -499,12 +474,12 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     }
 
     private void setToolbarTitle() {
-        if (navItemIndex != 1) {
-            collapsingToolbar.setTitleEnabled(false);
-            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
-        } else {
+        if (navItemIndex == 1 || navItemIndex == 2) {
             collapsingToolbar.setTitleEnabled(true);
             collapsingToolbar.setTitle(activityTitles[navItemIndex]);
+        } else {
+            collapsingToolbar.setTitleEnabled(false);
+            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
         }
     }
 
@@ -606,15 +581,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     //sign out method
     public void signOut() {
         auth.signOut();
-    }
-
-
-    //Called when Start/Stop route button is pressed
-    public void onRouteStateChanged(boolean started){
-        if(started)
-            mService.requestLocationUpdates();
-        else
-            mService.removeLocationUpdates();
     }
 
     public void loadFragment(int id, Fragment fragment) {

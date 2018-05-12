@@ -97,6 +97,8 @@ public class AttractionHistoryFragment extends Fragment implements SwipeRefreshL
         );
 
         recyclerView = view.findViewById(R.id.recycler_view);
+        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
+        fastScroller = view.findViewById(R.id.fastscroll);
 
         attractionList = new ArrayList<>();
         mAdapter = new AttractionAdapter(getContext(), attractionList, mListener);

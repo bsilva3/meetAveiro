@@ -1,13 +1,16 @@
-package pi.ua.meetaveiro.fragments;
-
+package pi.ua.meetaveiro.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -17,23 +20,20 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentActivity;
+import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,7 +60,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 
@@ -85,20 +84,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.others.MyApplication;
-import pi.ua.meetaveiro.others.Utils;
+import pi.ua.meetaveiro.others.Constants;
+import pi.ua.meetaveiro.services.LocationUpdatesService;
 
-import static android.content.Context.MODE_PRIVATE;
 import static pi.ua.meetaveiro.others.Constants.*;
 
-/**
- * Photo logging and route making {@link Fragment} subclass.
- */
-public class PhotoLogFragment extends Fragment implements
+public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
         DataReceiver,
         TextToSpeech.OnInitListener{
@@ -106,11 +100,18 @@ public class PhotoLogFragment extends Fragment implements
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
-    private static final String TAG = "ERRO";
     private static final int DEFAULT_ZOOM = 17;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
+    private static final String KEY_ROUTE_STATE = "routeState";
+
+    //Current start/pause/stop buttons state
+    private Constants.ROUTE_STATE buttonsState;
+    private FloatingActionButton buttonStopRoute;
+    private FloatingActionButton buttonStartRoute;
+    private FloatingActionButton buttonPauseRoute;
+    private FloatingActionButton buttonAddPhoto;
 
     // Default location
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
@@ -120,54 +121,33 @@ public class PhotoLogFragment extends Fragment implements
     private Location mLastKnownLocation;
     // Map Object
     private GoogleMap mMap;
-    //Text to speech converter
-    private TextToSpeech tts;
-
-    // The entry points to the Places API.
-    private GeoDataClient mGeoDataClient;
-    private PlaceDetectionClient mPlaceDetectionClient;
-
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
     //Provides access to the Location Settings API.
     private SettingsClient mSettingsClient;
+    // The entry routePoints to the Places API.
+    private GeoDataClient mGeoDataClient;
+    private PlaceDetectionClient mPlaceDetectionClient;
+    //Receiver for device location
+    LocationsReceiver locationsReceiver;
     //Tracks the status of the location updates request. Value changes when the user presses the Start Updates and Stop Updates buttons.
     private Boolean mRequestingLocationUpdates;
+
+    //Text to speech converter
+    private TextToSpeech tts;
 
     //map to store marker that are not yet updated with information
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
     private Map<Marker, Bitmap> imageMarkers = new HashMap<>();
 
-    private FloatingActionButton buttonAddPhoto;
-
     //To store in local
     private SharedPreferences prefs = null;
 
-    //to store the points obtained for the path being drawn at the moment
-    private ArrayList<LatLng> points;
-    //used to store the line being drawn at the moment
-    private Polyline currentDrawingLine;
-    //stores the tours currently showing on the map
-    private List<Route> routes;
-    private int[] lineColors = {Color.BLUE, Color.GREEN, Color.RED, Color.GRAY, Color.CYAN, Color.YELLOW,
-            Color.MAGENTA, Color.WHITE};
-    //each time a new route is drawn, the path will have another color
-    private static int colorIndex;
-    //used to preserve the routes displayed on map
-    private MyApplication myApp;
-    //bottom sheet
-    private BottomSheetBehavior mBottomSheetBehavior;
-    //bottom sheet's list of options
-    private ListView tourOptionsListView;
-    private TextView tourTitleText;
-    private TextView tourDescriptionText;
-    //name of the option
-    private String[] optionsText;
-    //icon for the option
-    private Integer[] optionsImages;
+    //to draw the lines for the tour (== route) path
+    private ArrayList<LatLng> routePoints;
 
-
+    private Polyline line;
 
     // Used for selecting the current place.
     private static final int M_MAX_ENTRIES = 10;
@@ -176,37 +156,130 @@ public class PhotoLogFragment extends Fragment implements
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
 
+    // A reference to the service used to get location updates.
+    private LocationUpdatesService mService = null;
+
+    // Tracks the bound state of the service.
+    private boolean mBound = false;
+
+    // Monitors the state of the connection to the service.
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+            mBound = false;
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_route);
+
+        if (getIntent().getBooleanExtra(
+                EXTRA_STARTED_FROM_NOTIFICATION,
+                false)) {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
+        locationsReceiver = new LocationsReceiver();
 
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
         mRequestingLocationUpdates = false;
+        buttonsState = Constants.ROUTE_STATE.STOPPED;
 
         // Construct a GeoDataClient.
-        mGeoDataClient = Places.getGeoDataClient(getContext());
+        mGeoDataClient = Places.getGeoDataClient(this);
 
         // Construct a PlaceDetectionClient.
-        mPlaceDetectionClient = Places.getPlaceDetectionClient(getContext());
+        mPlaceDetectionClient = Places.getPlaceDetectionClient(this);
 
         // Construct a FusedLocationProviderClient.
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        mSettingsClient = LocationServices.getSettingsClient(getContext());
+        mSettingsClient = LocationServices.getSettingsClient(this);
 
-        points = new ArrayList<>(); //stores all points during the tour so that a trajectory line can be drawn using those points
-        routes = new ArrayList<>();
-        colorIndex = 0;
-        //for now, there's only the options to remove the tour from the marker
-        // and to rename tours....
-        optionsText = new String[]{getContext().getString(R.string.remove_tour_from_map_btn),
-                getContext().getString(R.string.edit_tour_name)}; //options
-        optionsImages = new Integer[]{R.drawable.ic_highlight_off_black_24dp,
-                R.drawable.ic_edit_black_24dp}; //icons for the options
+        routePoints = new ArrayList<>(); //stores all routePoints during the tour so that a trajectory line can be drawn using those routePoints
 
+        // Inflate the layout for this fragment
+        buttonAddPhoto = findViewById(R.id.take_photo);
+        buttonStartRoute = findViewById(R.id.start);
+        buttonPauseRoute = findViewById(R.id.pause);
+        buttonStopRoute = findViewById(R.id.stop);
+
+        buttonAddPhoto.setOnClickListener(v -> {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        });
+
+        buttonStartRoute.setOnClickListener(v -> {
+            onRouteStateChanged(true);
+            buttonsState = Constants.ROUTE_STATE.STARTED;
+            updateRouteButtons(buttonsState);
+        });
+
+        buttonStopRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
+            buttonsState = Constants.ROUTE_STATE.STOPPED;
+            updateRouteButtons(buttonsState);
+            endRoute();
+            //save route to store
+        });
+
+        buttonPauseRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
+            buttonsState = Constants.ROUTE_STATE.PAUSED;
+            updateRouteButtons(buttonsState);
+        });
+
+        updateValuesFromBundle(savedInstanceState);
+        updateRouteButtons(buttonsState);
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.route_map);
+        mapFragment.getMapAsync(this);
     }
 
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Bind to the service. If the service is in foreground mode, this signals to the service
+        // that since this activity is in the foreground, the service can exit foreground mode.
+        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("resume", "onresumecalled");
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(
+                        locationsReceiver,
+                        new IntentFilter(ACTION_BROADCAST)
+                );
+    }
+
+    //Called when Start/Stop route button is pressed
+    public void onRouteStateChanged(boolean started){
+        if(started)
+            mService.requestLocationUpdates();
+        else
+            mService.removeLocationUpdates();
+    }
 
     /**
      * Updates fields based on data stored in the bundle.
@@ -233,152 +306,28 @@ public class PhotoLogFragment extends Fragment implements
             if (savedInstanceState.keySet().contains(KEY_CAMERA_POSITION)) {
                 mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
             }
-        }
-    }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_photo_log, container, false);
-        buttonAddPhoto = view.findViewById(R.id.search);
-
-        buttonAddPhoto.setOnClickListener(v -> {
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
-        });
-
-        //start bottom sheet
-        mBottomSheetBehavior = BottomSheetBehavior.from(getActivity().findViewById(R.id.bottom_sheet_tour));
-        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        mBottomSheetBehavior.setPeekHeight(0);//completely hide bottom sheet on not expanded
-        //start listview for bottom sheet
-        TourOptionsAdapter adapter = new TourOptionsAdapter(getActivity(), optionsText, optionsImages);
-        tourOptionsListView = getActivity().findViewById(R.id.list_view_tour_options);
-        tourTitleText = getActivity().findViewById(R.id.tour_name);
-        tourDescriptionText = getActivity().findViewById(R.id.tour_description);
-        tourOptionsListView.setAdapter(adapter);
-        myApp = (MyApplication) getActivity().getApplicationContext();
-
-        updateValuesFromBundle(savedInstanceState);
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-        mapFragment.getMapAsync(this);
-        FragmentManager manager = getFragmentManager();
-        FragmentTransaction transaction = manager.beginTransaction();
-        transaction.replace(R.id.map, mapFragment);
-        transaction.commit();
-        return view;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        routes = myApp.getRoutes();
-        if (routes == null)
-            routes = new ArrayList<>();
-        Log.d("route", routes.size()+"");
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        //leaving fragment, store the routes so that we can display them again later
-        Log.d("route", routes.size()+" saving");
-        myApp.setRoutes(routes);
-    }
-
-    public void placeRoutesOnMap(List<Route> routes){
-        mMap.clear();
-        Boolean firstRoute = true;
-        for (Route r : routes) {
-            Log.d("redraw", "redrawing");
-            //place the lines..
-            if (firstRoute) {
-                redrawLine(r.getRoutePoints(), false);//dont switch line color yet
-                firstRoute = false;
-            }
-            else
-                redrawLine(r.getRoutePoints(), true);
-            //place the markers with the photos
-            for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
-                mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
-                        .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
-                        .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
+            // Update the value of mLastUpdateTime from the Bundle and update the UI.
+            if (savedInstanceState.keySet().contains(KEY_ROUTE_STATE)) {
+                buttonsState = (Constants.ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
             }
         }
-        //when a path is clicked, a menu will appear
-        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
-            @Override
-            public void onPolylineClick(Polyline polyline) {
-                Log.d("clicked", "line clicked");
-                    Route route = checkWhatTourPolyBelongs(polyline);
-                    if (route != null) {
-                        if (mBottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
-                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                            tourTitleText.setText(route.getRouteTitle());
-                            tourDescriptionText.setText(route.getRouteDescription());
-                            tourOptionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                @Override
-                                public void onItemClick(AdapterView<?> parent, View view,
-                                                        int position, long id) {
-                                    String selecteditem = optionsText[+position];
-                                    //remove this route from the map
-                                    if (selecteditem.equals(getContext().getString(R.string.remove_tour_from_map_btn))) {
-                                        routes.remove(route);
-                                        placeRoutesOnMap(routes);
-                                    } //edit tour
-                                    else if (selecteditem.equals(getContext().getString(R.string.edit_tour_name))) {
-                                        LayoutInflater li = LayoutInflater.from(getContext());
-                                        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
-                                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-                                        alertDialogBuilder.setView(promptsView);
-                                        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
-                                        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
-                                        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
-                                        dialogTitle.setText(getString(R.string.edit_tour_dialog_title));
-                                        routeTitleBox.setText(route.getRouteTitle());
-                                        routeDescriptionBox.setText(route.getRouteDescription());
+    }
 
-                                        alertDialogBuilder
-                                                .setCancelable(false)
-                                                .setPositiveButton("OK",
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                //update route in the array that has all routes on the map
-                                                                //and update info in bottom sheet
-                                                                routes.remove(route);
-                                                                route.setRouteTitle(routeTitleBox.getText().toString());
-                                                                route.setRouteDescription(routeDescriptionBox.getText().toString());
-                                                                routes.add(route);
-                                                                saveRouteToFile(route);
-                                                                tourTitleText.setText(route.getRouteTitle());
-                                                                tourDescriptionText.setText(route.getRouteDescription());
-                                                            }
-                                                        })
-                                                .setNegativeButton(getString(R.string.cancel),
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                dialog.cancel();
-                                                            }
-                                                        });
-                                         // create alert dialog
-                                        AlertDialog alertDialog = alertDialogBuilder.create();
-                                        // show it
-                                        alertDialog.show();
-                                    }
-                                    //Toast.makeText(getContext(), selecteditem, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    } else {
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        //mButton1.setText(R.string.button1);
-                    }
-
-             }
-        });
+    public void updateRouteButtons(Constants.ROUTE_STATE state){
+        if(Constants.ROUTE_STATE.STARTED.equals(state)){
+            buttonStartRoute.setVisibility( View.GONE );
+            buttonPauseRoute.setVisibility( View.VISIBLE );
+            buttonStopRoute.setVisibility( View.VISIBLE );
+        }else if(Constants.ROUTE_STATE.PAUSED.equals(state)){
+            buttonStopRoute.setVisibility( View.VISIBLE );
+            buttonPauseRoute.setVisibility( View.GONE );
+            buttonStartRoute.setVisibility( View.VISIBLE );
+        }else if(Constants.ROUTE_STATE.STOPPED.equals(state)){
+            buttonStopRoute.setVisibility( View.GONE );
+            buttonPauseRoute.setVisibility( View.GONE );
+            buttonStartRoute.setVisibility( View.VISIBLE );
+        }
     }
 
     /**
@@ -400,42 +349,8 @@ public class PhotoLogFragment extends Fragment implements
         getDeviceLocation();
 
         //Initialize Preferences*
-        prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
-        Log.d("route", routes.size()+" placing");
-        if (!routes.isEmpty())
-            placeRoutesOnMap(routes);
+        prefs = getSharedPreferences("LatLng",MODE_PRIVATE);
 
-        /*While we have markers stored iterate trough.
-        * For each marker add to the map with all information related to it*/
-        boolean stop = false;
-        int tmp = 0;
-        while (!stop){
-            if (prefs.contains("Lat" + tmp)) {
-                String lat = prefs.getString("Lat" + tmp, "");
-                String lng = prefs.getString("Lng" + tmp, "");
-                String btm = prefs.getString("bmp" + tmp, "");
-                String snip = prefs.getString("Snip" + tmp, "");
-                String titl = prefs.getString("Titl" + tmp,"");
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-                Bitmap img = Utils.StringToBitMap(btm);
-                try {
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .icon(BitmapDescriptorFactory.fromBitmap(img))
-                            .title(titl)
-                            .snippet(snip));
-                    imageMarkers.put(m,img);
-                    markers.put(m,true);
-                }catch (Exception e){
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .title(titl)
-                            .snippet(snip));
-                    markers.put(m,true);
-                }
-                tmp++;
-            }else{
-                stop = true;
-            }
-        }
     }
 
     private void updateLocationUI() {
@@ -460,42 +375,39 @@ public class PhotoLogFragment extends Fragment implements
          */
         try {
             Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
-            locationResult.addOnCompleteListener(getActivity(), new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        // Set the map's camera position to the current location of the device.
-                        mLastKnownLocation = task.getResult();
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                    } else {
-                        Log.d(TAG, "Current location is null. Using defaults.");
-                        Log.e(TAG, "Exception: %s", task.getException());
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                    }
+            locationResult.addOnCompleteListener(this, task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    // Set the map's camera position to the current location of the device.
+                    mLastKnownLocation = task.getResult();
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                } else {
+                    Log.d("ERROR", "Current location is null. Using defaults.");
+                    Log.e("ERROR", "Exception: %s", task.getException());
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
                 }
-            }).addOnFailureListener(getActivity(), new OnFailureListener() {
+            }).addOnFailureListener(this, new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     int statusCode = ((ApiException) e).getStatusCode();
                     switch (statusCode) {
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                            Log.i(TAG, "Location settings are not satisfied. Attempting to upgrade " +
+                            Log.i("ERROR", "Location settings are not satisfied. Attempting to upgrade " +
                                     "location settings ");
                             try {
                                 // Show the dialog by calling startResolutionForResult(), and check the
                                 // result in onActivityResult().
                                 ResolvableApiException rae = (ResolvableApiException) e;
-                                rae.startResolutionForResult(getActivity(), REQUEST_CHECK_SETTINGS);
+                                rae.startResolutionForResult(RouteActivity.this, REQUEST_CHECK_SETTINGS);
                             } catch (IntentSender.SendIntentException sie) {
-                                Log.i(TAG, "PendingIntent unable to execute request.");
+                                Log.i("ERROR", "PendingIntent unable to execute request.");
                             }
                             break;
                         case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                             String errorMessage = "Location settings are inadequate, and cannot be " +
                                     "fixed here. Fix in Settings.";
-                            Log.e(TAG, errorMessage);
-                            Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_LONG).show();
+                            Log.e("ERROR", errorMessage);
+                            Toast.makeText(RouteActivity.this, errorMessage, Toast.LENGTH_LONG).show();
                             mRequestingLocationUpdates = false;
                     }
 
@@ -513,11 +425,11 @@ public class PhotoLogFragment extends Fragment implements
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Log.i(TAG, "User agreed to make required location settings changes.");
+                        Log.i("ERROR", "User agreed to make required location settings changes.");
                         // Nothing to do. startLocationupdates() gets called in onResume again.
                         break;
                     case Activity.RESULT_CANCELED:
-                        Log.i(TAG, "User chose not to make required location settings changes.");
+                        Log.i("ERROR", "User chose not to make required location settings changes.");
                         mRequestingLocationUpdates = false;
                         updateLocationUI();
                         break;
@@ -542,16 +454,16 @@ public class PhotoLogFragment extends Fragment implements
                         //does not have an updated info yet
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
-                                .title(getContext().getString(R.string.unknown_string))
+                                .title(this.getString(R.string.unknown_string))
                                 .snippet("Unknown")
                                 .icon(BitmapDescriptorFactory.fromBitmap(photo)));
                         markers.put(m, false);
                         imageMarkers.put(m, photo);
                         //send a base 64 encoded photo to server
-                        new uploadFileToServerTask().execute(jsonRequest.toString());
+                        new UploadFileToServerTask().execute(jsonRequest.toString());
                     }else {
                         //Report error to user
-                        Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
                     }
                 }
                 break;
@@ -563,8 +475,21 @@ public class PhotoLogFragment extends Fragment implements
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
+            outState.putSerializable(KEY_ROUTE_STATE, buttonsState);
             super.onSaveInstanceState(outState);
         }
+    }
+
+    public void onNewLocation(Location location){
+        if (location == null) {
+            return;
+        }
+
+        Log.i("PhotoLogActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
+
+        mLastKnownLocation = location;
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), mMap.getCameraPosition().zoom));
     }
 
     public String bitMapToBase64 (Bitmap image){
@@ -582,7 +507,7 @@ public class PhotoLogFragment extends Fragment implements
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (java.lang.NullPointerException e){
-            Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Connection error", Toast.LENGTH_LONG).show();
             return;
         }
         Marker markerToUpdate = null;
@@ -607,14 +532,17 @@ public class PhotoLogFragment extends Fragment implements
         //update the marker in the map that stores every marker and the image in the marker
         final String idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
-        mMap.setOnMarkerClickListener(m -> {
-            Log.d("markerClick", "clicked");
-            if (m != null) {
-                Log.d("markerClickI", "clicked with info");
-                createAndShowInfoDialog(m, idFinal);
-                return true;
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                Log.d("markerClick", "clicked");
+                if (m != null) {
+                    Log.d("markerClickI", "clicked with info");
+                    createAndShowInfoDialog(m, idFinal);
+                    return true;
+                }
+                return false;
             }
-            return false;
         });
         //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
         createAndShowInfoDialog(markerToUpdate, id);
@@ -643,7 +571,7 @@ public class PhotoLogFragment extends Fragment implements
         //when the dialog with the description is closed, we show a feedback box;
         //the user says if the app was able to identify the image succesfully, or close the dialog
         //without providing an answer
-        final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
+        final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
                 .setHeaderDrawable(d)
                 .setIcon(R.drawable.ic_check_circle_black_24dp)
                 .withDialogAnimation(true)
@@ -681,7 +609,7 @@ public class PhotoLogFragment extends Fragment implements
 
 
     /*
-    * When the app is in background and whren a different fragment is selected
+    * When the app is in background and when a different fragment is selected
     * this will be triggered.
     * Each marker has:
     * - Latitude    Lat
@@ -693,6 +621,11 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(locationsReceiver);
+        super.onPause();
+
         //Iterate trough all saved markers.
         int i = 0;
         Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
@@ -712,6 +645,18 @@ public class PhotoLogFragment extends Fragment implements
 
         }
         //saveMarkersOnStorage(FILENAME, imageMarkers);
+    }
+
+    @Override
+    protected void onStop() {
+        if (mBound) {
+            // Unbind from the service. This signals to the service that this activity is no longer
+            // in the foreground, and the service can respond by promoting itself to a foreground
+            // service.
+            unbindService(mServiceConnection);
+            mBound = false;
+        }
+        super.onStop();
     }
 
     /*Encodes the Image to a string*/
@@ -763,13 +708,13 @@ public class PhotoLogFragment extends Fragment implements
         super.onDestroy();
     }
 
-    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+    private class UploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progDailog = new ProgressDialog(getContext());
-            progDailog.setMessage(getContext().getString(R.string.scanning_image_string));
+            progDailog = new ProgressDialog(RouteActivity.this);
+            progDailog.setMessage(getString(R.string.scanning_image_string));
             progDailog.setIndeterminate(false);
             progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progDailog.setCancelable(false);
@@ -778,7 +723,7 @@ public class PhotoLogFragment extends Fragment implements
 
         @Override
         protected String doInBackground(String... params) {
-            String JsonResponse = null;
+            String JsonResponse;
             String JsonDATA = params[0];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
@@ -829,7 +774,7 @@ public class PhotoLogFragment extends Fragment implements
                     try {
                         reader.close();
                     } catch (final IOException e) {
-                        Log.e(TAG, "Error closing stream", e);
+                        Log.e("ERROR", "Error closing stream", e);
                     }
                 }
             }
@@ -853,133 +798,156 @@ public class PhotoLogFragment extends Fragment implements
         if (mMap == null) {
             return;
         }
-        // Get the likely places - that is, the businesses and other points of interest that
+        // Get the likely places - that is, the businesses and other routePoints of interest that
         // are the best match for the device's current location.
         @SuppressWarnings("MissingPermission")
         final Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
         placeResult.addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+            if (task.isSuccessful() && task.getResult() != null) {
+                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
 
-                        // Set the count, handling cases where less than 5 entries are returned.
-                        int count;
-                        if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                            count = likelyPlaces.getCount();
-                        } else {
-                            count = M_MAX_ENTRIES;
-                        }
+                // Set the count, handling cases where less than 5 entries are returned.
+                int count;
+                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                    count = likelyPlaces.getCount();
+                } else {
+                    count = M_MAX_ENTRIES;
+                }
 
-                        int i = 0;
-                        mLikelyPlaceNames = new String[count];
-                        mLikelyPlaceAddresses = new String[count];
-                        mLikelyPlaceAttributions = new String[count];
-                        mLikelyPlaceLatLngs = new LatLng[count];
+                int i = 0;
+                mLikelyPlaceNames = new String[count];
+                mLikelyPlaceAddresses = new String[count];
+                mLikelyPlaceAttributions = new String[count];
+                mLikelyPlaceLatLngs = new LatLng[count];
 
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            // Build a list of likely places to show the user.
-                            mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                            mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                    .getAddress();
-                            mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                    .getAttributions();
-                            mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    // Build a list of likely places to show the user.
+                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                            .getAddress();
+                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                            .getAttributions();
+                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
 
-                            i++;
-                            if (i > (count - 1)) {
-                                break;
-                            }
-                        }
-
-                        // Release the place likelihood buffer, to avoid memory leaks.
-                        likelyPlaces.release();
-
-                        // Show a dialog offering the user the list of likely places, and add a
-                        // marker at the selected place.
-                        openPlacesDialog();
-
-                    } else {
-                        Log.e(TAG, "Exception: %s", task.getException());
+                    i++;
+                    if (i > (count - 1)) {
+                        break;
                     }
-                });
+                }
+
+                // Release the place likelihood buffer, to avoid memory leaks.
+                likelyPlaces.release();
+
+                // Show a dialog offering the user the list of likely places, and add a
+                // marker at the selected place.
+                openPlacesDialog();
+
+            } else {
+                Log.e("ERROR", "Exception: %s", task.getException());
+            }
+        });
 
     }
-
 
     /**
      * Displays a form allowing the user to select a place from a list of likely places.
      */
     private void openPlacesDialog() {
         // Ask the user to choose the place where they are now.
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // The "which" argument contains the position of the selected item.
-                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
-                String markerSnippet = mLikelyPlaceAddresses[which];
-                if (mLikelyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
-                }
-
-                // Add a marker for the selected place, with an info window
-                // showing information about that place.
-                mMap.addMarker(new MarkerOptions()
-                        .title(mLikelyPlaceNames[which])
-                        .position(markerLatLng)
-                        .snippet(markerSnippet));
-
-                // Position the map's camera at the location of the marker.
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
-                        DEFAULT_ZOOM));
+        DialogInterface.OnClickListener listener = (dialog, which) -> {
+            // The "which" argument contains the position of the selected item.
+            LatLng markerLatLng = mLikelyPlaceLatLngs[which];
+            String markerSnippet = mLikelyPlaceAddresses[which];
+            if (mLikelyPlaceAttributions[which] != null) {
+                markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
             }
+
+            // Add a marker for the selected place, with an info window
+            // showing information about that place.
+            mMap.addMarker(new MarkerOptions()
+                    .title(mLikelyPlaceNames[which])
+                    .position(markerLatLng)
+                    .snippet(markerSnippet));
+
+            // Position the map's camera at the location of the marker.
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+                    DEFAULT_ZOOM));
         };
 
         // Display the dialog.
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.pick_place)
                 .setItems(mLikelyPlaceNames, listener)
                 .show();
     }
 
-    private Polyline redrawLine(List<LatLng> points, boolean nextColor){
-        if (currentDrawingLine!=null) {
-            if (currentDrawingLine.getPoints().equals(points))
-                currentDrawingLine.remove();
+    /**
+     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
+     */
+    private class LocationsReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(EXTRA_LOCATION);
+            if (location != null) {
+                //add routePoints and redraw the trajectory line
+                routePoints.add(new LatLng(location.getLatitude(), location.getLongitude()));
+                redrawLine();
+                onNewLocation(location);
+            }
         }
+    }
 
-        PolylineOptions options = new PolylineOptions().width(10)
-                .color(getNextColor(nextColor)).geodesic(true);
-        for (int i = 0; i < points.size(); i++) {
-            LatLng point = points.get(i);
+    private void redrawLine(){
+        PolylineOptions options = new PolylineOptions()
+                .width(10)
+                .color(Color.BLUE)
+                .geodesic(true);
+
+        for (int i = 0; i < routePoints.size(); i++) {
+            LatLng point = routePoints.get(i);
             options.add(point);
         }
-        currentDrawingLine = mMap.addPolyline(options); //add Polyline
-        currentDrawingLine.setClickable(true);
-        return currentDrawingLine;
+
+        line = mMap.addPolyline(options); //add Polyline
     }
-    //simple method to change the color of a polyline. if false, returns the color of the
-    // current index (usefull when on route and we want to maintain the same color)
-    //if true, increments the index and returns the next color (usefull when placing all routes
-    //and we want to change the color of each path
-    private int getNextColor(boolean nextColor){
-        if (nextColor) {
-            colorIndex++;
-            if (colorIndex == lineColors.length)
-                colorIndex = 0;
-        }
-        return lineColors[colorIndex];
+
+    //show dialog to name route and save it
+    private void endRoute(){
+        LayoutInflater li = LayoutInflater.from(this);
+        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        // set prompts.xml to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        final EditText routeTitleBox = promptsView.findViewById(R.id.tour_title_box);
+        //Log.d("box", routeTitleBox.toString()+"");
+        final EditText routeDescriptionBox = promptsView.findViewById(R.id.tour_description_box);
+        TextView dialogTitle = promptsView.findViewById(R.id.dialog_description);
+        dialogTitle.setText(getString(R.string.save_tour_dialog_title));
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        (dialog, id) -> {
+
+                            // get user input and create a route object
+                            Route route = new Route (routeTitleBox.getText().toString(), line,
+                                    routeDescriptionBox.getText().toString(), imageMarkers);
+
+                            saveRouteToFile(route);
+
+                            line = null;
+                            routePoints.clear();//reset routePoints
+                        })
+                .setNegativeButton(getString(R.string.save_tour_discard),
+                        (dialog, id) -> dialog.cancel());
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        // show it
+        alertDialog.show();
 
     }
 
-    //used to check to which route these points belong to
-    //returns null if these points are not in any current path show on map
-    private Route checkWhatTourPolyBelongs(Polyline polyline){
-        for (Route rout : routes){
-            Log.d("route", rout.getRoutePath()+""+polyline);
-            if (rout.getRoutePoints().equals(polyline.getPoints()))
-                return rout;
-        }
-        return null;
-    }
 
     /**
      * Saving in JSON format:
@@ -1034,7 +1002,7 @@ public class PhotoLogFragment extends Fragment implements
         sb.append("],\n");
         sb.append("\"Poly\" : [\n");
 
-        //Poly points
+        //Poly routePoints
         Iterator<LatLng> it = polyPoints.iterator();
         tmp = 0;
         while (it.hasNext()){
@@ -1054,7 +1022,7 @@ public class PhotoLogFragment extends Fragment implements
         String filename = "route"+ route.getRouteTitle() +".json";
         FileOutputStream outputStream;
         try {
-            outputStream = getContext().openFileOutput(filename, Context.MODE_PRIVATE);
+            outputStream = this.openFileOutput(filename, Context.MODE_PRIVATE);
             outputStream.write(sb.toString().getBytes());
             outputStream.close();
         } catch (Exception e) {
@@ -1062,5 +1030,5 @@ public class PhotoLogFragment extends Fragment implements
         }
 
     }
-
+    
 }

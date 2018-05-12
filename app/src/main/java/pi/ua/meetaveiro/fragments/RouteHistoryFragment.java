@@ -24,6 +24,8 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.facebook.shimmer.ShimmerFrameLayout;
+import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -46,9 +48,11 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
@@ -57,7 +61,9 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
  * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
  * interface.
  */
-public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+public class RouteHistoryFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        NetworkCheckResponse{
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
 
@@ -71,17 +77,15 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
     private SwipeRefreshLayout swipeRefreshLayout;
 
+    private ShimmerFrameLayout mShimmerViewContainer;
+
+    private FastScroller fastScroller;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
     public RouteHistoryFragment() {
-    }
-
-
-    public static RouteHistoryFragment newInstance() {
-        return new RouteHistoryFragment();
     }
 
     @Override
@@ -94,7 +98,11 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
-        recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+
+        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
+        recyclerView = view.findViewById(R.id.recycler_view);
+        fastScroller = view.findViewById(R.id.fastscroll);
+
         recyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this.getContext());
         recyclerView.setLayoutManager(mLayoutManager);
@@ -108,24 +116,21 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-                    swipeRefreshLayout.setRefreshing(true);
-                    fetchLocalRoutes();
-                    //fetchRoutes();
-                }
-        );
+            swipeRefreshLayout.setRefreshing(true);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
+        });
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
-        //RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
-        //recyclerView.setLayoutManager(mLayoutManager);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
-        //recyclerView.setAdapter(mAdapter);
+        recyclerView.setAdapter(mAdapter);
 
-        //fetchRoutes();
-        fetchLocalRoutes();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
 
         return view;
     }
@@ -169,16 +174,22 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-        });
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+        );
 
         MyApplication.getInstance().addToRequestQueue(request);
     }
@@ -209,8 +220,8 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
             // refreshing recycler view
             mAdapter.notifyDataSetChanged();
             // stop animating Shimmer and hide the layout
-            //mShimmerViewContainer.stopShimmerAnimation();
-            //mShimmerViewContainer.setVisibility(View.GONE);
+            mShimmerViewContainer.stopShimmerAnimation();
+            mShimmerViewContainer.setVisibility(View.GONE);
             // stopping swipe refresh
             swipeRefreshLayout.setRefreshing(false);
 
@@ -279,7 +290,7 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     @Override
     public void onRefresh() {
         fetchLocalRoutes();
-        //fetchRoutes();
+        fetchRoutes();
     }
 /*
     @Override
@@ -295,11 +306,19 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
     @Override
     public void onResume() {
         super.onResume();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.startShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
     }
 
     /**
@@ -331,7 +350,6 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
         }
 
         return datax.toString();
-
 
     }
 
@@ -378,7 +396,6 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
                 tempMap.put(m,image);
 */
             }
-            /*r.setRouteMarkers(tempMap);*/
 
             //Reconstruct the polilyne
             arr = json.getJSONArray("Poly");
@@ -415,17 +432,22 @@ public class RouteHistoryFragment extends Fragment implements SwipeRefreshLayout
 
     }
 
-
     /**
      * @param encodedString
      * @return bitmap (from given string)
      */
     public Bitmap StringToBitMap(String encodedString) {
         byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
-        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-        return decodedByte;
+        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
     }
 
-
+    @Override
+    public void onProcessFinished(boolean hasNetworkConnection) {
+        if (hasNetworkConnection) {
+            fetchRoutes();
+        }else {
+            fetchLocalRoutes();
+        }
+    }
 
 }

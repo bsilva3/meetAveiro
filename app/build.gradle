@@ -23,8 +23,23 @@ android {
     }
 }
 
+apply plugin: "org.sonarqube"
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "meetAveiro"
+        property "sonar.projectKey", "pi.ua.meetaveiro"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.language", "java"
+        property "sonar.sources", "src/main/"
+        property "sonar.login", "admin"
+        property "sonar.password", "admin"
+    }
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
     // UI and material design
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:design:27.1.1'
@@ -33,40 +48,41 @@ dependencies {
     implementation 'com.android.support:cardview-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     implementation 'com.android.support:design:27.1.1'
+
     // Firebase
-    //noinspection GradleCompatible
     implementation 'com.google.firebase:firebase-core:15.0.0'
     implementation "com.google.firebase:firebase-auth:15.0.0"
+
     // Location
     implementation 'com.google.android.gms:play-services-places:15.0.1'
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.maps.android:android-maps-utils:0.5'
     implementation "com.google.android.gms:play-services-location:15.0.1"
+
     // Glide image library
     implementation 'com.github.bumptech.glide:glide:4.6.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.6.1'
+
     // Volley http library
     implementation 'com.android.volley:volley:1.0.0'
     implementation 'com.google.code.gson:gson:2.8.0'
+
     // Shimmer
     implementation 'com.facebook.shimmer:shimmer:0.1.0@aar'
+
     // Fast scroll (and alphabetical scroll)
-    compile 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
-    //circle indicator for image slider
-    compile 'me.relex:circleindicator:1.2.2@aar'
     implementation 'com.futuremind.recyclerfastscroll:fastscroll:0.2.5'
+
+    // Circle indicator for image slider
+    implementation 'me.relex:circleindicator:1.2.2@aar'
+
     // Nice Dialog
     implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
+
     // Testing
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
-    compile 'me.relex:circleindicator:1.2.2@aar'
 }
-
-
-
-
 
 apply plugin: 'com.google.gms.google-services'

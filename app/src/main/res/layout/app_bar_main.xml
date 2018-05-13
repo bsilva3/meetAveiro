@@ -101,6 +101,8 @@
         app:srcCompat="@drawable/ic_add_black_24dp" />
 
     <!-- Bottom Sheet Content -->
-    <include layout="@layout/bottom_sheet_tour_options" />
+    <include
+        android:visibility="gone"
+        layout="@layout/bottom_sheet_tour_options" />
 
 </android.support.design.widget.CoordinatorLayout>

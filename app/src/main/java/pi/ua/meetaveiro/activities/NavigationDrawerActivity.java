@@ -204,8 +204,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         // Update the buttons state depending on whether location updates are being requested.
-        if (s.equals(Utils.KEY_REQUESTING_LOCATION_UPDATES)) {
-            //on(sharedPreferences.getBoolean(Utils.KEY_REQUESTING_LOCATION_UPDATES, false));
+        if (s.equals(Utils.KEY_ROUTE_STATE)) {
+            //on(sharedPreferences.getBoolean(Utils.KEY_ROUTE_STATE, false));
         }
     }
 

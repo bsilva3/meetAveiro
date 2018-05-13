@@ -54,6 +54,7 @@ import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
@@ -117,7 +118,7 @@ public class RouteHistoryFragment extends Fragment implements
          */
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
-            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
         routeList = new ArrayList<>();
@@ -130,7 +131,7 @@ public class RouteHistoryFragment extends Fragment implements
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
 
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
     }
@@ -228,7 +229,7 @@ public class RouteHistoryFragment extends Fragment implements
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
     }
 
@@ -289,8 +290,9 @@ public class RouteHistoryFragment extends Fragment implements
 
     @Override
     public void onRefresh() {
-        fetchLocalRoutes();
-        fetchRoutes();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
     }
 /*
     @Override
@@ -302,24 +304,6 @@ public class RouteHistoryFragment extends Fragment implements
         }
         super.onBackPressed();
     }*/
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.startShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.VISIBLE);
-
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTE_HISTORY);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-    }
 
     /**
      * Opens the file with the route and reconctructs it
@@ -345,8 +329,8 @@ public class RouteHistoryFragment extends Fragment implements
             }
             isr.close();
 
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
         }
 
         return datax.toString();
@@ -411,7 +395,7 @@ public class RouteHistoryFragment extends Fragment implements
 
             return r;
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
             return null;
         }
     }

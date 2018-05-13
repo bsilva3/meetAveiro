@@ -104,7 +104,7 @@ public class RouteListFragment extends Fragment implements
          */
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
-            (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
         mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
@@ -122,7 +122,7 @@ public class RouteListFragment extends Fragment implements
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
     }
@@ -219,7 +219,7 @@ public class RouteListFragment extends Fragment implements
             mShimmerViewContainer.setVisibility(View.GONE);
             mShimmerViewContainer.stopShimmerAnimation();
         }catch (Exception e){
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
 
 
@@ -234,7 +234,7 @@ public class RouteListFragment extends Fragment implements
         try {
             Glide.with(getActivity()).load(R.drawable.agueda).into(collImgView);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
     }
 
@@ -288,24 +288,8 @@ public class RouteListFragment extends Fragment implements
     public void onRefresh() {
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(URL_ROUTES);
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mShimmerViewContainer.setVisibility(View.VISIBLE);
-        mShimmerViewContainer.startShimmerAnimation();
-    }
-
-    @Override
-    public void onPause() {
-        mShimmerViewContainer.setVisibility(View.GONE);
-        mShimmerViewContainer.stopShimmerAnimation();
-        super.onPause();
-    }
-
-
 
     /**
      * Opens the file with the route and reconctructs it
@@ -330,8 +314,8 @@ public class RouteListFragment extends Fragment implements
             }
             isr.close ( ) ;
 
-        } catch (IOException ioe ) {
-            ioe.printStackTrace() ;
+        } catch (IOException e ) {
+            Log.e(TAG, e.getMessage());
         }
 
         return datax.toString();

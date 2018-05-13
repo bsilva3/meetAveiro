@@ -104,7 +104,7 @@
     <string name="unknown_geofence_transition">Unknown Transition</string>
 
     <string name="geofence_transition_notification_text">
-        Click notification to return to app
+        Click notification to return to know more
     </string>
 
     <string name="insufficient_permissions">Insufficient permissions.</string>
@@ -269,4 +269,5 @@
     </string>
     <string name="more_info_attraction">Would you like to know more about this attraction?</string>
     <string name="title_activity_route">Route</string>
+    <string name="notification_on_a_route">You are on a meetAveiro route. Click to know more!</string>
 </resources>

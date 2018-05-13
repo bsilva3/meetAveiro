@@ -42,10 +42,10 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
-        public View mView;
-        public Attraction mItem;
-        public TextView name, city;
-        public ImageView thumbnail, overflow;
+        View mView;
+        Attraction mItem;
+        TextView name, city;
+        ImageView thumbnail, overflow;
 
         public MyViewHolder(View view) {
             super(view);

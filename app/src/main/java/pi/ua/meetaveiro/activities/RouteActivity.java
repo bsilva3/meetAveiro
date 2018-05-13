@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -27,7 +28,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
@@ -37,10 +37,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
@@ -60,8 +64,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,8 +93,12 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Constants;
+import pi.ua.meetaveiro.others.GeofenceErrorMessages;
+import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.receivers.GeofenceBroadcastReceiver;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static pi.ua.meetaveiro.others.Constants.*;
@@ -95,7 +106,8 @@ import static pi.ua.meetaveiro.others.Constants.*;
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
         DataReceiver,
-        TextToSpeech.OnInitListener{
+        TextToSpeech.OnInitListener,
+        OnCompleteListener<Void> {
 
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -105,6 +117,7 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
     private static final String KEY_ROUTE_STATE = "routeState";
+    private static final String TAG = "ERROR";
 
     //Current start/pause/stop buttons state
     private Constants.ROUTE_STATE buttonsState;
@@ -162,6 +175,21 @@ public class RouteActivity extends FragmentActivity implements
     // Tracks the bound state of the service.
     private boolean mBound = false;
 
+    /**
+     * Provides access to the Geofencing API.
+     */
+    private GeofencingClient mGeofencingClient;
+
+    /**
+     * The list of geofences used in this sample.
+     */
+    private ArrayList<Geofence> mGeofenceList;
+
+    /**
+     * Used when requesting to add or remove geofences.
+     */
+    private PendingIntent mGeofencePendingIntent;
+
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -196,6 +224,17 @@ public class RouteActivity extends FragmentActivity implements
         imageMarkers = new HashMap<>();
         mRequestingLocationUpdates = false;
         buttonsState = Constants.ROUTE_STATE.STOPPED;
+
+        // Empty list for storing geofences.
+        mGeofenceList = new ArrayList<>();
+
+        // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
+        mGeofencePendingIntent = null;
+
+        // Fetch simple attractions from server.
+        fetchGeofences();
+
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this);
@@ -250,8 +289,6 @@ public class RouteActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
     }
 
-
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -259,6 +296,7 @@ public class RouteActivity extends FragmentActivity implements
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
         bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        addGeofences();
     }
 
     @Override
@@ -271,6 +309,35 @@ public class RouteActivity extends FragmentActivity implements
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
+    }
+
+    /**
+     * fetches json by making http calls
+     */
+    private void fetchGeofences() {
+        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
+                response -> {
+                    if (response == null) {
+                        Log.e(TAG, "Couldn't fetch the attractions.");
+                        return;
+                    }
+
+                    List<Attraction> items = new Gson()
+                            .fromJson(
+                                    response.toString(),
+                                    new TypeToken<List<Attraction>>() {}.getType()
+                            );
+
+                    // adding contacts to contacts list
+                    this.populateGeofenceList(items);
+                },
+                error -> {
+                    // error in getting json
+                    Log.e(TAG, "Error: " + error.getMessage());
+                }
+        );
+
+        MyApplication.getInstance().addToRequestQueue(request);
     }
 
     //Called when Start/Stop route button is pressed
@@ -327,6 +394,137 @@ public class RouteActivity extends FragmentActivity implements
             buttonStopRoute.setVisibility( View.GONE );
             buttonPauseRoute.setVisibility( View.GONE );
             buttonStartRoute.setVisibility( View.VISIBLE );
+        }
+    }
+
+    /**
+     * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
+     * Also specifies how the geofence notifications are initially triggered.
+     */
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+
+        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
+        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
+        // is already inside that geofence.
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+
+        // Add the geofences to be monitored by geofencing service.
+        builder.addGeofences(mGeofenceList);
+
+        // Return a GeofencingRequest.
+        return builder.build();
+    }
+
+    /**
+     * Adds geofences. This method should be called after the user has granted the location
+     * permission.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void addGeofences() {
+        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                .addOnCompleteListener(this);
+    }
+
+    /**
+     * Removes geofences. This method should be called after the user has granted the location
+     * permission.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void removeGeofences() {
+        mGeofencingClient.removeGeofences(getGeofencePendingIntent()).addOnCompleteListener(this);
+    }
+
+    /**
+     * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
+     * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
+     * current list of geofences.
+     *
+     * @return A PendingIntent for the IntentService that handles geofence transitions.
+     */
+    private PendingIntent getGeofencePendingIntent() {
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceBroadcastReceiver.class);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
+        // addGeofences() and removeGeofences().
+        mGeofencePendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return mGeofencePendingIntent;
+    }
+
+    /**
+     * Runs when the result of calling {@link #addGeofences()} and/or {@link #removeGeofences()}
+     * is available.
+     * @param task the resulting Task, containing either a result or error.
+     */
+    @Override
+    public void onComplete(@NonNull Task<Void> task) {
+        if (task.isSuccessful()) {
+            updateGeofencesAdded(!getGeofencesAdded());
+
+            int messageId = getGeofencesAdded() ? R.string.geofences_added :
+                    R.string.geofences_removed;
+            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+        } else {
+            // Get the status code for the error and log it using a user-friendly message.
+            String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
+            Log.w(TAG, errorMessage);
+        }
+    }
+
+    /**
+     * Returns true if geofences were added, otherwise false.
+     */
+    private boolean getGeofencesAdded() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+                Constants.GEOFENCES_ADDED_KEY, false);
+    }
+
+    /**
+     * Stores whether geofences were added ore removed in {@link SharedPreferences};
+     *
+     * @param added Whether geofences were added or removed.
+     */
+    private void updateGeofencesAdded(boolean added) {
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(Constants.GEOFENCES_ADDED_KEY, added)
+                .apply();
+    }
+
+    /**
+     * This sample hard codes geofence data. A real app might dynamically create geofences based on
+     * the user's location.
+     * PUT HERE THE RESULTS RETURNED BY THE SERVER (CONCEPTS)
+     */
+    private void populateGeofenceList(List<Attraction> attractions) {
+        for (Attraction entry : attractions) {
+
+            mGeofenceList.add(new Geofence.Builder()
+                    // Set the request ID of the geofence. This is a string to identify this
+                    // geofence.
+                    .setRequestId(entry.getName())
+
+                    // Set the circular region of this geofence.
+                    .setCircularRegion(
+                            entry.getLocation().latitude,
+                            entry.getLocation().longitude,
+                            Constants.GEOFENCE_RADIUS_IN_METERS
+                    )
+
+                    // Set the expiration duration of the geofence. This geofence gets automatically
+                    // removed after this period of time.
+                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+
+                    // Set the transition types of interest. Alerts are only generated for these
+                    // transition. We track entry and exit transitions in this sample.
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                            Geofence.GEOFENCE_TRANSITION_EXIT)
+
+                    // Create the geofence.
+                    .build());
         }
     }
 
@@ -446,7 +644,7 @@ public class RouteActivity extends FragmentActivity implements
                     try {
                         jsonRequest.put("image", base64Photo);
                     } catch (JSONException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, e.getMessage());
                     }
 
                     if (mLastKnownLocation!=null) {
@@ -505,7 +703,7 @@ public class RouteActivity extends FragmentActivity implements
         try {
             json = new JSONObject(result.toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (java.lang.NullPointerException e){
             Toast.makeText(this, "Connection error", Toast.LENGTH_LONG).show();
             return;
@@ -525,7 +723,7 @@ public class RouteActivity extends FragmentActivity implements
             markerToUpdate.setSnippet(json.get("description").toString());
             id = json.get("id").toString();
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
         markers.put(markerToUpdate, true);
 
@@ -565,7 +763,7 @@ public class RouteActivity extends FragmentActivity implements
             jsonRequest.put("name", name);
             jsonRequest.put("id", id);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
 
         //when the dialog with the description is closed, we show a feedback box;
@@ -585,7 +783,7 @@ public class RouteActivity extends FragmentActivity implements
                             try {
                                 jsonRequest.put("feedback", 1);
                             } catch (JSONException e) {
-                                e.printStackTrace();
+                                Log.e(TAG, e.getMessage());
                             }
                         }
                 )
@@ -596,7 +794,7 @@ public class RouteActivity extends FragmentActivity implements
                             try {
                                 jsonRequest.put("feedback", 0);
                             } catch (JSONException e) {
-                                e.printStackTrace();
+                                Log.e(TAG, e.getMessage());
                             }
                         }
                 )
@@ -765,7 +963,7 @@ public class RouteActivity extends FragmentActivity implements
                 return JsonResponse;
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -1026,9 +1224,8 @@ public class RouteActivity extends FragmentActivity implements
             outputStream.write(sb.toString().getBytes());
             outputStream.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
-
     }
     
 }

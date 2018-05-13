@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -31,11 +33,15 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTES;
 
 /**
  * A fragment representing a list of Items.
@@ -43,7 +49,9 @@ import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
  * Activities containing this fragment MUST implement the {@link AttractionAdapter.OnAttractionSelectedListener}
  * interface.
  */
-public class AttractionListFragment extends Fragment {
+public class AttractionListFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        NetworkCheckResponse{
 
     private static final String TAG = AttractionListFragment.class.getSimpleName();
 
@@ -54,6 +62,11 @@ public class AttractionListFragment extends Fragment {
     private RecyclerView recyclerView;
     private List<Attraction> attractionList;
     private AttractionAdapter adapter;
+
+
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    private ShimmerFrameLayout mShimmerViewContainer;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -80,6 +93,22 @@ public class AttractionListFragment extends Fragment {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
+    }
+
+    @Override
+    public void onProcessFinished(boolean hasNetworkConnection) {
+        if (hasNetworkConnection)
+            fetchAttractions();
+        else {
+            //fetchLocalAttractions();
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
     }
 
     /**
@@ -125,6 +154,7 @@ public class AttractionListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_attraction_list, container, false);
 
+        mShimmerViewContainer = view.findViewById(R.id.attraction_list_shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
         // Set the adapter
         Context context = view.getContext();
@@ -134,13 +164,26 @@ public class AttractionListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
 
+        // Set the adapter
+        swipeRefreshLayout = view.findViewById(R.id.attaction_swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        /**
+         * Showing Swipe Refresh animation on activity create
+         * As animation won't start on onCreate, post runnable is used
+         */
+        swipeRefreshLayout.post(() -> {
+            swipeRefreshLayout.setRefreshing(true);
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+        });
+
         adapter = new AttractionAdapter(getContext(), attractionList, mListener);
 
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
 
-        fetchAttractions();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
     }
@@ -165,24 +208,27 @@ public class AttractionListFragment extends Fragment {
 
                     // refreshing recycler view
                     adapter.notifyDataSetChanged();
-                    /*
+
                     // stop animating Shimmer and hide the layout
                     mShimmerViewContainer.stopShimmerAnimation();
                     mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);*/
-                }, error -> {
-  /*
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            swipeRefreshLayout.setRefreshing(false);
-*/
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-        });
+                    swipeRefreshLayout.setRefreshing(false);
+                },
+                error -> {
+
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    swipeRefreshLayout.setRefreshing(false);
+
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                }
+        );
+
         Attraction attraction = new Attraction();
         attraction.setName("Moliceiro");
         attraction.setCity("Aveiro");
@@ -205,12 +251,10 @@ public class AttractionListFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
-        TextView collTitlteView = getActivity().findViewById(R.id.collapsing_toolbar_title);
-        TextView collSubtitleView = getActivity().findViewById(R.id.collapsing_toolbar_subtitle);
         try {
             Glide.with(getActivity()).load(R.drawable.moliceiro).into(collImgView);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
     }
 

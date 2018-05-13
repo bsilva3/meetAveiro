@@ -152,8 +152,7 @@ public class LocationUpdatesService extends Service {
 
         // We got here because the user decided to remove location updates from the notification.
         if (startedFromNotification) {
-            removeLocationUpdates();
-            stopSelf();
+            pauseLocationUpdates();
         }
         // Tells the system to not try to recreate the service after it has been killed.
         return START_NOT_STICKY;
@@ -227,6 +226,21 @@ public class LocationUpdatesService extends Service {
      * Removes location updates. Note that in this sample we merely log the
      * {@link SecurityException}.
      */
+    public void pauseLocationUpdates() {
+        Log.i(TAG, "Pausing location updates");
+        try {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            Utils.setRequestingLocationUpdates(this, false);
+        } catch (SecurityException unlikely) {
+            Utils.setRequestingLocationUpdates(this, true);
+            Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
+        }
+    }
+
+    /**
+     * Removes location updates. Note that in this sample we merely log the
+     * {@link SecurityException}.
+     */
     public void removeLocationUpdates() {
         Log.i(TAG, "Removing location updates");
         try {
@@ -263,7 +277,7 @@ public class LocationUpdatesService extends Service {
                 activityIntent,
                 0);
 
-        CharSequence text = "On a Route";
+        CharSequence text = getString(R.string.notification_on_a_route);
 
         Notification notification;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -361,7 +375,7 @@ public class LocationUpdatesService extends Service {
                 Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(
                 Integer.MAX_VALUE)) {
-            if (getClass().getName().equals(service.service.getClassName())) {
+            if (getClass().isInstance(service.service.getClass())) {
                 if (service.foreground) {
                     return true;
                 }

@@ -8,48 +8,42 @@ public class Constants {
 
     private Constants() {}
 
+    // Pakcage Names
+
+    private static final String ACTIVITIES_PACKAGE_NAME = "pi.ua.meetaveiro.activities";
+    private static final String SERVICES_PACKAGE_NAME = "pi.ua.meetaveiro.services";
+    private static final String FRAGMENTS_PACKAGE_NAME = "pi.ua.meetaveiro.fragments";
+
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
-    public final static String API_URL = "http://192.168.54.155:8080/search";
-
+    public final static String API_URL = "http://192.168.54.155:8080";
     // url to fetch all routes
-    public static final String URL_ROUTES = "https://localhost..blahblah";
+    public static final String URL_ROUTES = API_URL + "/blahblah";
     // url to fetch routes history json
-    public static final String URL_ROUTE_HISTORY = "https://localhost..blahblah";
+    public static final String URL_ROUTE_HISTORY = API_URL + "/blahblah";
     // url to fetch routes history json
-    public static final String URL_ATTRACTIONS = "https://localhost..blahblah";
+    public static final String URL_ATTRACTIONS = API_URL + "/blahblah";
     // url to fetch routes history json
-    public static final String URL_ATTRACTION_HISTORY = "https://localhost..blahblah";
-
+    public static final String URL_ATTRACTION_HISTORY = API_URL + "/blahblah";
     // url to fetch routes that have a certain attraction
-    public static final String URL_ROUTES_ATTRACTION = "https://localhost..blahblah";
+    public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
 
-    public final static String PREFERENCES_FILENAME = "pi.ua.meetaveirocom.PREFERENCE_FILE_KEY";
+    // Geofence related constants
 
-    private static final String PACKAGE_NAME = "com.google.android.gms.location.Geofence";
-
-    static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
-
+    public static final String GEOFENCES_ADDED_KEY = ACTIVITIES_PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
     /**
      * Used to set an expiration time for a geofence. After this amount of time Location Services
      * stops tracking the geofence.
      */
     private static final long GEOFENCE_EXPIRATION_IN_HOURS = 12;
-
-    /**
-     * For this sample, geofences expire after twelve hours.
-     */
-    static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
+    // For this sample, geofences expire after twelve hours.
+    public static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
-    static final float GEOFENCE_RADIUS_IN_METERS = 500; // meters
+    public static final float GEOFENCE_RADIUS_IN_METERS = 209; // 0.2 km
 
     // LocationUpdatesServiceConstants
 
-    private static final String SERVICES_PACKAGE_NAME = "pi.ua.meetaveiro.services";
-
     public static final String EXTRA_STARTED_FROM_NOTIFICATION = SERVICES_PACKAGE_NAME + ".started_from_notification";
-
     public static final String ACTION_BROADCAST = SERVICES_PACKAGE_NAME + ".broadcast";
-
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
 
     public enum ROUTE_STATE{

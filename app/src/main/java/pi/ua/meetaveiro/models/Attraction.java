@@ -127,6 +127,11 @@ public class Attraction implements Parcelable {
         this.city = city;
     }
 
+    public Attraction(String name, LatLng location) {
+        this.name = name;
+        this.location = location;
+    }
+
     @Override
     public int describeContents() {
         return 0;

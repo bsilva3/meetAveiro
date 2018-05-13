@@ -30,18 +30,24 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTION_HISTORY;
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
  * A fragment representing a list of routes
  * Activities containing this fragment MUST implement the {@link pi.ua.meetaveiro.adapters.AttractionAdapter.OnAttractionSelectedListener}
  * interface.
  */
-public class AttractionHistoryFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+public class AttractionHistoryFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        NetworkCheckResponse {
 
     private static final String TAG = AttractionHistoryFragment.class.getSimpleName();
 
@@ -91,10 +97,8 @@ public class AttractionHistoryFragment extends Fragment implements SwipeRefreshL
          */
         swipeRefreshLayout.post(() -> {
             swipeRefreshLayout.setRefreshing(true);
-
-            fetchAttractions();
-        }
-        );
+            (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+        });
 
         recyclerView = view.findViewById(R.id.recycler_view);
         mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
@@ -111,7 +115,7 @@ public class AttractionHistoryFragment extends Fragment implements SwipeRefreshL
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
-        fetchAttractions();
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
     }
@@ -160,16 +164,17 @@ public class AttractionHistoryFragment extends Fragment implements SwipeRefreshL
                     mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
-                }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            Log.e(TAG, "Error: " + error.getMessage());
-            Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-        });
+                },
+                error -> {
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    Log.e(TAG, "Error: " + error.getMessage());
+                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                });
 
         MyApplication.getInstance().addToRequestQueue(request);
     }
@@ -222,20 +227,18 @@ public class AttractionHistoryFragment extends Fragment implements SwipeRefreshL
 
     @Override
     public void onRefresh() {
+        // start animating Shimmer and hide the layout
         mShimmerViewContainer.startShimmerAnimation();
-        fetchAttractions();
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        mShimmerViewContainer.startShimmerAnimation();
+    public void onProcessFinished(boolean hasNetworkConnection) {
+        if (hasNetworkConnection)
+            fetchAttractions();
+        else {
+            //fetchLocalAttractions();
+        }
     }
-
-    @Override
-    public void onPause() {
-        mShimmerViewContainer.stopShimmerAnimation();
-        super.onPause();
-    }
-
 }

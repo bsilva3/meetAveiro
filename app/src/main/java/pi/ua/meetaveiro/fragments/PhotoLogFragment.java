@@ -534,7 +534,7 @@ public class PhotoLogFragment extends Fragment implements
                     try {
                         jsonRequest.put("image", base64Photo);
                     } catch (JSONException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, e.getMessage());
                     }
 
                     if (mLastKnownLocation!=null) {
@@ -580,7 +580,7 @@ public class PhotoLogFragment extends Fragment implements
         try {
             json = new JSONObject(result.toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (java.lang.NullPointerException e){
             Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG).show();
             return;
@@ -600,7 +600,7 @@ public class PhotoLogFragment extends Fragment implements
             markerToUpdate.setSnippet(json.get("description").toString());
             id = json.get("id").toString();
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
         markers.put(markerToUpdate, true);
 
@@ -637,7 +637,7 @@ public class PhotoLogFragment extends Fragment implements
             jsonRequest.put("name", name);
             jsonRequest.put("id", id);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
 
         //when the dialog with the description is closed, we show a feedback box;
@@ -657,7 +657,7 @@ public class PhotoLogFragment extends Fragment implements
                             try {
                                 jsonRequest.put("feedback", 1);
                             } catch (JSONException e) {
-                                e.printStackTrace();
+                                Log.e(TAG, e.getMessage());
                             }
                         }
                 )
@@ -668,7 +668,7 @@ public class PhotoLogFragment extends Fragment implements
                             try {
                                 jsonRequest.put("feedback", 0);
                             } catch (JSONException e) {
-                                e.printStackTrace();
+                                Log.e(TAG, e.getMessage());
                             }
                         }
                 )
@@ -820,7 +820,7 @@ public class PhotoLogFragment extends Fragment implements
                 return JsonResponse;
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -1058,7 +1058,7 @@ public class PhotoLogFragment extends Fragment implements
             outputStream.write(sb.toString().getBytes());
             outputStream.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
 
     }

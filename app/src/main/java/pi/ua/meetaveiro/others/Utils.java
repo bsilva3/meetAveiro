@@ -22,7 +22,7 @@ import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 
 public class Utils {
 
-    public static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting_locaction_updates";
+    public static final String KEY_ROUTE_STATE = "route_state";
 
     /**
      * Returns true if requesting location updates, otherwise returns false.
@@ -30,7 +30,7 @@ public class Utils {
      * @param context The {@link Context}.
      */
     public static boolean requestingLocationUpdates(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(KEY_REQUESTING_LOCATION_UPDATES, false);
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(KEY_ROUTE_STATE, false);
     }
 
     /**
@@ -40,7 +40,7 @@ public class Utils {
     public static void setRequestingLocationUpdates(Context context, boolean requestingLocationUpdates) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
-                .putBoolean(KEY_REQUESTING_LOCATION_UPDATES, requestingLocationUpdates)
+                .putBoolean(KEY_ROUTE_STATE, requestingLocationUpdates)
                 .apply();
     }
 
@@ -103,7 +103,7 @@ public class Utils {
                     urlc.setConnectTimeout(750);
                     urlc.connect();
                     return (urlc.getResponseCode() == 200);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Log.e("ERROR", "Error checking internet connection", e);
                 }
             } else {

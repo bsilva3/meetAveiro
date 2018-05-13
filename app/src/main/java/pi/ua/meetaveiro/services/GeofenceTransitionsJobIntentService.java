@@ -22,6 +22,7 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
+import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 
 /**
@@ -65,8 +66,7 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
         // Test that the reported transition was of interest.
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ) {
 
             // Get the geofences that were triggered. A single event can trigger multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
@@ -128,13 +128,13 @@ public class GeofenceTransitionsJobIntentService extends JobIntentService {
         }
 
         // Create an explicit content Intent that starts the main Activity.
-        Intent notificationIntent = new Intent(getApplicationContext(), NavigationDrawerActivity.class);
+        Intent notificationIntent = new Intent(getApplicationContext(), RouteActivity.class);
 
         // Construct a task stack.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
         // Add the main Activity to the task stack as the parent.
-        stackBuilder.addParentStack(NavigationDrawerActivity.class);
+        stackBuilder.addParentStack(RouteActivity.class);
 
         // Push the content Intent onto the stack.
         stackBuilder.addNextIntent(notificationIntent);

@@ -23,7 +23,8 @@ android {
     }
 }
 
-apply plugin: "org.sonarqube"
+//apply plugin: "org.sonarqube"
+
 
 sonarqube {
     properties {

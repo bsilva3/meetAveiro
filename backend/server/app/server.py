@@ -145,19 +145,22 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
+    print("Request received")
     writeImage(image)
+    print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
     img_name = classification[0]
     score = classification[1]
+    print(img_name, score)
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):
         os.makedirs(folder)
     files = os.listdir(folder)
-
+    print("Folder created")
     file_id = str(len(files)) + '.jpg'
     filename = os.path.join(folder, file_id)
     os.rename('./temp.jpg', filename)
-
+    print("Imagem gravada")
     desc = ''
 
     try:
@@ -165,17 +168,24 @@ def classify_image():
     except KeyError:
         desc = img_name
     while(True):
+        print("Looping...")
         foto = addFotografia(None, "Biblioteca, Universidade de Aveiro", user_email, lat, lon, filename,
                         None, datetime.datetime.now(), None, 'pending', score, None)
         if foto is None:
             continue
         else:
             break
-
+    print("Enviando resposta...")
+    if float(score) >= 0.8:
+        return jsonify({
+            'name' : img_name,
+            'description' : desc,
+            'id' : foto.id
+        })
     return jsonify({
-        'name' : img_name,
-        'description' : desc,
-        'id' : foto.id
+        'name': 'Desconhecido',
+        'description': '',
+        'id': None
     })
 
 @app.route('/search/feedback', methods=['POST'])
@@ -184,7 +194,7 @@ def send_feedback():
     file_id = res['image_id']
     concept = res['concept']
     feedback = res['feedback']
-    
+    print('feedback ' + str(feedback))
     if feedback == 1:
         #req_path = os.path.join('./static/img', concept)
         #file_path = os.path.join(req_path, file_id)
@@ -197,9 +207,9 @@ def send_feedback():
         new_file_path = os.path.join(dest_path, new_id)
         os.rename(file_path, os.path.join(new_file_path))
         updateFotografia(file_id, None, new_file_path)
-
+        print('feedback')
     return jsonify({
-        'status': 'OK'
+        'status': str(feedback)
     })
 
 @app.route('/resources/delimage', methods=['POST'])

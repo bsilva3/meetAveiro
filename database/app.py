@@ -1,6 +1,7 @@
 from flask import *
 from models import *
 
+
 app = Flask(__name__)
 
 
@@ -15,7 +16,9 @@ POSTGRES = {
 app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(password)s@%(host)s:%(port)s/%(database)s' % POSTGRES
 
+
 db.init_app(app)
+
 
 def addTiposExemplo():
     ## Adição dos tipos de Utilizadores ##
@@ -145,7 +148,7 @@ def queriesChico():
 
 @app.route('/')
 def index():
-    # addInfoExemplo()
+    addInfoExemplo()
     # queriesExemplo()
     #queriesChico()
     print(getInfoConceito('Biblioteca, Universidade de Aveiro'))

@@ -67,21 +67,7 @@ import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
-/*
-eu imagino uma collapsing toolbar
-        com o slide show
-        1 botao entre a informaçao do conceito e o slideshow
-        por cima entre ambas as views
-        a informaçao em si em card views
-        e no final uma expandable com a listview dos percursos
-        ah esse botao faz o tal intent
-        pro google maps
-        */
-/*funcionalidades:
-- um intent pro google maps pra ir pro conceito em causa;
-- ver todos os percursos em que esse conceito aparece;
-- um slide show com imagens tiradas do conceito;
- */
+//TODO remove default text, image for slider and elements in list when we can connect to server
 public class POIDetails extends AppCompatActivity implements DataReceiver {
     private Attraction attraction;
     private TextView description;
@@ -193,8 +179,11 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onStart() {
         super.onStart();
         requestRoutes();
-    }
+        //REMOVE THIS after we can connect to server
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
 
+    }
 
 
     private void initImageSlider() {
@@ -224,43 +213,6 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             }
         }, 2500, 2500);
     }
-
-    /*private void fetchAttractions() {
-        JsonObjectRequest request = new JsonObjectRequest(URL_ROUTES_ATTRACTION,
-                response -> {
-                    if (response == null) {
-                        Toast.makeText(this, "Couldn't fetch the routes! Please try again.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
-                    }.getType());
-
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
-
-                    // refreshing recycler view
-                    listAdapter.notifyDataSetChanged();
-                    listDataChild.put(listDataHeader.get(0), routeList);
-
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                }, error -> {
-            // error in getting json
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-
-
-            //Log.e("fetch error", "Error: " + error.getMessage());
-            //Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            // stopping swipe refresh
-        });
-        MyApplication.getInstance().addToRequestQueue(request);
-    }*/
 
     private void prepareListData() {
         listDataHeader = new ArrayList<String>();

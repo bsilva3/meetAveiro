@@ -45,7 +45,7 @@
     <string name="option_photo_log">Photo Log</string>
     <string name="option_attractions">Attractions</string>
     <string name="option_routes">Routes</string>
-    <string name="option_history">History</string>
+    <string name="option_history">My Tour\'s History</string>
     <string name="option_account_settings">Account Settings</string>
     <string name="option_logout">Logout</string>
 
@@ -119,10 +119,11 @@
 
     <!-- dialog box for feedback-->
     <string name="feedback">Do you think our app was able to identify succesfully your image?</string>
-    <!--general confirmation buttona -->
+    <!--general confirmation buttons -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="cancel">Cancel</string>
+    <string name="procede">continue</string>
 
     <!-- bottom sheet tour options-->
     <string name="remove_tour_from_map_btn">Remove Tour From Map</string>
@@ -136,6 +137,10 @@
     <string name="save_tour_description">Describe this tour</string>
     <string name="save_tour_discard">Don\'t save this tour</string>
     <string name="save_tour">Save</string>
+    <string name="exit_tour_confirmation">You are currently in route mode. If you exit now, this route will
+    be lost forever. To avoid this, go back and end your tour.\n Are you sure you want to leave?</string>
+    <string name="start_tour_confirmation">If you start a new tour, the previous tour will be removed from the map
+    but if you saved it, you can access it later on the "my history" menu</string>
 
     <string name="default_info_snippet">No places found, because location permission is disabled.</string>
     <string name="option_get_place">Points of Interest</string>

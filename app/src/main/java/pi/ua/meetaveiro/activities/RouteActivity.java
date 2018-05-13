@@ -98,6 +98,7 @@ import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.receivers.GeofenceBroadcastReceiver;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
@@ -116,11 +117,9 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
-    private static final String KEY_ROUTE_STATE = "routeState";
     private static final String TAG = "ERROR";
 
     //Current start/pause/stop buttons state
-    private Constants.ROUTE_STATE buttonsState;
     private FloatingActionButton buttonStopRoute;
     private FloatingActionButton buttonStartRoute;
     private FloatingActionButton buttonPauseRoute;
@@ -223,7 +222,6 @@ public class RouteActivity extends FragmentActivity implements
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
         mRequestingLocationUpdates = false;
-        buttonsState = Constants.ROUTE_STATE.STOPPED;
 
         // Empty list for storing geofences.
         mGeofenceList = new ArrayList<>();
@@ -262,26 +260,27 @@ public class RouteActivity extends FragmentActivity implements
 
         buttonStartRoute.setOnClickListener(v -> {
             onRouteStateChanged(true);
-            buttonsState = Constants.ROUTE_STATE.STARTED;
-            updateRouteButtons(buttonsState);
+            Utils.setRouteState(this, ROUTE_STATE.STARTED);
+            updateRouteButtons(Utils.getRouteState(this));
         });
 
         buttonStopRoute.setOnClickListener(v -> {
             onRouteStateChanged(false);
-            buttonsState = Constants.ROUTE_STATE.STOPPED;
-            updateRouteButtons(buttonsState);
+            Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+            updateRouteButtons(Utils.getRouteState(this));
             endRoute();
             //save route to store
         });
 
         buttonPauseRoute.setOnClickListener(v -> {
             onRouteStateChanged(false);
-            buttonsState = Constants.ROUTE_STATE.PAUSED;
-            updateRouteButtons(buttonsState);
+            Utils.setRouteState(this, ROUTE_STATE.PAUSED);
+            updateRouteButtons(Utils.getRouteState(this));
         });
 
         updateValuesFromBundle(savedInstanceState);
-        updateRouteButtons(buttonsState);
+        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+        updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -296,7 +295,6 @@ public class RouteActivity extends FragmentActivity implements
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
         bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-        addGeofences();
     }
 
     @Override
@@ -374,10 +372,6 @@ public class RouteActivity extends FragmentActivity implements
                 mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
             }
 
-            // Update the value of mLastUpdateTime from the Bundle and update the UI.
-            if (savedInstanceState.keySet().contains(KEY_ROUTE_STATE)) {
-                buttonsState = (Constants.ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
-            }
         }
     }
 
@@ -526,6 +520,7 @@ public class RouteActivity extends FragmentActivity implements
                     // Create the geofence.
                     .build());
         }
+        addGeofences();
     }
 
     /**
@@ -673,7 +668,6 @@ public class RouteActivity extends FragmentActivity implements
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
-            outState.putSerializable(KEY_ROUTE_STATE, buttonsState);
             super.onSaveInstanceState(outState);
         }
     }
@@ -848,6 +842,7 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     protected void onStop() {
         if (mBound) {
+            Log.i("unbind", "unbinddddddddddd");
             // Unbind from the service. This signals to the service that this activity is no longer
             // in the foreground, and the service can respond by promoting itself to a foreground
             // service.

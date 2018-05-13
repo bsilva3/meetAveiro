@@ -474,9 +474,13 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     }
 
     private void setToolbarTitle() {
-        if (navItemIndex == 1 || navItemIndex == 2) {
+        if (navItemIndex == 1) {
             collapsingToolbar.setTitleEnabled(true);
             collapsingToolbar.setTitle(activityTitles[navItemIndex]);
+        } else if ( navItemIndex == 2 ) {
+            collapsingToolbar.setTitleEnabled(true);
+            collapsingToolbar.setTitle(activityTitles[navItemIndex]);
+
         } else {
             collapsingToolbar.setTitleEnabled(false);
             getSupportActionBar().setTitle(activityTitles[navItemIndex]);

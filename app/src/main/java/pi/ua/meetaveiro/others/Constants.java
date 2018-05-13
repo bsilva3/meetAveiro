@@ -47,7 +47,16 @@ public class Constants {
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
 
     public enum ROUTE_STATE{
-        STARTED, PAUSED, STOPPED
+        STARTED, PAUSED, STOPPED;
+
+        public static ROUTE_STATE toMyEnum (String myEnumString) {
+            try {
+                return valueOf(myEnumString);
+            } catch (Exception ex) {
+                // For error cases
+                return STARTED;
+            }
+        }
     }
 
     /**

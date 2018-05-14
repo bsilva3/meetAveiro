@@ -116,9 +116,15 @@
 
     <!-- dialog box tour save -->
     <string name="tour_save">Would you like to save and/or share this Tour?</string>
-
+    <!--point info dialog-->
+    <string name="see_more_info">See more info</string>
     <!-- dialog box for feedback-->
     <string name="feedback">Do you think our app was able to identify succesfully your image?</string>
+    <string name="feedback_success">Your response was registered. Thank you!</string>
+    <string name="feedback_fail">There was a problem and we were unable to send your response</string>
+    <string name="image_rec_fail">Unfortunately, we were unable to identify the content of this image.\n
+    Try taking another picture from a different angle, and make sure theres enough light in the picture.</string>
+    <string name="dont_answer">Don\'t answer</string>
     <!--general confirmation buttons -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -128,6 +134,11 @@
     <!-- bottom sheet tour options-->
     <string name="remove_tour_from_map_btn">Remove Tour From Map</string>
     <string name="edit_tour_name">Edit Tour\'s tittle/description</string>
+    <!-- for buttons in the route activity, to control the flow of the tour-->
+    <string name="pause_tour_btn">Pause Tour</string>
+    <string name="stop_tour_btn">Stop Tour</string>
+    <string name="start_tour_btn">Start Tour</string>
+    <string name="picture_btn">Take picture</string>
 
     <!--dialog box to save tour-->
     <string name="save_tour_dialog_title">You can now save this tour, but first, please give it a

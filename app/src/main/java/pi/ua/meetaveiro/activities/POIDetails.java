@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import me.relex.circleindicator.CircleIndicator;
 import pi.ua.meetaveiro.R;
@@ -67,7 +68,7 @@ import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
-//TODO remove default text, image for slider and elements in list when we can connect to server
+//TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff
 public class POIDetails extends AppCompatActivity implements DataReceiver {
     private Attraction attraction;
     private TextView description;
@@ -90,11 +91,13 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_poidetails);
-        attraction = (Attraction) getIntent().getParcelableExtra("attraction");
-        Log.d("attr", attraction.toString()+"");
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.attraction_collapsing_toolbar);
-        collapsingToolbar.setTitleEnabled(true);
-        collapsingToolbar.setTitle(attraction.getName());
+        if (getIntent().hasExtra("attraction")) {
+            attraction = (Attraction) getIntent().getParcelableExtra("attraction");
+            collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.attraction_collapsing_toolbar);
+            collapsingToolbar.setTitleEnabled(true);
+            collapsingToolbar.setTitle(attraction.getName());
+            //attraction photos, description.. from intent if any
+        }
         toolbar = findViewById(R.id.attraction_toolbar);
         setSupportActionBar(toolbar);
         // showss back button
@@ -273,7 +276,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         try {
             jsonRequest.put("conceptName", attraction.getName());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e("Request Route Error", e.toString());
         }
 
         new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString());
@@ -331,7 +334,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                 return JsonResponse;
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e("IOException on response", e.toString());
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -361,7 +364,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         try {
             json = new JSONObject(result.toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e("Error on response", e.toString());
         } catch (java.lang.NullPointerException e){
             Toast.makeText(POIDetails.this, "Connection error", Toast.LENGTH_LONG).show();
             return;

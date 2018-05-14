@@ -26,6 +26,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,6 +64,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -85,9 +87,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
+import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
@@ -100,7 +105,7 @@ import static pi.ua.meetaveiro.others.Constants.*;
  */
 public class PhotoLogFragment extends Fragment implements
         OnMapReadyCallback,
-        DataReceiver,
+        ImageDataReceiver,
         TextToSpeech.OnInitListener{
 
     //Constant used in the location settings dialog.
@@ -204,6 +209,12 @@ public class PhotoLogFragment extends Fragment implements
                 getContext().getString(R.string.edit_tour_name)}; //options
         optionsImages = new Integer[]{R.drawable.ic_highlight_off_black_24dp,
                 R.drawable.ic_edit_black_24dp}; //icons for the options
+
+        tts = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+            }
+        });
 
     }
 
@@ -425,6 +436,7 @@ public class PhotoLogFragment extends Fragment implements
                             .snippet(snip));
                     imageMarkers.put(m,img);
                     markers.put(m,true);
+
                 }catch (Exception e){
                     Marker m = mMap.addMarker(new MarkerOptions().position(l)
                             .title(titl)
@@ -530,9 +542,13 @@ public class PhotoLogFragment extends Fragment implements
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
+                    Log.d("lst", mLastKnownLocation.toString());
                     JSONObject jsonRequest = new JSONObject();
                     try {
                         jsonRequest.put("image", base64Photo);
+                        jsonRequest.put("lat", mLastKnownLocation.getLatitude());
+                        jsonRequest.put("long", mLastKnownLocation.getLongitude());
+                        jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
@@ -543,12 +559,13 @@ public class PhotoLogFragment extends Fragment implements
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(getContext().getString(R.string.unknown_string))
-                                .snippet("Unknown")
+                                .snippet(getContext().getString(R.string.unknown_string))
                                 .icon(BitmapDescriptorFactory.fromBitmap(photo)));
                         markers.put(m, false);
                         imageMarkers.put(m, photo);
                         //send a base 64 encoded photo to server
-                        new uploadFileToServerTask().execute(jsonRequest.toString());
+                        Log.d("req", jsonRequest.toString()+"");
+                        new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
                     }else {
                         //Report error to user
                         Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
@@ -575,16 +592,17 @@ public class PhotoLogFragment extends Fragment implements
     }
 
     @Override
-    public void onResponseReceived(Object result) {
+    public void onImageResponseReceived(Object result) {
         JSONObject json = null;
         try {
             json = new JSONObject(result.toString());
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         } catch (java.lang.NullPointerException e){
-            Toast.makeText(getContext(), "Connection error", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Connection error. Please try again later", Toast.LENGTH_LONG).show();
             return;
         }
+
         Marker markerToUpdate = null;
         //search the not yet updated marker
         for(Map.Entry entry : markers.entrySet()){
@@ -594,18 +612,21 @@ public class PhotoLogFragment extends Fragment implements
             }
         }
         Marker oldMarker = markerToUpdate;
-        String id = null;
+        int id = 0;
+        String concept = "";
+        int imageId = 0;
         try {
             markerToUpdate.setTitle(json.get("name").toString());
             markerToUpdate.setSnippet(json.get("description").toString());
-            id = json.get("id").toString();
+            concept = json.get("concept").toString();
+            id = Integer.parseInt(json.get("answer").toString());
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
         markers.put(markerToUpdate, true);
 
         //update the marker in the map that stores every marker and the image in the marker
-        final String idFinal = id;
+        final int idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(m -> {
             Log.d("markerClick", "clicked");
@@ -620,6 +641,21 @@ public class PhotoLogFragment extends Fragment implements
         createAndShowInfoDialog(markerToUpdate, id);
     }
 
+    //when we send feedback
+    @Override
+    public void onFeedbackResponseReceived (Object result){
+        JSONObject json = null;
+        try {
+            json = new JSONObject(result.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (java.lang.NullPointerException e){
+            Toast.makeText(getContext(), getContext().getString(R.string.feedback_fail), Toast.LENGTH_LONG).show();
+            return;
+        }
+        Toast.makeText(getContext(), getContext().getString(R.string.feedback_success), Toast.LENGTH_LONG).show();
+    }
+
     //used to save the updated marker with the info obtained from the server
     private void updateMarkerOnMap(Marker old, Marker newMarker){
         Bitmap bit = imageMarkers.get(old);
@@ -627,56 +663,98 @@ public class PhotoLogFragment extends Fragment implements
         imageMarkers.put(newMarker, bit);
     }
 
-    private void createAndShowInfoDialog(Marker m, String id){
+    private void createAndShowInfoDialog(Marker m, int id){
         String name = m.getTitle();
         String description = m.getSnippet();
         Drawable d = new BitmapDrawable(getResources(), imageMarkers.get(m));
+        //image was recognized
+        if (!name.toLowerCase().equals("desconhecido")) {
+            //when the dialog with the description is closed, we show a feedback box;
+            //the user says if the app was able to identify the image succesfully, or close the dialog
+            //without providing an answer
+            final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
+                    .setHeaderDrawable(d)
+                    .setIcon(R.drawable.ic_check_green_24dp)
+                    .withDialogAnimation(true)
+                    .setTitle(name)
+                    .setDescription(description)
+                    .setCancelable(false)
+                    .setPositiveText(getContext().getString(R.string.ok))
+                    .onPositive(
+                            (dialog12, which) -> {
+                                dialog12.dismiss();
+                                showFeedbackDialogAndSend(name, id, d);
+                            }
+                    )
+                    .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
+                            .putExtra("attraction", name)))
+                    .setNeutralText(getContext().getString(R.string.see_more_info));
+            dialog.setScrollable(true, 5);
+            dialog.show();
+        }
+        else{
+            final MaterialStyledDialog dialog = new MaterialStyledDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AppTheme))
+                    .setHeaderDrawable(d)
+                    .setIcon(R.drawable.ic_clear_red_24dp)
+                    .withDialogAnimation(true)
+                    .setTitle(name)
+                    .setDescription(getContext().getString(R.string.image_rec_fail))
+                    .setCancelable(false)
+                    .setPositiveText(getContext().getString(R.string.ok))
+                    .onPositive(
+                            (dialog12, which) -> {
+                                dialog12.dismiss();
+                            }
+                    ).setScrollable(true, 5).build();
 
+            dialog.show();
+
+        }
+        //Log.d("tts", name+". "+ description);
+        speakOut(name);
+    }
+
+    private void showFeedbackDialogAndSend(String conceptName, int imageId, Drawable d){
         JSONObject jsonRequest = new JSONObject();
         try {
-            jsonRequest.put("name", name);
-            jsonRequest.put("id", id);
+            jsonRequest.put("concept", conceptName);
+            jsonRequest.put("image_id", imageId);
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
-
-        //when the dialog with the description is closed, we show a feedback box;
-        //the user says if the app was able to identify the image succesfully, or close the dialog
-        //without providing an answer
         final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
                 .setHeaderDrawable(d)
-                .setIcon(R.drawable.ic_check_circle_black_24dp)
+                .setIcon(R.drawable.ic_help_outline_yellow_24dp)
                 .withDialogAnimation(true)
-                .setTitle(name)
-                .setDescription(getResources().getString(R.string.feedback))
+                .setTitle(conceptName)
+                .setDescription(getContext().getString(R.string.feedback))
                 .setCancelable(true)
-                .setPositiveText("Yes")
+                .setPositiveText(getContext().getString(R.string.yes))
                 .onPositive(
                         (dialog12, which) -> {
                             //Yes button clicked
                             try {
-                                jsonRequest.put("feedback", 1);
+                                jsonRequest.put("answer", 1);
+                                new uploadFileToServerTask().execute(jsonRequest.toString(), FEEDBACK_URL);
                             } catch (JSONException e) {
                                 Log.e(TAG, e.getMessage());
                             }
                         }
                 )
-                .setNegativeText("No")
+                .setNegativeText(getContext().getString(R.string.no))
                 .onNegative(
                         (dialog12, which) -> {
                             //Yes button clicked
                             try {
-                                jsonRequest.put("feedback", 0);
+                                jsonRequest.put("answer", 0);
+                                new uploadFileToServerTask().execute(jsonRequest.toString(), FEEDBACK_URL);
                             } catch (JSONException e) {
                                 Log.e(TAG, e.getMessage());
                             }
                         }
                 )
-                .onNeutral((dialog1, which) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/javiersantos"))))
-                .setNeutralText("Show More");
-
+                .setNeutralText(getContext().getString(R.string.dont_answer));
         dialog.show();
-        speakOut(name+". "+ description);
     }
 
 
@@ -765,6 +843,7 @@ public class PhotoLogFragment extends Fragment implements
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         ProgressDialog progDailog;
+        String serverUrl;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -780,12 +859,13 @@ public class PhotoLogFragment extends Fragment implements
         protected String doInBackground(String... params) {
             String JsonResponse = null;
             String JsonDATA = params[0];
+            serverUrl = params[1];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             Log.d("response", "begin");
             try {
                 //Create a URL object holding our url
-                URL url = new URL(API_URL);
+                URL url = new URL(serverUrl);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
@@ -840,7 +920,11 @@ public class PhotoLogFragment extends Fragment implements
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
             progDailog.dismiss();
-            onResponseReceived(response);
+            if (serverUrl.equals(IMAGE_SCAN_URL))
+                onImageResponseReceived(response);
+            else if (serverUrl.equals(FEEDBACK_URL))
+                onFeedbackResponseReceived(response);
+            Log.d("res", response+"");
         }
 
     }

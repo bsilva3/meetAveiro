@@ -15,7 +15,11 @@ public class Constants {
     private static final String FRAGMENTS_PACKAGE_NAME = "pi.ua.meetaveiro.fragments";
 
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
-    public final static String API_URL = "http://192.168.54.155:8080";
+    public final static String API_URL = "http://192.168.160.192:8080";
+    //url to send an image to the server to scan
+    public final static String IMAGE_SCAN_URL = API_URL + "/search";
+    //url to send image feedback
+    public final static String FEEDBACK_URL = API_URL + "/search/feedback";
     // url to fetch all routes
     public static final String URL_ROUTES = API_URL + "/blahblah";
     // url to fetch routes history json

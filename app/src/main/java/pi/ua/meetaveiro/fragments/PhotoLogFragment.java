@@ -542,6 +542,7 @@ public class PhotoLogFragment extends Fragment implements
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
+                    Log.d("lst", mLastKnownLocation.toString());
                     JSONObject jsonRequest = new JSONObject();
                     try {
                         jsonRequest.put("image", base64Photo);

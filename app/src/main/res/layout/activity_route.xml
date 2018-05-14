@@ -33,7 +33,7 @@
         android:layout_margin="@dimen/fab_margin"
         android:orientation="vertical">
 
-        <!--<android.support.design.widget.FloatingActionButton
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -69,8 +69,8 @@
             android:layout_height="wrap_content"
             android:src="@drawable/ic_add_photo"
             app:backgroundTint="@color/colorPrimary" />
-        -->
-        <Button
+
+        <!--<Button
             android:id="@+id/stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -103,6 +103,6 @@
             android:layout_height="wrap_content"
             android:drawableLeft="@drawable/ic_add_photo"
             android:text="@string/picture_btn"
-            android:backgroundTint="@color/colorPrimary" />
+            android:backgroundTint="@color/colorPrimary" />-->
     </LinearLayout>
 </FrameLayout>

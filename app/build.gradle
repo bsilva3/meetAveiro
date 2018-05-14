@@ -23,8 +23,9 @@ android {
     }
 }
 
-apply plugin: "org.sonarqube"
+//apply plugin: "org.sonarqube"
 
+/*
 sonarqube {
     properties {
         property "sonar.projectName", "meetAveiro"
@@ -35,7 +36,7 @@ sonarqube {
         property "sonar.login", "admin"
         property "sonar.password", "admin"
     }
-}
+}*/
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

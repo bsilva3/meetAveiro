@@ -2,6 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
 
 db = SQLAlchemy()
 
@@ -135,9 +137,9 @@ class InstanciaPercurso(db.Model):
 
 class Fotografia(db.Model):
     __tablename__ = 'fotografia'
-    id = db.Column('idfoto', db.Integer, primary_key=True)
+    id = db.Column('idfoto', db.Integer, primary_key=True, autoincrement=True)
 
-    nomeconc = db.Column('nomeconceito', db.String(80), ForeignKey('conceito.nomeconceito'), primary_key=True)
+    nomeconc = db.Column('nomeconceito', db.String(80), ForeignKey('conceito.nomeconceito'))
     nomeconceito = relationship('Conceito')
 
     emailinst = db.Column('emailcriador', db.String(80), ForeignKey('utilizador.email'))
@@ -194,6 +196,11 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
     db.session.add(conceito)
     db.session.commit()
 
+def deleteConceito(id):
+    conc = db.session.query(Conceito).get(id)
+    db.session.delete(conc)
+    db.session.commit()
+
 def addPercurso(emailc, titulo, estado, descricao=None):
     percurso = Percurso(emailc, titulo, estado, descricao)
     db.session.add(percurso)
@@ -210,9 +217,15 @@ def addInstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao=None
     db.session.commit()
 
 def addFotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
+    #try:
     foto = Fotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
     db.session.add(foto)
     db.session.commit()
+    return foto
+    #except IntegrityError as e:
+    #    db.session.rollback()
+    #    return None
+    
 
 def nTotalUsers():
     return Utilizador.query.count()
@@ -287,10 +300,34 @@ def infoPercursos():
         indice+=1
     return concs
 
-def updateFotografia(id, newid, conceito, newconceito, newpath):
-    sql = text('update fotografia set idfoto = \'' + str(id) + '\', nomeconceito = \'' + conceito + '\', path = \'' + newpath + '\' where idfoto = \'' + str(newid) + '\' and nomeconceito = \'' + newconceito + '\'')
-    db.engine.execute(sql)
+def updateFotografia(id, conceito, path):
+    #sql = text('update fotografia set idfoto = \'' + str(id) + '\', nomeconceito = \'' + conceito + '\', path = \'' + newpath + '\' where idfoto = \'' + str(newid) + '\' and nomeconceito = \'' + newconceito + '\'')
+    #db.engine.execute(sql)
+    #return
+    foto = db.session.query(Fotografia).get(id)
+    if conceito is not None:
+        foto.nomeconc = conceito
+    foto.path = path
+    db.session.commit()
     return
+
+def updateFotoByPath(path, newpath):
+    foto = db.session.query().filter(Fotografia.path == path).first()
+    foto.path = newpath
+    db.session.commit()
+
+def getFoto(id):
+    #sql = text('select from fotografia where idfoto=\'' + str(id) + '\'')
+    #result = db.engine.execute(sql)
+    foto = db.session.query(Fotografia).get(id)
+    #foto = None
+    #for row in result:
+    #    foto = Fotografia(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+    return foto
+
+def deleteFoto(path):
+    foto = db.session.query(Fotografia).filter(Fotografia.path == path).delete()
+    db.session.commit()
 
 def getTodasInstPercursoUser(em):
     sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \

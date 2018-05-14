@@ -1,6 +1,6 @@
 #!/bin/bash
-#source ~/tensorflow/bin/activate
-source activate tensorflow
+source ~/tensorflow/bin/activate
+#source activate tensorflow
 
 cd ../../../../tensorflow-for-poets-2
 python -m scripts.label_image \

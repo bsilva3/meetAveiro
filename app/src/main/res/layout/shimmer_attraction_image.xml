@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/activity_padding">
+    <View
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/attraction_image_height"
+        android:layout_marginRight="@dimen/activity_padding"
+        android:background="@color/placeholder_bg" />
+
+</RelativeLayout>

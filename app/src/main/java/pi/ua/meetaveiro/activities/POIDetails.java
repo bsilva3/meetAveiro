@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -20,11 +21,16 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,26 +60,14 @@ import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.others.MyApplication;
 
 import static pi.ua.meetaveiro.activities.NavigationDrawerActivity.navItemIndex;
 import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
-/*
-eu imagino uma collapsing toolbar
-        com o slide show
-        1 botao entre a informaçao do conceito e o slideshow
-        por cima entre ambas as views
-        a informaçao em si em card views
-        e no final uma expandable com a listview dos percursos
-        ah esse botao faz o tal intent
-        pro google maps
-        */
-/*funcionalidades:
-- um intent pro google maps pra ir pro conceito em causa;
-- ver todos os percursos em que esse conceito aparece;
-- um slide show com imagens tiradas do conceito;
- */
+//TODO remove default text, image for slider and elements in list when we can connect to server
 public class POIDetails extends AppCompatActivity implements DataReceiver {
     private Attraction attraction;
     private TextView description;
@@ -84,10 +78,12 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     private List<Integer> imagesArray = new ArrayList<Integer>();
     private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
+    private ShimmerFrameLayout mShimmerViewContainer;
     RouteExpandable listAdapter;
     ExpandableListView expListView;
     List<String> listDataHeader;
     HashMap<String, List<Route>> listDataChild;
+    private List<Route> routeList;
 
 
     @Override
@@ -109,6 +105,8 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                 onBackPressed();
             }
         });
+
+        mShimmerViewContainer = findViewById(R.id.shimmer_view_container);
         //collapsingToolbar.post() { collapsingToolbar.requestLayout(); }
 
         //toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
@@ -130,7 +128,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
         // get the listview
         expListView = (ExpandableListView) findViewById(R.id.routes_with_attraction);
-
+        routeList = new ArrayList<>();
         // preparing list data
         prepareListData();
 
@@ -180,7 +178,11 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     @Override
     protected void onStart() {
         super.onStart();
-        //requestRoutes();
+        requestRoutes();
+        //REMOVE THIS after we can connect to server
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
+
     }
 
 
@@ -220,7 +222,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         listDataHeader.add("Routes that pass in this place");
 
         // Adding child data
-        List<Route> routeList = new ArrayList<Route>();
+        routeList = new ArrayList<Route>();
         routeList.add(new Route("Salreu", "Nice wal in salreu's corn"));
         routeList.add(new Route("Aveiro city", "Beatifull tour in Aveiro"));
         routeList.add(new Route("UA", "Route that goes around UA"));
@@ -282,6 +284,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            mShimmerViewContainer.startShimmerAnimation();
         }
 
         @Override
@@ -363,6 +366,9 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             Toast.makeText(POIDetails.this, "Connection error", Toast.LENGTH_LONG).show();
             return;
         }
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
         //.... recriar aqui objetos route e colocá-los numa lista
         //List<LatLng> trajectory = json.get("trajectory");
     }

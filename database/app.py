@@ -1,6 +1,7 @@
 from flask import *
 from models import *
 
+
 app = Flask(__name__)
 
 
@@ -15,7 +16,15 @@ POSTGRES = {
 app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(password)s@%(host)s:%(port)s/%(database)s' % POSTGRES
 
+
 db.init_app(app)
+
+def addUsers():
+    addUtilizador('bjpsilva@hotmail.com', 1)
+    addUtilizador('joao@outlook.com',1)
+    addUtilizador('youngf3@live.com.pt',1)
+    addUtilizador('joaoserpa1997@outlook.com',1)
+
 
 def addTiposExemplo():
     ## Adição dos tipos de Utilizadores ##
@@ -145,7 +154,8 @@ def queriesChico():
 
 @app.route('/')
 def index():
-    # addInfoExemplo()
+    addUsers()
+    #addInfoExemplo()
     # queriesExemplo()
     #queriesChico()
     print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
@@ -163,4 +173,4 @@ def index():
                            totalfotos = nTotalFotos())
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000, host='0.0.0.0')

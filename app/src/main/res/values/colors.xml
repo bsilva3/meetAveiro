@@ -23,4 +23,9 @@
     <color name="bgBottomNavigation">#fe485a</color>
     <color name="placeholder_bg">#dddddd</color>
     <color name="attraction_title">#4c4c4c</color>
+    <color name="item_name">#0c0c0c</color>
+    <color name="description">#1a1a1a</color>
+    <color name="chef">#777</color>
+    <color name="timestamp">#777</color>
+    <color name="white_opac">#b4ffffff</color>
 </resources>

@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -46,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pi.ua.meetaveiro.activities.RouteDetailsActivity;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
@@ -93,6 +95,10 @@ public class RouteHistoryFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        /*Intent intent = new Intent(getContext(), RouteDetailsActivity.class);
+        getContext().startActivity(intent);*/
+
     }
 
     @Override

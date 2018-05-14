@@ -34,6 +34,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -113,7 +115,7 @@ public class RouteActivity extends FragmentActivity implements
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
-    private static final int DEFAULT_ZOOM = 17;
+    private static final int DEFAULT_ZOOM = 18;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
@@ -259,9 +261,38 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         buttonStartRoute.setOnClickListener(v -> {
-            onRouteStateChanged(true);
-            Utils.setRouteState(this, ROUTE_STATE.STARTED);
-            updateRouteButtons(Utils.getRouteState(this));
+            if (routePoints.isEmpty()){
+                onRouteStateChanged(true);
+                updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
+            }
+            else{
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                //clean all points and markers from previous tour
+                                markers.clear();
+                                routePoints.clear();
+                                imageMarkers.clear();
+                                line.remove();
+                                //now procede to the tour
+                                onRouteStateChanged(true);
+                                updateRouteButtons(Utils.getRouteState(RouteActivity.this));
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                //tour wont start
+                                dialog.dismiss();
+                                break;
+                        }
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
+                        .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
+            }
         });
 
         buttonStopRoute.setOnClickListener(v -> {
@@ -276,6 +307,38 @@ public class RouteActivity extends FragmentActivity implements
             onRouteStateChanged(false);
             Utils.setRouteState(this, ROUTE_STATE.PAUSED);
             updateRouteButtons(Utils.getRouteState(this));
+        });
+
+        //back button (with image)
+        ImageButton back = (ImageButton)findViewById(R.id.back_image_btn);
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
+                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which){
+                                case DialogInterface.BUTTON_POSITIVE:
+                                    onBackPressed();
+                                    break;
+
+                                case DialogInterface.BUTTON_NEGATIVE:
+                                    dialog.dismiss();
+                                    break;
+                            }
+                        }
+                    };
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                    builder.setMessage(getString(R.string.exit_tour_confirmation)).setPositiveButton(getString(R.string.yes), dialogClickListener)
+                            .setNegativeButton(getString(R.string.no), dialogClickListener).show();
+                }
+                else{
+                    onBackPressed();
+                }
+
+            }
         });
 
         updateValuesFromBundle(savedInstanceState);
@@ -1128,8 +1191,8 @@ public class RouteActivity extends FragmentActivity implements
 
                             saveRouteToFile(route);
 
-                            line = null;
-                            routePoints.clear();//reset routePoints
+                            //routePoints.clear();not reseting because we are gonna have only one route
+                            //at a time, and this will be to check if a route exists in map
                         })
                 .setNegativeButton(getString(R.string.save_tour_discard),
                         (dialog, id) -> dialog.cancel());

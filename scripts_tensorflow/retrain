@@ -8,8 +8,8 @@ WD=$(pwd)
 cd "tensorflow-for-poets-2"
 
 #cd "${HOME_DIR}"tensorflow-for-poets-2   
-#source tensorflow/bin/activate 
-source activate tensorflow   
+source ~/tensorflow/bin/activate 
+#source activate tensorflow   
 
 
 python -m scripts.retrain \

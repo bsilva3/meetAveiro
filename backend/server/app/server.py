@@ -244,6 +244,7 @@ def create_topic():
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
+            addConceito(topic, 'admin@admin.pt')
     return redirect(url_for('index'))
 
 @app.route('/resources/topics/manage', methods=['POST'])
@@ -260,6 +261,7 @@ def manage_topic():
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder, ignore_errors=True)
+            deleteConceito(topic)
         return redirect(url_for('index'))
 
 
@@ -307,10 +309,12 @@ def manage_requests():
             os.makedirs(dest_folder)
         files = os.listdir(dest_folder)
         new_file = str(len(files)) + '.' + file_desc[1]
-        os.rename(req_folder, os.path.join(dest_folder, new_file))
+        new_path = os.path.join(dest_folder, new_file)
+        os.rename(req_folder, new_path)
+        updateFotoByPath(req_folder, new_path)
     elif method == 'DELETE':
         os.remove(req_folder)
-    
+        deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
 
 # Background tasks

@@ -196,6 +196,11 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
     db.session.add(conceito)
     db.session.commit()
 
+def deleteConceito(id):
+    conc = db.session.query(Conceito).get(id)
+    db.session.delete(conc)
+    db.session.commit()
+
 def addPercurso(emailc, titulo, estado, descricao=None):
     percurso = Percurso(emailc, titulo, estado, descricao)
     db.session.add(percurso)
@@ -319,6 +324,10 @@ def getFoto(id):
     #for row in result:
     #    foto = Fotografia(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
     return foto
+
+def deleteFoto(path):
+    foto = db.session.query(Fotografia).filter(Fotografia.path == path).delete()
+    db.session.commit()
 
 def getTodasInstPercursoUser(em):
     sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \

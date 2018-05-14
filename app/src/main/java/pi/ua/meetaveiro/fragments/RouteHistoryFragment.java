@@ -106,7 +106,7 @@ public class RouteHistoryFragment extends Fragment implements
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
 
-        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
+        mShimmerViewContainer = view.findViewById(R.id.route_list_shimmer_view_container);
         recyclerView = view.findViewById(R.id.recycler_view);
         fastScroller = view.findViewById(R.id.fastscroll);
 
@@ -123,7 +123,8 @@ public class RouteHistoryFragment extends Fragment implements
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-            swipeRefreshLayout.setRefreshing(true);
+            mShimmerViewContainer.setVisibility(View.VISIBLE);
+            mShimmerViewContainer.startShimmerAnimation();
             (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
@@ -136,6 +137,9 @@ public class RouteHistoryFragment extends Fragment implements
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
+
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
 
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
@@ -231,8 +235,6 @@ public class RouteHistoryFragment extends Fragment implements
             mShimmerViewContainer.setVisibility(View.GONE);
             // stopping swipe refresh
             swipeRefreshLayout.setRefreshing(false);
-
-
 
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());

@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
@@ -88,7 +87,9 @@ public class RouteListFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
-        // Set the adapter
+
+        mShimmerViewContainer = view.findViewById(R.id.route_list_shimmer_view_container);
+        recyclerView = view.findViewById(R.id.recycler_view);
 
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -98,12 +99,11 @@ public class RouteListFragment extends Fragment implements
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-            swipeRefreshLayout.setRefreshing(true);
+            mShimmerViewContainer.setVisibility(View.VISIBLE);
+            mShimmerViewContainer.startShimmerAnimation();
             (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
-        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
-        recyclerView = view.findViewById(R.id.recycler_view);
         fastScroller = view.findViewById(R.id.fastscroll);
 
         routeList = new ArrayList<>();
@@ -117,6 +117,8 @@ public class RouteListFragment extends Fragment implements
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
@@ -188,6 +190,7 @@ public class RouteListFragment extends Fragment implements
      *
      */
     private void fetchLocalRoutes(){
+
         List<Route> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
@@ -206,17 +209,16 @@ public class RouteListFragment extends Fragment implements
             routeList.clear();
             routeList.addAll(items);
 
-            // refreshing recycler view
-            mAdapter.notifyDataSetChanged();
-
             // stopping swipe refresh
             swipeRefreshLayout.setRefreshing(false);
             mShimmerViewContainer.setVisibility(View.GONE);
             mShimmerViewContainer.stopShimmerAnimation();
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
         }catch (Exception e){
             Log.e(TAG, e.getMessage());
         }
-
 
     }
 

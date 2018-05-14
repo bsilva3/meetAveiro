@@ -45,7 +45,7 @@
     <string name="option_photo_log">Photo Log</string>
     <string name="option_attractions">Attractions</string>
     <string name="option_routes">Routes</string>
-    <string name="option_history">My Tour\'s History</string>
+    <string name="option_history">My History</string>
     <string name="option_account_settings">Account Settings</string>
     <string name="option_logout">Logout</string>
 

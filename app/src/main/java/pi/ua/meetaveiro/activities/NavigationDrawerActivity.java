@@ -1,22 +1,17 @@
 package pi.ua.meetaveiro.activities;
 
 import android.Manifest;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -34,7 +29,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,12 +49,10 @@ import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.fragments.RouteListFragment;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
-import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         AttractionAdapter.OnAttractionSelectedListener,
@@ -116,29 +108,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private Bundle savedState;
     private boolean mPermissionsGranted = false;
 
-    // A reference to the service used to get location updates.
-    private LocationUpdatesService mService = null;
-
-    // Tracks the bound state of the service.
-    private boolean mBound = false;
-
-    // Monitors the state of the connection to the service.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-            mBound = false;
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -183,10 +152,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-
-        // Bind to the service. If the service is in foreground mode, this signals to the service
-        // that since this activity is in the foreground, the service can exit foreground mode.
-        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override

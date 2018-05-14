@@ -90,18 +90,20 @@ public class AttractionHistoryFragment extends Fragment implements
 
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
+        mShimmerViewContainer = view.findViewById(R.id.route_list_shimmer_view_container);
+
 
         /**
          * Showing Swipe Refresh animation on activity create
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-            swipeRefreshLayout.setRefreshing(true);
+            mShimmerViewContainer.setVisibility(View.VISIBLE);
+            mShimmerViewContainer.startShimmerAnimation();
             (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
         recyclerView = view.findViewById(R.id.recycler_view);
-        mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         fastScroller = view.findViewById(R.id.fastscroll);
 
         attractionList = new ArrayList<>();
@@ -115,6 +117,8 @@ public class AttractionHistoryFragment extends Fragment implements
         recyclerView.setAdapter(mAdapter);
         fastScroller.setRecyclerView(recyclerView);
 
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
@@ -238,6 +242,11 @@ public class AttractionHistoryFragment extends Fragment implements
         if (hasNetworkConnection)
             fetchAttractions();
         else {
+            // stop animating Shimmer and hide the layout
+            mShimmerViewContainer.stopShimmerAnimation();
+            mShimmerViewContainer.setVisibility(View.GONE);
+            // stopping swipe refresh
+            swipeRefreshLayout.setRefreshing(false);
             //fetchLocalAttractions();
         }
     }

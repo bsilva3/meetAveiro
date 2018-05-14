@@ -7,6 +7,8 @@ import sys
 sys.path.append('../../../database')
 from models import *
 
+
+import datetime
 import requests
 from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
 from flask_bootstrap import Bootstrap
@@ -24,8 +26,8 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-import firebase_admin
-from firebase_admin import db
+#import firebase_admin
+#from firebase_admin import db
 import flask
 
 IMAGE_FOLDER = '../../../../treino'
@@ -53,9 +55,9 @@ infos = {
     'complexo pedagógico' : 'Complexo Pedagógico, Tecnológico e Científico da Universidade de Aveiro'
 }
 
-firebase_admin.initialize_app(options={
-    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
-})
+#firebase_admin.initialize_app(options={
+#    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
+#})
 
 def get_request_files():
     folder = './static/img'
@@ -110,8 +112,6 @@ def show_gallery(query):
 def show_stats():
     return render_template('stats.html',
                            totalusers = nTotalUsers(),
-                           #totalAdmin = nTotalTipoUser('Administrador'),
-                           #totalTuristas = nTotalTipoUser('Turista'),
                            totalAdmin=10,
                            totalTuristas = 80,
                            totalconcepts = nTotalConcepts(),
@@ -142,53 +142,74 @@ def do_search(query):
 def classify_image():
     res = request.get_json(force=True)
     image = res['image']
+    user_email = res['user']
+    lat = res['lat']
+    lon = res['long']
+    print("Request received")
     writeImage(image)
+    print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
-    # print(classification)
-    #img_name = classification["outputs"][0]["data"]["concepts"][0]["name"]
-    # print(img_name.lower())
     img_name = classification[0]
+    score = classification[1]
+    print(img_name, score)
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):
         os.makedirs(folder)
     files = os.listdir(folder)
-
+    print("Folder created")
     file_id = str(len(files)) + '.jpg'
     filename = os.path.join(folder, file_id)
     os.rename('./temp.jpg', filename)
-
+    print("Imagem gravada")
     desc = ''
 
     try:
         desc = infos[img_name.lower()]
     except KeyError:
         desc = img_name
-    #process_image_search(img_name)
+    while(True):
+        print("Looping...")
+        foto = addFotografia(None, "Biblioteca, Universidade de Aveiro", user_email, lat, lon, filename,
+                        None, datetime.datetime.now(), None, 'pending', score, None)
+        if foto is None:
+            continue
+        else:
+            break
+    print("Enviando resposta...")
+    if float(score) >= 0.8:
+        return jsonify({
+            'name' : img_name,
+            'description' : desc,
+            'id' : foto.id
+        })
     return jsonify({
-        'name' : img_name,
-        'description' : desc,
-        'id' : file_id
+        'name': 'Desconhecido',
+        'description': '',
+        'id': None
     })
 
 @app.route('/search/feedback', methods=['POST'])
 def send_feedback():
     res = request.get_json(force=True)
-    file_id = res['id']
+    file_id = res['image_id']
     concept = res['concept']
     feedback = res['feedback']
-    
+    print('feedback ' + str(feedback))
     if feedback == 1:
-        req_path = os.path.join('./static/img', concept)
-        file_path = os.path.join(req_path, file_id)
+        #req_path = os.path.join('./static/img', concept)
+        #file_path = os.path.join(req_path, file_id)
+        foto = getFoto(file_id)
+        file_path = foto.path
         dest_path = os.path.join(IMAGE_FOLDER, concept)
         if not os.path.exists(dest_path):
             os.makedirs(dest_path)
         new_id = str(len(os.listdir(dest_path))) + '.jpg'
         new_file_path = os.path.join(dest_path, new_id)
         os.rename(file_path, os.path.join(new_file_path))
-
+        updateFotografia(file_id, None, new_file_path)
+        print('feedback')
     return jsonify({
-        'status': 'OK'
+        'status': str(feedback)
     })
 
 @app.route('/resources/delimage', methods=['POST'])
@@ -223,6 +244,7 @@ def create_topic():
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
+            addConceito(topic, 'admin@admin.pt')
     return redirect(url_for('index'))
 
 @app.route('/resources/topics/manage', methods=['POST'])
@@ -239,6 +261,7 @@ def manage_topic():
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder, ignore_errors=True)
+            deleteConceito(topic)
         return redirect(url_for('index'))
 
 
@@ -263,7 +286,10 @@ def change_request():
         os.makedirs(dest_folder)
     files = os.listdir(dest_folder)
     new_file = str(len(files)) + '.' + file_desc[1]
-    os.rename(req_folder, os.path.join(dest_folder, new_file))
+    new_path = os.path.join(dest_folder, new_file)
+    os.rename(req_folder, new_path)
+
+    updateFotoByPath(req_folder, new_path)
 
     return redirect(url_for('show_requests'))
 
@@ -283,10 +309,12 @@ def manage_requests():
             os.makedirs(dest_folder)
         files = os.listdir(dest_folder)
         new_file = str(len(files)) + '.' + file_desc[1]
-        os.rename(req_folder, os.path.join(dest_folder, new_file))
+        new_path = os.path.join(dest_folder, new_file)
+        os.rename(req_folder, new_path)
+        updateFotoByPath(req_folder, new_path)
     elif method == 'DELETE':
         os.remove(req_folder)
-    
+        deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
 
 # Background tasks

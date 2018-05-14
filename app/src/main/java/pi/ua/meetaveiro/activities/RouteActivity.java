@@ -33,8 +33,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -69,7 +69,6 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -96,24 +95,20 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.receivers.GeofenceBroadcastReceiver;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 import static pi.ua.meetaveiro.others.Constants.*;
 
-/* This activity can create a new route, by drawing the path as the user walks, or
-    it can follow a pre created route. To see which mode we are on, we check to see if there
-    is an intent with a route. If there is, then we are just following a tour.
- */
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        ImageDataReceiver,
+        DataReceiver,
         TextToSpeech.OnInitListener,
         OnCompleteListener<Void> {
 
@@ -124,15 +119,13 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
-    private static final String KEY_ROUTE_STATE = "routeState";
     private static final String TAG = "ERROR";
 
     //Current start/pause/stop buttons state
-    private Constants.ROUTE_STATE buttonsState;
-    private Button buttonStopRoute;
-    private Button buttonStartRoute;
-    private Button buttonPauseRoute;
-    private Button buttonAddPhoto;
+    private FloatingActionButton buttonStopRoute;
+    private FloatingActionButton buttonStartRoute;
+    private FloatingActionButton buttonPauseRoute;
+    private FloatingActionButton buttonAddPhoto;
 
     // Default location
     private final LatLng mDefaultLocation = new LatLng(40.6442700, -8.6455400);
@@ -197,9 +190,6 @@ public class RouteActivity extends FragmentActivity implements
      * Used when requesting to add or remove geofences.
      */
     private PendingIntent mGeofencePendingIntent;
-    //used to see if we are creating a route, or following a pre created route
-    private boolean createRouteMode = true;
-    private Route route;
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -234,7 +224,6 @@ public class RouteActivity extends FragmentActivity implements
         markers = new HashMap<>();
         imageMarkers = new HashMap<>();
         mRequestingLocationUpdates = false;
-        buttonsState = Constants.ROUTE_STATE.STOPPED;
 
         // Empty list for storing geofences.
         mGeofenceList = new ArrayList<>();
@@ -260,13 +249,6 @@ public class RouteActivity extends FragmentActivity implements
 
         routePoints = new ArrayList<>(); //stores all routePoints during the tour so that a trajectory line can be drawn using those routePoints
 
-        //check to see if a route object was passed as an intent
-        if (getIntent().hasExtra("route")){
-            route = (Route) getIntent().getExtras().getParcelable("route");
-            //because we received a route, we are not creating a route
-            this.createRouteMode = false;
-        }
-
         // Inflate the layout for this fragment
         buttonAddPhoto = findViewById(R.id.take_photo);
         buttonStartRoute = findViewById(R.id.start);
@@ -277,112 +259,62 @@ public class RouteActivity extends FragmentActivity implements
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         });
-        if (createRouteMode) {
-            buttonStartRoute.setOnClickListener(v -> {
-                if (routePoints.isEmpty()) {
-                    //route record begins
-                    onRouteStateChanged(true);
-                    buttonsState = Constants.ROUTE_STATE.STARTED;
-                    updateRouteButtons(buttonsState);//we can procede to the tour
-                } else {
-                    //we already have a route on the map
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    //clean all points and markers from previous tour
-                                    markers.clear();
-                                    routePoints.clear();
-                                    imageMarkers.clear();
-                                    line.remove();
-                                    //now proceed to the tour
-                                    onRouteStateChanged(true);
-                                    buttonsState = Constants.ROUTE_STATE.STARTED;
-                                    updateRouteButtons(buttonsState);
-                                    break;
 
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    //tour wont start
-                                    dialog.dismiss();
-                                    break;
-                            }
+        buttonStartRoute.setOnClickListener(v -> {
+            if (routePoints.isEmpty()){
+                onRouteStateChanged(true);
+                updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
+            }
+            else{
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                //clean all points and markers from previous tour
+                                markers.clear();
+                                routePoints.clear();
+                                imageMarkers.clear();
+                                line.remove();
+                                //now procede to the tour
+                                onRouteStateChanged(true);
+                                updateRouteButtons(Utils.getRouteState(RouteActivity.this));
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                //tour wont start
+                                dialog.dismiss();
+                                break;
                         }
-                    };
+                    }
+                };
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
-                    builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
-                            .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
-                }
-            });
+                AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
+                        .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
+            }
+        });
 
-            buttonStopRoute.setOnClickListener(v -> {
-                onRouteStateChanged(false);
-                buttonsState = Constants.ROUTE_STATE.STOPPED;
-                updateRouteButtons(buttonsState);
-                endRoute();
-                //save route to store
-            });
+        buttonStopRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
+            Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+            updateRouteButtons(Utils.getRouteState(this));
+            endRoute();
+            //save route to store
+        });
 
-            buttonPauseRoute.setOnClickListener(v -> {
-                onRouteStateChanged(false);
-                buttonsState = Constants.ROUTE_STATE.PAUSED;
-                updateRouteButtons(buttonsState);
-            });
-        }
-        else{
-            buttonStartRoute.setOnClickListener(v -> {
-                if (routePoints.isEmpty()) {
-                    //route navigation begins
-                    onRouteStateChanged(true);
-                    buttonsState = Constants.ROUTE_STATE.STARTED_NAVIGATION;
-                    updateRouteButtons(buttonsState);//we can procede to the tour
-                } else {
-                    //we already have a route on the map
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    //clean all points and markers from previous tour
-                                    markers.clear();
-                                    routePoints.clear();
-                                    imageMarkers.clear();
-                                    line.remove();
-                                    //now proceed to the tour
-                                    onRouteStateChanged(true);
-                                    buttonsState = Constants.ROUTE_STATE.STARTED;
-                                    updateRouteButtons(buttonsState);
-                                    break;
+        buttonPauseRoute.setOnClickListener(v -> {
+            onRouteStateChanged(false);
+            Utils.setRouteState(this, ROUTE_STATE.PAUSED);
+            updateRouteButtons(Utils.getRouteState(this));
+        });
 
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    //tour wont start
-                                    dialog.dismiss();
-                                    break;
-                            }
-                        }
-                    };
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
-                    builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
-                            .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
-                }
-            });
-
-            buttonStopRoute.setOnClickListener(v -> {
-                onRouteStateChanged(false);
-                buttonsState = Constants.ROUTE_STATE.STOPPED;
-                updateRouteButtons(buttonsState);
-                endRoute();
-                //save route to store
-            });
-        }
         //back button (with image)
         ImageButton back = (ImageButton)findViewById(R.id.back_image_btn);
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (buttonsState.equals(ROUTE_STATE.STARTED) || buttonsState.equals(ROUTE_STATE.PAUSED)){
+                if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
                     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -410,13 +342,13 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         updateValuesFromBundle(savedInstanceState);
-        updateRouteButtons(buttonsState);
+        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+        updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.route_map);
         mapFragment.getMapAsync(this);
-
     }
 
     @Override
@@ -426,7 +358,6 @@ public class RouteActivity extends FragmentActivity implements
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
         bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-        addGeofences();
     }
 
     @Override
@@ -504,10 +435,6 @@ public class RouteActivity extends FragmentActivity implements
                 mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
             }
 
-            // Update the value of mLastUpdateTime from the Bundle and update the UI.
-            if (savedInstanceState.keySet().contains(KEY_ROUTE_STATE)) {
-                buttonsState = (Constants.ROUTE_STATE) savedInstanceState.getSerializable(KEY_ROUTE_STATE);
-            }
         }
     }
 
@@ -541,15 +468,9 @@ public class RouteActivity extends FragmentActivity implements
 
         // Add the geofences to be monitored by geofencing service.
         builder.addGeofences(mGeofenceList);
-        GeofencingRequest geo = null;
-        try {
-            geo = builder.build();
-        } catch (IllegalArgumentException e){
-            Log.e("GeoFence Error", e.toString());
-        }
 
         // Return a GeofencingRequest.
-        return geo;
+        return builder.build();
     }
 
     /**
@@ -633,7 +554,7 @@ public class RouteActivity extends FragmentActivity implements
     /**
      * This sample hard codes geofence data. A real app might dynamically create geofences based on
      * the user's location.
-     *TODO: PUT HERE THE RESULTS RETURNED BY THE SERVER (CONCEPTS)
+     * PUT HERE THE RESULTS RETURNED BY THE SERVER (CONCEPTS)
      */
     private void populateGeofenceList(List<Attraction> attractions) {
         for (Attraction entry : attractions) {
@@ -662,6 +583,7 @@ public class RouteActivity extends FragmentActivity implements
                     // Create the geofence.
                     .build());
         }
+        addGeofences();
     }
 
     /**
@@ -779,9 +701,6 @@ public class RouteActivity extends FragmentActivity implements
                     JSONObject jsonRequest = new JSONObject();
                     try {
                         jsonRequest.put("image", base64Photo);
-                        jsonRequest.put("lat", mLastKnownLocation.getLatitude());
-                        jsonRequest.put("long", mLastKnownLocation.getLongitude());
-                        jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
@@ -812,7 +731,6 @@ public class RouteActivity extends FragmentActivity implements
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
-            outState.putSerializable(KEY_ROUTE_STATE, buttonsState);
             super.onSaveInstanceState(outState);
         }
     }
@@ -837,7 +755,7 @@ public class RouteActivity extends FragmentActivity implements
     }
 
     @Override
-    public void onImageResponseReceived(Object result) {
+    public void onResponseReceived(Object result) {
         JSONObject json = null;
         try {
             json = new JSONObject(result.toString());
@@ -855,41 +773,34 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             }
         }
-            if (markerToUpdate != null) {
-                Marker oldMarker = markerToUpdate;
-                String id = null;
-                try {
-                    markerToUpdate.setTitle(json.get("name").toString());
-                    markerToUpdate.setSnippet(json.get("description").toString());
-                    id = json.get("id").toString();
-                } catch (JSONException e) {
-                    Log.e(TAG, e.getMessage());
+        Marker oldMarker = markerToUpdate;
+        String id = null;
+        try {
+            markerToUpdate.setTitle(json.get("name").toString());
+            markerToUpdate.setSnippet(json.get("description").toString());
+            id = json.get("id").toString();
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        markers.put(markerToUpdate, true);
+
+        //update the marker in the map that stores every marker and the image in the marker
+        final String idFinal = id;
+        updateMarkerOnMap(oldMarker, markerToUpdate);
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                Log.d("markerClick", "clicked");
+                if (m != null) {
+                    Log.d("markerClickI", "clicked with info");
+                    createAndShowInfoDialog(m, idFinal);
+                    return true;
                 }
-                markers.put(markerToUpdate, true);
-
-                //update the marker in the map that stores every marker and the image in the marker
-                final String idFinal = id;
-                updateMarkerOnMap(oldMarker, markerToUpdate);
-                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker m) {
-                        Log.d("markerClick", "clicked");
-                        if (m != null) {
-                            Log.d("markerClickI", "clicked with info");
-                            createAndShowInfoDialog(m, idFinal);
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-                //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
-                createAndShowInfoDialog(markerToUpdate, id);
+                return false;
             }
-    }
-
-    @Override
-    public void onFeedbackResponseReceived(Object result) {
-
+        });
+        //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
+        createAndShowInfoDialog(markerToUpdate, id);
     }
 
     //used to save the updated marker with the info obtained from the server
@@ -994,6 +905,7 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     protected void onStop() {
         if (mBound) {
+            Log.i("unbind", "unbinddddddddddd");
             // Unbind from the service. This signals to the service that this activity is no longer
             // in the foreground, and the service can respond by promoting itself to a foreground
             // service.
@@ -1074,7 +986,7 @@ public class RouteActivity extends FragmentActivity implements
             Log.d("response", "begin");
             try {
                 //Create a URL object holding our url
-                URL url = new URL(IMAGE_SCAN_URL);
+                URL url = new URL(API_URL);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
@@ -1129,7 +1041,7 @@ public class RouteActivity extends FragmentActivity implements
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
             progDailog.dismiss();
-            onImageResponseReceived(response);
+            onResponseReceived(response);
         }
 
     }

@@ -25,22 +25,24 @@ public class Utils {
     public static final String KEY_ROUTE_STATE = "route_state";
 
     /**
-     * Returns true if requesting location updates, otherwise returns false.
-     *
+     * Returns the route state from shared preferences.
      * @param context The {@link Context}.
      */
-    public static boolean requestingLocationUpdates(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(KEY_ROUTE_STATE, false);
+    public static Constants.ROUTE_STATE getRouteState(Context context) {
+        String stringValue = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getString(KEY_ROUTE_STATE, Constants.ROUTE_STATE.STOPPED.toString());
+        return Constants.ROUTE_STATE.toMyEnum(stringValue);
     }
 
     /**
-     * Stores the location updates state in SharedPreferences.
-     * @param requestingLocationUpdates The location updates state.
+     * Stores the route state in SharedPreferences.
+     * @param route_state The route state.
      */
-    public static void setRequestingLocationUpdates(Context context, boolean requestingLocationUpdates) {
+    public static void setRouteState(Context context, Constants.ROUTE_STATE route_state) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
-                .putBoolean(KEY_ROUTE_STATE, requestingLocationUpdates)
+                .putString(KEY_ROUTE_STATE, route_state.toString())
                 .apply();
     }
 

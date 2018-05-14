@@ -281,4 +281,5 @@
     <string name="more_info_attraction">Would you like to know more about this attraction?</string>
     <string name="title_activity_route">Route</string>
     <string name="notification_on_a_route">You are on a meetAveiro route. Click to know more!</string>
+    <string name="return_route">Return Route</string>
 </resources>

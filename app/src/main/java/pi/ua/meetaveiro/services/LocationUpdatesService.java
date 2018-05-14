@@ -152,7 +152,11 @@ public class LocationUpdatesService extends Service {
 
         // We got here because the user decided to remove location updates from the notification.
         if (startedFromNotification) {
-            pauseLocationUpdates();
+            if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
+                removeLocationUpdates();
+            else if(Utils.getRouteState(this).equals(ROUTE_STATE.STOPPED))
+                requestLocationUpdates();
+            startForeground(NOTIFICATION_ID, getNotification());
         }
         // Tells the system to not try to recreate the service after it has been killed.
         return START_NOT_STICKY;
@@ -188,12 +192,12 @@ public class LocationUpdatesService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.i(TAG, "Last client unbound from service");
+        Log.i(TAG, "Last client unbound from service" + Utils.getRouteState(this).toString());
 
         // Called when the last client (MainActivity in case of this sample) unbinds from this
         // service. If this method is called due to a configuration change in MainActivity, we
         // do nothing. Otherwise, we make this service a foreground service.
-        if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
+        if (!mChangingConfiguration && !Utils.getRouteState(this).equals(ROUTE_STATE.STOPPED)) {
             Log.i(TAG, "Starting foreground service");
             startForeground(NOTIFICATION_ID, getNotification());
         }
@@ -211,29 +215,14 @@ public class LocationUpdatesService extends Service {
      */
     public void requestLocationUpdates() {
         Log.i(TAG, "Requesting location updates");
-        Utils.setRequestingLocationUpdates(this, true);
+        Utils.setRouteState(this, ROUTE_STATE.STARTED);
         startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
         try {
             mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                     mLocationCallback, Looper.myLooper());
         } catch (SecurityException unlikely) {
-            Utils.setRequestingLocationUpdates(this, false);
+            Utils.setRouteState(this, ROUTE_STATE.STOPPED);
             Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
-        }
-    }
-
-    /**
-     * Removes location updates. Note that in this sample we merely log the
-     * {@link SecurityException}.
-     */
-    public void pauseLocationUpdates() {
-        Log.i(TAG, "Pausing location updates");
-        try {
-            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
-            Utils.setRequestingLocationUpdates(this, false);
-        } catch (SecurityException unlikely) {
-            Utils.setRequestingLocationUpdates(this, true);
-            Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
         }
     }
 
@@ -245,10 +234,10 @@ public class LocationUpdatesService extends Service {
         Log.i(TAG, "Removing location updates");
         try {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
-            Utils.setRequestingLocationUpdates(this, false);
+            Utils.setRouteState(this, ROUTE_STATE.PAUSED);
             stopSelf();
         } catch (SecurityException unlikely) {
-            Utils.setRequestingLocationUpdates(this, true);
+            Utils.setRouteState(this, ROUTE_STATE.STARTED);
             Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
         }
     }
@@ -281,7 +270,7 @@ public class LocationUpdatesService extends Service {
 
         Notification notification;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            notification = new Notification.Builder(this)
+            Notification.Builder builder = new Notification.Builder(this)
                     .setContentTitle(text)
                     .setPriority(Notification.PRIORITY_HIGH)
                     .setSmallIcon(R.mipmap.ic_launcher)
@@ -291,11 +280,18 @@ public class LocationUpdatesService extends Service {
                     //.setStyle(new Notification.MediaStyle())
                     .addAction(new Notification.Action.Builder(R.drawable.ic_add_photo,
                             getString(R.string.take_picture),
-                            activityPendingIntent).build())
-                    .addAction(new Notification.Action.Builder(R.drawable.ic_pause,
-                            getString(R.string.pause_route),
-                            pauseServicePendingIntent).build())
-                    .build();
+                            activityPendingIntent).build());
+
+            if(Utils.getRouteState(this).equals(ROUTE_STATE.PAUSED))
+                builder.addAction(new Notification.Action.Builder(R.drawable.ic_pause,
+                        getString(R.string.pause_route),
+                        pauseServicePendingIntent).build());
+            else
+                builder.addAction(new Notification.Action.Builder(R.drawable.ic_play_arrow_black_24dp,
+                        getString(R.string.return_route),
+                        pauseServicePendingIntent).build());
+
+            notification = builder.build();
         }
         else{
                notification  = new Notification.Builder(this)
@@ -317,14 +313,11 @@ public class LocationUpdatesService extends Service {
     private void getLastLocation() {
         try {
             mFusedLocationClient.getLastLocation()
-                    .addOnCompleteListener(new OnCompleteListener<Location>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Location> task) {
-                            if (task.isSuccessful() && task.getResult() != null) {
-                                mLocation = task.getResult();
-                            } else {
-                                Log.w(TAG, "Failed to get location.");
-                            }
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            mLocation = task.getResult();
+                        } else {
+                            Log.w(TAG, "Failed to get location.");
                         }
                     });
         } catch (SecurityException unlikely) {

@@ -78,11 +78,6 @@ public class RouteListFragment extends Fragment implements
     public RouteListFragment() {
     }
 
-
-    public static RouteListFragment newInstance() {
-        return new RouteListFragment();
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -135,7 +130,7 @@ public class RouteListFragment extends Fragment implements
             mListener = (RouteAdapter.OnRouteItemSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInte ractionListener");
+                    + " must implement OnListFragmentInteractionListener");
         }
     }
 
@@ -229,8 +224,7 @@ public class RouteListFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
-        TextView collTitlteView = getActivity().findViewById(R.id.collapsing_toolbar_title);
-        TextView collSubtitleView = getActivity().findViewById(R.id.collapsing_toolbar_subtitle);
+
         try {
             Glide.with(getActivity()).load(R.drawable.agueda).into(collImgView);
         } catch (Exception e) {

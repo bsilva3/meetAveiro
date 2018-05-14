@@ -84,12 +84,14 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
                 Log.d("clicked!", "route"+holder.mItem +".json" );
 
                 //context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
-
                 Intent intent = new Intent(context, RouteDetailsActivity.class);
+                context.startActivity(intent);
+
+                /*Intent intent = new Intent(context, RouteDetailsActivity.class);
                 Bundle b = new Bundle();
                 b.putString("name", "route"+holder.mItem +".json" ); //Your id
                 intent.putExtras(b); //Put your id to your next Intent
-                context.startActivity(intent);
+                context.startActivity(intent);*/
 
                 //GO TO MAP AND SHOW THE ROUTE HERE
                 listener.onRouteSelected(holder.mItem);

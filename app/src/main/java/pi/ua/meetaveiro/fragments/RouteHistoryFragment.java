@@ -96,8 +96,8 @@ public class RouteHistoryFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        Intent intent = new Intent(getContext(), RouteDetailsActivity.class);
-        getContext().startActivity(intent);
+        /*Intent intent = new Intent(getContext(), RouteDetailsActivity.class);
+        getContext().startActivity(intent);*/
 
     }
 

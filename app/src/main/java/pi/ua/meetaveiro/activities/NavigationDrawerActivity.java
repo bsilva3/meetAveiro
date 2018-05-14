@@ -18,6 +18,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -33,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +56,7 @@ import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteListFragment;
+import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
@@ -63,7 +66,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         AttractionAdapter.OnAttractionSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
-        HistoryFragment.OnBottomHistoryNavigationInteractionListener {
+        HistoryFragment.OnBottomHistoryNavigationInteractionListener,
+        RouteListsFragment.OnNewRouteListener{
 
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
@@ -76,7 +80,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private TextView txtName, txtWebsite;
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
-    private FloatingActionButton newRouteFab;
 
     // urls to load navigation header background image
     // and profile image
@@ -98,6 +101,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     // toolbar titles respected to selected nav menu item
     private String[] activityTitles;
+
+    // Tab bar
+    private TabLayout tabLayout;
 
     //Current home fragment
     Fragment currentFragment;
@@ -140,11 +146,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         auth = FirebaseAuth.getInstance();
         setContentView(R.layout.activity_navigation_drawer);
         collapsingToolbar = findViewById(R.id.collapsing_toolbar);
-        newRouteFab = findViewById(R.id.new_route_fab);
-        newRouteFab.setOnClickListener(v -> {
-            Intent myIntent = new Intent(NavigationDrawerActivity.this, RouteActivity.class);
-            NavigationDrawerActivity.this.startActivity(myIntent);
-        });
+
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -161,6 +163,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
         //Collapse content
         collapseContent = findViewById(R.id.collapse_content);
+
+        //Tab content
+        tabLayout = findViewById(R.id.collapsing_tabs);
 
         // load toolbar titles from string resources
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
@@ -417,28 +422,42 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         switch (navItemIndex) {
             case 0:
                 disableCollapse();
-                newRouteFab.setVisibility(View.GONE);
+                handleTabLayout(false);
                 break;
             case 1:
                 enableCollapse();
-                newRouteFab.setVisibility(View.GONE);
+                handleTabLayout(false);
                 break;
             case 2:
                 enableCollapse();
-                newRouteFab.setVisibility(View.VISIBLE);
+                handleTabLayout(true);
                 break;
             case 3:
                 disableCollapse();
-                newRouteFab.setVisibility(View.GONE);
+                handleTabLayout(false);
                 break;
             case 4:
                 disableCollapse();
-                newRouteFab.setVisibility(View.GONE);
+                handleTabLayout(false);
                 break;
             default:
                 disableCollapse();
-                newRouteFab.setVisibility(View.GONE);
+                handleTabLayout(false);
                 break;
+        }
+    }
+
+    private void handleTabLayout(boolean showTabLayoutInCollapse){
+        if(showTabLayoutInCollapse) {
+            tabLayout.setVisibility(View.VISIBLE);
+            CollapsingToolbarLayout.LayoutParams params = (CollapsingToolbarLayout.LayoutParams) toolbar.getLayoutParams();
+            params.setMargins(0, 0, 0, 110); //substitute parameters for left, top, right, bottom
+            toolbar.setLayoutParams(params);
+        }else{
+            tabLayout.setVisibility(View.GONE);
+            CollapsingToolbarLayout.LayoutParams params = (CollapsingToolbarLayout.LayoutParams) toolbar.getLayoutParams();
+            params.setMargins(0, 0, 0, 0); //substitute parameters for left, top, right, bottom
+            toolbar.setLayoutParams(params);
         }
     }
 
@@ -452,8 +471,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 // Attraction list fragment
                 return new AttractionListFragment();
             case 2:
-                // Route List fragment
-                return new RouteListFragment();
+                // Route Lists fragment
+                return new RouteListsFragment();
             case 3:
                 // History fragment
                 return new HistoryFragment();
@@ -477,10 +496,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         if (navItemIndex == 1) {
             collapsingToolbar.setTitleEnabled(true);
             collapsingToolbar.setTitle(activityTitles[navItemIndex]);
-        } else if ( navItemIndex == 2 ) {
-            collapsingToolbar.setTitleEnabled(true);
-            collapsingToolbar.setTitle(activityTitles[navItemIndex]);
-
         } else {
             collapsingToolbar.setTitleEnabled(false);
             getSupportActionBar().setTitle(activityTitles[navItemIndex]);
@@ -594,4 +609,11 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         transaction.addToBackStack(null);
         transaction.commit();
     }
+
+    @Override
+    public void onNewRoute() {
+        Intent myIntent = new Intent(NavigationDrawerActivity.this, RouteActivity.class);
+        NavigationDrawerActivity.this.startActivity(myIntent);
+    }
+
 }

@@ -335,16 +335,20 @@ def receive_routes():
     percurso = addPercurso(email, title, 1, description)
     instancia = addInstanciaPercurso(email, percurso.id, start, end)
     print('Percurso criado')
+    marks = markers.split(',')
 
-    for m in markers:
+    for m in marks:
         foto = getFoto(m)
         addPonto(foto.latitude, foto.longitude, percurso.id)
         foto.idinstperc = instancia.id
 
+    
     print('Markers')
-    for coord in trajectory: 
-        lat = coord[0]
-        lon = coord[1]
+    trajs = trajectory.split(';')
+    for coord in trajs:
+        c = coord.split(',') 
+        lat = c[0]
+        lon = c[1]
         addPonto(lat, lon, percurso.id)
 
     print('Trajectory')

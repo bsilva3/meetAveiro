@@ -145,6 +145,7 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
+    data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -185,7 +186,7 @@ def classify_image():
     return jsonify({
         'name': 'Desconhecido',
         'description': '',
-        'id': None
+        'id': foto.id
     })
 
 @app.route('/search/feedback', methods=['POST'])
@@ -316,6 +317,38 @@ def manage_requests():
         os.remove(req_folder)
         deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
+
+
+@app.route('/resources/routes', methods=['POST'])
+def receive_routes():
+    res = request.get_json(force=True)
+    email = res['user']
+    title = res['title']
+    inicio = res['start']
+    fim = res['end']
+    description = res['description']
+    markers = res['markers']
+    trajectory = res['trajectory']
+
+    percurso = addPercurso(email, title, 1, description)
+    instancia = addInstanciaPercurso(email, percurso.id, start, end)
+
+    for m in markers:
+        foto = getFoto(m)
+        ponto = addPonto(foto.latitude, foto.longitude, percurso.id)
+        foto.idinstperc = instancia.id
+
+    for coord in trajectory: 
+        lat = coord[0]
+        lon = coord[1]
+        ponto = addPonto(lat, lon, percurso.id)
+    
+    return jsonify({
+        'route': percurso.id,
+        'inst': instancia.id
+    })
+
+
 
 # Background tasks
 scheduler = BackgroundScheduler()

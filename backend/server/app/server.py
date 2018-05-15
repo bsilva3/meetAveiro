@@ -383,10 +383,11 @@ def search_routes():
             perc = db.session.query(Percurso).filter(Percurso.id==p.idperc).first()
             res.append({
                 'title': perc.titulo,
-                'description': perc.descricao
+                'description': perc.descricao,
+                'id': perc.id
             })
     return jsonify({
-        'percursos': res
+        'routes': res
     })
 
 # Background tasks

@@ -1,12 +1,12 @@
 package pi.ua.meetaveiro.models;
 
-import com.google.android.gms.maps.model.LatLng;
+import java.io.Serializable;
 
 /**
  * Created by fabio on 15-05-2018.
  */
 
-public class Event {
+public class Event implements Serializable{
     private double price;
     private String title;
 

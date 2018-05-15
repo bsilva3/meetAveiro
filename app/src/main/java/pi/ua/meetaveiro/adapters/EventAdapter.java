@@ -83,6 +83,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.MyViewHolder
 
                 //context.startActivity(new Intent(context, EventHistoryDetailsActivity.class));
                 Intent intent = new Intent(context, EventDetailsActivity.class);
+                intent.putExtra("Event", holder.mItem);
                 context.startActivity(intent);
 
                 //GO TO MAP AND SHOW THE ROUTE HERE

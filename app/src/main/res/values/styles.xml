@@ -8,7 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="buttonBarPositiveButtonStyle">@style/Base.Widget.AppCompat.Button.Borderless.MyStyle</item>
+        <item name="buttonBarPositiveButtonStyle">
+            @style/Base.Widget.AppCompat.Button.Borderless.MyStyle
+        </item>
     </style>
 
     <style name="AppTheme.NoActionBar">

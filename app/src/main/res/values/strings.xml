@@ -284,4 +284,9 @@
     <string name="title_activity_route">Route</string>
     <string name="notification_on_a_route">You are on a meetAveiro route. Click to know more!</string>
     <string name="return_route">Return Route</string>
+    <string name="title_activity_event_details">EventDetailsActivity</string>
+    <string name="event_detail_price">Price</string>
+    <string name="event_detail_location">Location</string>
+    <string name="event_detail_title">Title</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

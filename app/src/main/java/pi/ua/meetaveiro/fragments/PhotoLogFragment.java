@@ -538,6 +538,8 @@ public class PhotoLogFragment extends Fragment implements
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
+
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
@@ -560,7 +562,7 @@ public class PhotoLogFragment extends Fragment implements
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(getContext().getString(R.string.unknown_string))
                                 .snippet(getContext().getString(R.string.unknown_string))
-                                .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photo);
                         //send a base 64 encoded photo to server

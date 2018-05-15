@@ -90,7 +90,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
 
-    private void custructPage(){
+    private void constructPage(){
         try {
             viewPager = (ViewPager) findViewById(R.id.view_images);
 
@@ -125,7 +125,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        custructPage();
+        constructPage();
     }
 
 

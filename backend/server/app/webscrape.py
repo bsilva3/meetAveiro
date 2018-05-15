@@ -128,13 +128,29 @@ def search_turismo():
         #print(title.text.strip())
         #print(price.text.strip())
         res['title'] = title.text.strip()
-        res['price'] = price.text.strip()
+        preco = price.text.strip()
+        res['price'] = float(preco.replace('€', ''))
 
         if len(ps) == 3:
-            #print(ps[1].text.strip())
-            #print(ps[2].text.strip())
+            
             res['location'] = ps[1].text.strip()
-            res['coordinates'] = ps[2].text.strip()
+            coordinates = ps[2].text.strip()
+            i = 0
+            coordinates = coordinates[17:].split(' ')
+            for c in coordinates:
+                coords = []
+                temp = c.split('°')
+                coords.append(float(temp[0]))
+                temp = temp[1].split('\'')
+                coords.append(float(temp[0]))
+                seconds = temp[1].replace('W', '')
+                seconds = seconds.replace('N', '')
+                seconds = seconds.replace('"', '')
+                if i == 0:
+                    res['lat'] = sum(coords)
+                else:
+                    res['long'] = sum(coords)
+                i+=1
         else:
             res['location'] = ps[1].text.strip()
         result.append(res)
@@ -143,4 +159,4 @@ def search_turismo():
         json.dump(result, json_file, ensure_ascii=False)
 
 #search_eventos()
-#search_turismo()
+search_turismo()

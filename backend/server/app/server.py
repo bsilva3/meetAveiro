@@ -364,8 +364,8 @@ def receive_routes():
 def get_routes(email):
     pass
 
-@app.route('/resources/routes/<string:email>/routes/<integer:id>', methods=['GET'])
-def get_routes(email, id):
+@app.route('/resources/routes/<string:email>/routes', methods=['GET'])
+def get_specific_route(email, id):
     pass
 
 # Background tasks

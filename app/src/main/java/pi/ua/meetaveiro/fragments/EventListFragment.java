@@ -28,39 +28,33 @@ import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.adapters.RouteAdapter;
-import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.adapters.EventAdapter;
+import pi.ua.meetaveiro.models.Event;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.*;
+import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.URL_EVENTS;
 
 /**
- * A fragment representing a list of routes
- * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
+ * A fragment representing a list of Events
+ * Activities containing this fragment MUST implement the {@link EventAdapter.OnEventItemSelectedListener}
  * interface.
  */
-public class RouteListFragment extends Fragment implements
-        SwipeRefreshLayout.OnRefreshListener,
-        NetworkCheckResponse{
+public class EventListFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener{
 
-    private static final String TAG = RouteListFragment.class.getSimpleName();
+    private static final String TAG = EventListFragment.class.getSimpleName();
 
-    private RouteAdapter.OnRouteItemSelectedListener mListener;
+    private EventAdapter.OnEventItemSelectedListener mListener;
 
-    private List<Route> routeList;
-    private RouteAdapter mAdapter;
+    private List<Event> eventList;
+    private EventAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
 
@@ -74,7 +68,7 @@ public class RouteListFragment extends Fragment implements
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public RouteListFragment() {
+    public EventListFragment() {
     }
 
     @Override
@@ -101,13 +95,13 @@ public class RouteListFragment extends Fragment implements
         swipeRefreshLayout.post(() -> {
             mShimmerViewContainer.setVisibility(View.VISIBLE);
             mShimmerViewContainer.startShimmerAnimation();
-            (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+            fetchEvents();
         });
 
         fastScroller = view.findViewById(R.id.fastscroll);
 
-        routeList = new ArrayList<>();
-        mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+        eventList = new ArrayList<>();
+        mAdapter = new EventAdapter(getContext(), eventList, mListener);
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -119,7 +113,7 @@ public class RouteListFragment extends Fragment implements
 
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+        fetchEvents();
 
         return view;
     }
@@ -128,8 +122,8 @@ public class RouteListFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof RouteAdapter.OnRouteItemSelectedListener) {
-            mListener = (RouteAdapter.OnRouteItemSelectedListener) context;
+        if (context instanceof EventAdapter.OnEventItemSelectedListener) {
+            mListener = (EventAdapter.OnEventItemSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInteractionListener");
@@ -146,20 +140,20 @@ public class RouteListFragment extends Fragment implements
     /**
      * fetches json by making http calls
      */
-    private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
+    private void fetchEvents() {
+        JsonArrayRequest request = new JsonArrayRequest(URL_EVENTS,
                 response -> {
                     if (response == null) {
-                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), "Couldn't fetch the Events! Pleas try again.", Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
+                    List<Event> items = new Gson().fromJson(response.toString(), new TypeToken<List<Event>>() {
                     }.getType());
 
                     // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
+                    eventList.clear();
+                    eventList.addAll(items);
 
                     // refreshing recycler view
                     mAdapter.notifyDataSetChanged();
@@ -181,52 +175,13 @@ public class RouteListFragment extends Fragment implements
         MyApplication.getInstance().addToRequestQueue(request);
     }
 
-
-    /**
-     * Gets all the route names saved in the phone.
-     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
-     *
-     */
-    private void fetchLocalRoutes(){
-
-        List<Route> items = new ArrayList<>();
-        try {
-            File directory = getActivity().getFilesDir();
-            File[] files = directory.listFiles();
-            Route r;
-            for (int i = 0; i < files.length; i++) {
-                if(files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route","");
-                    getRouteFromFile(title);
-                    r = new Route(title);
-                    items.add(r);
-                }
-            }
-
-            // adding contacts to contacts list
-            routeList.clear();
-            routeList.addAll(items);
-
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-            mShimmerViewContainer.setVisibility(View.GONE);
-            mShimmerViewContainer.stopShimmerAnimation();
-
-            // refreshing recycler view
-            mAdapter.notifyDataSetChanged();
-        }catch (Exception e){
-            Log.e(TAG, e.getMessage());
-        }
-
-    }
-
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
 
         try {
-            Glide.with(getActivity()).load(R.drawable.beach).into(collImgView);
+            Glide.with(getActivity()).load(R.drawable.agueda).into(collImgView);
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
@@ -282,46 +237,6 @@ public class RouteListFragment extends Fragment implements
     public void onRefresh() {
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
-    }
-
-    /**
-     * Opens the file with the route and reconctructs it
-     * File name format: route+++.json
-     * +++ = route name
-     * @param filename
-     * @return String (json format) with all the information
-     *
-     * Must be sent to RouteDetais as an argument
-     */
-    private String getRouteFromFile(String filename){
-
-        StringBuffer datax = new StringBuffer("");
-        try {
-            FileInputStream fIn = getContext().openFileInput ( filename ) ;
-            InputStreamReader isr = new InputStreamReader ( fIn ) ;
-            BufferedReader buffreader = new BufferedReader ( isr ) ;
-            String readString = buffreader.readLine ( ) ;
-            while ( readString != null ) {
-                datax.append(readString);
-                readString = buffreader.readLine ( ) ;
-            }
-            isr.close ( ) ;
-
-        } catch (IOException e ) {
-            Log.e(TAG, e.getMessage());
-        }
-
-        return datax.toString();
-
-    }
-
-    @Override
-    public void onProcessFinished(boolean hasNetworkConnection) {
-        if (hasNetworkConnection)
-            fetchRoutes();
-        else {
-            fetchLocalRoutes();
-        }
+        fetchEvents();
     }
 }

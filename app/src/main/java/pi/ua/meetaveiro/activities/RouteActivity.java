@@ -213,12 +213,6 @@ public class RouteActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
 
-        if (getIntent().getBooleanExtra(
-                EXTRA_STARTED_FROM_NOTIFICATION,
-                false)) {
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
-        }
         locationsReceiver = new LocationsReceiver();
 
         markers = new HashMap<>();
@@ -263,6 +257,7 @@ public class RouteActivity extends FragmentActivity implements
         buttonStartRoute.setOnClickListener(v -> {
             if (routePoints.isEmpty()){
                 onRouteStateChanged(true);
+                Utils.setRouteState(this, ROUTE_STATE.STARTED);
                 updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
             }
             else{
@@ -278,6 +273,7 @@ public class RouteActivity extends FragmentActivity implements
                                 line.remove();
                                 //now procede to the tour
                                 onRouteStateChanged(true);
+                                Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
                                 updateRouteButtons(Utils.getRouteState(RouteActivity.this));
                                 break;
 
@@ -310,35 +306,32 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         //back button (with image)
-        ImageButton back = (ImageButton)findViewById(R.id.back_image_btn);
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which){
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    onBackPressed();
-                                    break;
+        ImageButton back = findViewById(R.id.back_image_btn);
+        back.setOnClickListener(v -> {
+            if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                onBackPressed();
+                                break;
 
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    dialog.dismiss();
-                                    break;
-                            }
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                dialog.dismiss();
+                                break;
                         }
-                    };
+                    }
+                };
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
-                    builder.setMessage(getString(R.string.exit_tour_confirmation)).setPositiveButton(getString(R.string.yes), dialogClickListener)
-                            .setNegativeButton(getString(R.string.no), dialogClickListener).show();
-                }
-                else{
-                    onBackPressed();
-                }
-
+                AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                builder.setMessage(getString(R.string.exit_tour_confirmation)).setPositiveButton(getString(R.string.yes), dialogClickListener)
+                        .setNegativeButton(getString(R.string.no), dialogClickListener).show();
             }
+            else{
+                onBackPressed();
+            }
+
         });
 
         updateValuesFromBundle(savedInstanceState);
@@ -363,13 +356,19 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("resume", "onresumecalled");
+        updateRouteButtons(Utils.getRouteState(this));
+        Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
                 .registerReceiver(
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
+        if (getIntent().getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false) &&
+                getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
     }
 
     /**
@@ -443,14 +442,17 @@ public class RouteActivity extends FragmentActivity implements
             buttonStartRoute.setVisibility( View.GONE );
             buttonPauseRoute.setVisibility( View.VISIBLE );
             buttonStopRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.VISIBLE );
         }else if(Constants.ROUTE_STATE.PAUSED.equals(state)){
             buttonStopRoute.setVisibility( View.VISIBLE );
             buttonPauseRoute.setVisibility( View.GONE );
             buttonStartRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.VISIBLE );
         }else if(Constants.ROUTE_STATE.STOPPED.equals(state)){
             buttonStopRoute.setVisibility( View.GONE );
             buttonPauseRoute.setVisibility( View.GONE );
             buttonStartRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.GONE );
         }
     }
 
@@ -606,7 +608,6 @@ public class RouteActivity extends FragmentActivity implements
 
         //Initialize Preferences*
         prefs = getSharedPreferences("LatLng",MODE_PRIVATE);
-
     }
 
     private void updateLocationUI() {

@@ -196,7 +196,6 @@ public class RouteHistoryFragment extends Fragment implements
                     mShimmerViewContainer.stopShimmerAnimation();
                     mShimmerViewContainer.setVisibility(View.GONE);
                     Log.e(TAG, "Error: " + error.getMessage());
-                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }

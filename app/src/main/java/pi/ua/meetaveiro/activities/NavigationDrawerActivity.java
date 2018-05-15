@@ -43,14 +43,17 @@ import java.util.List;
 import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
+import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
+import pi.ua.meetaveiro.fragments.EventListFragment;
 import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.models.Attraction;
+import pi.ua.meetaveiro.models.Event;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -59,7 +62,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener,
-        RouteListsFragment.OnNewRouteListener{
+        RouteListsFragment.OnNewRouteListener,
+        EventAdapter.OnEventItemSelectedListener{
 
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
@@ -87,6 +91,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private static final String TAG_PHOTO_LOG = "home";
     private static final String TAG_ATTRACTIONS = "attractions";
     private static final String TAG_ROUTES = "routes";
+    private static final String TAG_EVENTS = "events";
     private static final String TAG_HISTORY = "history";
     private static final String TAG_ACCOUNT_SETTINGS = "photos";
     public static String CURRENT_TAG = TAG_PHOTO_LOG;
@@ -398,10 +403,14 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 handleTabLayout(true);
                 break;
             case 3:
-                disableCollapse();
+                enableCollapse();
                 handleTabLayout(false);
                 break;
             case 4:
+                disableCollapse();
+                handleTabLayout(false);
+                break;
+            case 5:
                 disableCollapse();
                 handleTabLayout(false);
                 break;
@@ -439,9 +448,12 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 // Route Lists fragment
                 return new RouteListsFragment();
             case 3:
+                // Event List fragment
+                return new EventListFragment();
+            case 4:
                 // History fragment
                 return new HistoryFragment();
-            case 4:
+            case 5:
                 // Account settings fragment
                 return new AccountSettingsFragment();
             default:
@@ -494,12 +506,16 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                         navItemIndex = 2;
                         CURRENT_TAG = TAG_ROUTES;
                         break;
-                    case R.id.option_history:
+                    case R.id.option_events:
                         navItemIndex = 3;
+                        CURRENT_TAG = TAG_EVENTS;
+                        break;
+                    case R.id.option_history:
+                        navItemIndex = 4;
                         CURRENT_TAG = TAG_HISTORY;
                         break;
                     case R.id.option_account_settings:
-                        navItemIndex = 4;
+                        navItemIndex = 5;
                         CURRENT_TAG = TAG_ACCOUNT_SETTINGS;
                         break;
                     case R.id.option_logout:
@@ -581,4 +597,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         NavigationDrawerActivity.this.startActivity(myIntent);
     }
 
+    @Override
+    public void onEventSelected(Event item) {
+
+    }
 }

@@ -145,6 +145,7 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
+#    data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -185,7 +186,7 @@ def classify_image():
     return jsonify({
         'name': 'Desconhecido',
         'description': '',
-        'id': None
+        'id': foto.id
     })
 
 @app.route('/search/feedback', methods=['POST'])
@@ -193,7 +194,7 @@ def send_feedback():
     res = request.get_json(force=True)
     file_id = res['image_id']
     concept = res['concept']
-    feedback = res['feedback']
+    feedback = res['answer']
     print('feedback ' + str(feedback))
     if feedback == 1:
         #req_path = os.path.join('./static/img', concept)
@@ -316,6 +317,50 @@ def manage_requests():
         os.remove(req_folder)
         deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
+
+
+@app.route('/resources/routes', methods=['POST'])
+def receive_routes():
+    res = request.get_json(force=True)
+    email = res['user']
+    title = res['title']
+    start = res['start']
+    print('Datas hooray')
+    end = res['end']
+    description = res['description']
+    markers = res['markers']
+    trajectory = res['trajectory']
+
+    print('Recebido')
+    percurso = addPercurso(email, title, 1, description)
+    instancia = addInstanciaPercurso(email, percurso.id, start, end)
+    print('Percurso criado')
+    marks = markers.split(',')
+
+    for m in marks:
+        foto = getFoto(m)
+        addPonto(foto.latitude, foto.longitude, percurso.id)
+        foto.idinstperc = instancia.id
+
+    
+    print('Markers')
+    trajs = trajectory.split(';')
+    for coord in trajs:
+        c = coord.split(',') 
+        lat = c[0]
+        lon = c[1]
+        addPonto(lat, lon, percurso.id)
+
+    print('Trajectory')
+
+    print('Sending answer...')
+    
+    return jsonify({
+        'route': percurso.id,
+        'inst': instancia.id
+    })
+
+
 
 # Background tasks
 scheduler = BackgroundScheduler()

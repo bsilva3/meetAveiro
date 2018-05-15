@@ -694,10 +694,21 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
+                    //To ease the time to send a photo the photo is compressed
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    //This is to be used in the markers (To fiz the loss of quality)
+                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+
+
+
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+
+
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     try {
@@ -713,9 +724,9 @@ public class RouteActivity extends FragmentActivity implements
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(this.getString(R.string.unknown_string))
                                 .snippet("Unknown")
-                                .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
-                        imageMarkers.put(m, photo);
+                        imageMarkers.put(m, photoHighQuality);
                         //send a base 64 encoded photo to server
                         new UploadFileToServerTask().execute(jsonRequest.toString());
                     }else {

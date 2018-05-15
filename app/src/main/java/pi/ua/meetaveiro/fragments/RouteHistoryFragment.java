@@ -96,9 +96,6 @@ public class RouteHistoryFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        /*Intent intent = new Intent(getContext(), RouteDetailsActivity.class);
-        getContext().startActivity(intent);*/
-
     }
 
     @Override
@@ -193,6 +190,7 @@ public class RouteHistoryFragment extends Fragment implements
                 }, error -> {
                     // error in getting json
                     // stop animating Shimmer and hide the layout
+                    fetchLocalRoutes();
                     mShimmerViewContainer.stopShimmerAnimation();
                     mShimmerViewContainer.setVisibility(View.GONE);
                     Log.e(TAG, "Error: " + error.getMessage());
@@ -301,111 +299,6 @@ public class RouteHistoryFragment extends Fragment implements
         mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
     }
-/*
-    @Override
-    public void onBackPressed() {
-        // close search view on back button pressed
-        if (!searchView.isIconified()) {
-            searchView.setIconified(true);
-            return;
-        }
-        super.onBackPressed();
-    }*/
-
-    /**
-     * Opens the file with the route and reconctructs it
-     * File name format: route+++.json
-     * +++ = route name
-     *
-     * @param filename
-     * @return String (json format) with all the information
-     * <p>
-     * Must be sent to RouteDetais as an argument
-     */
-    private String getRouteFromFile(String filename) {
-
-        StringBuffer datax = new StringBuffer("");
-        try {
-            FileInputStream fIn = getContext().openFileInput(filename);
-            InputStreamReader isr = new InputStreamReader(fIn);
-            BufferedReader buffreader = new BufferedReader(isr);
-            String readString = buffreader.readLine();
-            while (readString != null) {
-                datax.append(readString);
-                readString = buffreader.readLine();
-            }
-            isr.close();
-
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
-        }
-
-        return datax.toString();
-
-    }
-
-
-    /**
-     * Reconstructs the Route with all the markers
-     *
-     * @param datax
-     */
-    private Route reconstructRoute(String datax) {
-
-
-        Route r;
-        Map<Marker, Bitmap> tempMap = new HashMap<>();
-        try {
-
-            JSONObject json = new JSONObject(datax.toString());
-            JSONArray arr = json.getJSONArray("Markers");
-
-            r = new Route(json.get("Title").toString());
-            r.setRouteDescription(json.get("Description").toString());
-
-            //Iterate trough the array of markers
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject gfg = arr.getJSONObject(i);
-                String title = gfg.get("Titl").toString();
-                String snippet = gfg.get("Snippet").toString();
-
-                String lat = gfg.get("Latitude").toString();
-                String longi = gfg.get("Longitude").toString();
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
-
-
-                String icon = gfg.get("Icon").toString();
-                String newIcon = icon.replaceAll("//", "/");
-                Bitmap image = StringToBitMap(newIcon);
-
-               /* Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                        .icon(BitmapDescriptorFactory.fromBitmap(image))
-                        .title(title)
-                        .snippet(snippet));
-
-                //Put in the map of markers
-                tempMap.put(m,image);
-*/
-            }
-
-            //Reconstruct the polilyne
-            arr = json.getJSONArray("Poly");
-            PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
-            LatLng l = new LatLng(0, 0);
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject gfg = arr.getJSONObject(i);
-                String lat = gfg.get("Latitude").toString();
-                String longi = gfg.get("Longitude").toString();
-                l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
-                options.add(l);
-            }
-
-            return r;
-        } catch (JSONException e) {
-            Log.e(TAG, e.getMessage());
-            return null;
-        }
-    }
 
 
     /**
@@ -423,14 +316,6 @@ public class RouteHistoryFragment extends Fragment implements
 
     }
 
-    /**
-     * @param encodedString
-     * @return bitmap (from given string)
-     */
-    public Bitmap StringToBitMap(String encodedString) {
-        byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
-        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-    }
 
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {

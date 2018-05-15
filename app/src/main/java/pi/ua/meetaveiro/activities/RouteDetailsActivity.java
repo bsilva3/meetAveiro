@@ -40,6 +40,7 @@ import java.util.Map;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.others.Utils;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -48,45 +49,63 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     RouteHistoryDetailAdapter adapter;
     ArrayList<Bitmap> images = new ArrayList<>();
     private Toolbar mTopToolbar;
-    private String routeTitle = "",routeDesc = "",value ="";
-
+    private String routeTitle = "", routeDesc = "", value ="";
+    private TextView routeDescription, routeDate;
 
     //Map
     private GoogleMap mMap;
 
+    /**
+     * To send here:
+     *
+     * routeTitle: The title of the route (MANDATORY)
+     * fileName: The name of the file if it is local
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route_details);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+        mTopToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mTopToolbar);
+
+        //Get the title
+        Bundle b = getIntent().getExtras();
+        getSupportActionBar().setTitle(b.getString("routeTitle"));
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        //Initialize the TextViews
+        routeDescription = findViewById(R.id.descriptRoute);
+        routeDate = findViewById(R.id.DateRoute);
+
 
     }
 
 
 
-    private int test(){
+    private void constructPage(){
         try {
             viewPager = (ViewPager) findViewById(R.id.view_images);
 
+            //Get the fileName in case of local
             Bundle b = getIntent().getExtras();
-            if (b != null)
-                value = b.getString("name");
+            if (b.getString("fileName") != null)
+                value = b.getString("fileName");
 
             //Get all info
-            reconstructRoute(getRouteFromFile(value));
+            reconstructRoute(Utils.getRouteFromFile(value,this.getApplicationContext()));
             adapter = new RouteHistoryDetailAdapter(this, images);
             viewPager.setAdapter(adapter);
 
-            return 0;
         }catch (Exception e){
-            return 1;
+            e.printStackTrace();
         }
 
     }
@@ -106,52 +125,16 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        test();
-    }
-
-
-
-    /**
-     * Opens the file with the route and reconctructs it
-     * File name format: route+++.json
-     * +++ = route name
-     *
-     * @param filename
-     * @return String (json format) with all the information
-     * <p>
-     * Must be sent to RouteDetais as an argument
-     */
-    private String getRouteFromFile(String filename) {
-
-        StringBuffer datax = new StringBuffer("");
-        try {
-            FileInputStream fIn = openFileInput(filename);
-            InputStreamReader isr = new InputStreamReader(fIn);
-            BufferedReader buffreader = new BufferedReader(isr);
-            String readString = buffreader.readLine();
-            while (readString != null) {
-                datax.append(readString);
-                readString = buffreader.readLine();
-            }
-            isr.close();
-
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-
-        return datax.toString();
-
-
+        constructPage();
     }
 
 
     /**
-     * Reconstructs the Route with all the markers
+     * Reconstructs the Route with all the markers from the storage
      *
      * @param datax
      */
     private Route reconstructRoute(String datax) {
-        System.out.println(datax);
 
         Route r;
         Map<Marker, Bitmap> tempMap = new HashMap<>();
@@ -161,7 +144,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             JSONArray arr = json.getJSONArray("Markers");
 
             r = new Route(json.get("Title").toString());
-
             routeTitle = json.get("Title").toString();
 
             r.setRouteDescription(json.get("Description").toString());
@@ -181,7 +163,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
                 String icon = gfg.get("Icon").toString();
                 String newIcon = icon.replaceAll("//", "/");
-                Bitmap image = StringToBitMap(newIcon);
+                Bitmap image = Utils.StringToBitMap(newIcon);
                 images.add(image);
                 Marker m = mMap.addMarker(new MarkerOptions().position(markLar)
                         .icon(BitmapDescriptorFactory.fromBitmap(image))
@@ -193,7 +175,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
             }
-            /*r.setRouteMarkers(tempMap);*/
+
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markLar, 17));
 
 
@@ -209,6 +191,11 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 options.add(l);
             }
             mMap.addPolyline(options);
+
+            //Set the route Description if there is any
+            if(routeDesc != "" || routeDesc!= null)
+                routeDescription.setText(routeDesc);
+
             return r;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -216,16 +203,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         }
     }
 
-
-    /**
-     * @param encodedString
-     * @return bitmap (from given string)
-     */
-    public Bitmap StringToBitMap(String encodedString) {
-        byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
-        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-        return decodedByte;
-    }
 
 
     @Override

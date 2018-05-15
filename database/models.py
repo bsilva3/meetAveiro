@@ -182,12 +182,14 @@ def addTipo(nome):
     tipo = Tipo(nome)
     db.session.add(tipo)
     db.session.commit()
+    return tipo
 
 # Adição dos Utilizadores
 def addUtilizador(email, tipoid):
     user = Utilizador(email, tipoid)
     db.session.add(user)
     db.session.commit()
+    return user
 
 # Adição de Conceitos
 def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
@@ -195,6 +197,7 @@ def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
     conceito = Conceito(nomeconceito, emailcriador, latitude, longitude, raio, descricao, classificacao)
     db.session.add(conceito)
     db.session.commit()
+    return conceito
 
 def deleteConceito(id):
     conc = db.session.query(Conceito).get(id)
@@ -205,16 +208,19 @@ def addPercurso(emailc, titulo, estado, descricao=None):
     percurso = Percurso(emailc, titulo, estado, descricao)
     db.session.add(percurso)
     db.session.commit()
+    return percurso
 
 def addPonto(latitude, longitude, idperc=None):
     ponto = Ponto(latitude, longitude, idperc)
     db.session.add(ponto)
     db.session.commit()
+    return ponto
 
 def addInstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao=None):
     inst = InstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao)
     db.session.add(inst)
     db.session.commit()
+    return inst
 
 def addFotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
     #try:
@@ -315,6 +321,7 @@ def updateFotoByPath(path, newpath):
     foto = db.session.query().filter(Fotografia.path == path).first()
     foto.path = newpath
     db.session.commit()
+    return foto
 
 def getFoto(id):
     #sql = text('select from fotografia where idfoto=\'' + str(id) + '\'')
@@ -427,3 +434,5 @@ def getConceptRoutes(nomeConceito):
     for row in result:
         concs.append((row[0], row[1], row[2], row[3]))
     return concs
+
+

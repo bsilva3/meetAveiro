@@ -13,8 +13,11 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -79,6 +82,46 @@ public class Utils {
         }
     }
 
+
+    /**
+     * Opens the file with the route and reconctructs it
+     * File name format: route+++.json
+     * +++ = route name
+     *
+     * @param filename
+     * @return String (json format) with all the information
+     *
+     */
+    public static String getRouteFromFile(String filename,Context ctx) {
+
+        StringBuffer datax = new StringBuffer("");
+        try {
+            FileInputStream fIn = ctx.openFileInput(filename);
+            InputStreamReader isr = new InputStreamReader(fIn);
+            BufferedReader buffreader = new BufferedReader(isr);
+            String readString = buffreader.readLine();
+            while (readString != null) {
+                datax.append(readString);
+                readString = buffreader.readLine();
+            }
+            isr.close();
+
+        } catch (IOException e) {
+            Log.e("GetRoute", e.getMessage());
+        }
+
+        return datax.toString();
+
+    }
+
+
+
+
+
+
+
+
+
     public static class NetworkCheckTask extends AsyncTask<String, Void, Boolean> {
         Context context;
         NetworkCheckResponse response;
@@ -120,5 +163,12 @@ public class Utils {
             NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
             return activeNetworkInfo != null;
         }
+
+
+
+
+
+
+
     }
 }

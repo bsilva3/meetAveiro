@@ -145,7 +145,7 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
-    data = res['date']
+#    data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -324,8 +324,9 @@ def receive_routes():
     res = request.get_json(force=True)
     email = res['user']
     title = res['title']
-    inicio = res['start']
-    fim = res['end']
+    start = res['start']
+    print('Datas hooray')
+    end = res['end']
     description = res['description']
     markers = res['markers']
     trajectory = res['trajectory']

@@ -360,7 +360,13 @@ def receive_routes():
         'inst': instancia.id
     })
 
+@app.route('/resources/routes/<string:email>', methods=['GET'])
+def get_routes(email):
+    pass
 
+@app.route('/resources/routes/<string:email>/routes/<integer:id>', methods=['GET'])
+def get_routes(email, id):
+    pass
 
 # Background tasks
 scheduler = BackgroundScheduler()

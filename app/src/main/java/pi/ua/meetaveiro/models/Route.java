@@ -15,25 +15,21 @@ import java.util.Map;
 import pi.ua.meetaveiro.R;
 
 public class Route implements Parcelable {
-    private static int COUNTER = 0;
+    private int id;
     private Polyline routePath;
     private List<LatLng> routePathPoints; //when we cant use polyline just for the parcelable
-    private Map<Marker, Bitmap> routeMarkers;
     private String routeTitle = "Unnamed"; //default
     private String routeDescription = ""; //default
 
     public Route(String routeTitle, Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
-        COUNTER++;
         this.routeTitle = routeTitle;
         this.routePath = routePath;
         this.routeDescription = routeDescription;
-        this.routeMarkers=routeMarkers;
     }
 
     public Route(String routeTitle, Polyline routePath, Map<Marker, Bitmap> routeMarkers) {
         this.routeTitle = routeTitle;
         this.routePath = routePath;
-        this.routeMarkers = routeMarkers;
     }
 
     public Route(String routeTitle, String routeDescription) {
@@ -41,15 +37,7 @@ public class Route implements Parcelable {
         this.routeDescription = routeDescription;
     }
 
-    public Route(Polyline routePath, Map<Marker, Bitmap> routeMarkers) {
-        COUNTER++;
-        this.routeTitle = Resources.getSystem().getString(R.string.route) + " " + COUNTER;
-        this.routePath = routePath;
-        this.routeMarkers = routeMarkers;
-    }
-
     public Route(String routeTitle) {
-        COUNTER++;
         this.routeTitle = routeTitle;
     }
 
@@ -61,15 +49,6 @@ public class Route implements Parcelable {
         routeTitle = in.readString();
         routeDescription = in.readString();
         routePathPoints = in.readParcelable(getClass().getClassLoader());
-        routeMarkers = in.readParcelable(getClass().getClassLoader());
-    }
-
-    public Route(Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
-        COUNTER++;
-        this.routeTitle = Resources.getSystem().getString(R.string.route) + " " + COUNTER;
-        this.routePath = routePath;
-        this.routeDescription = routeDescription;
-        this.routeMarkers = routeMarkers;
     }
 
     public String getRouteTitle() {
@@ -92,10 +71,6 @@ public class Route implements Parcelable {
         return routePath;
     }
 
-    public Map<Marker, Bitmap> getRouteMarkers() {
-        return routeMarkers;
-    }
-
     public List<LatLng> getRoutePoints(){
         return routePath.getPoints();
     }
@@ -116,7 +91,6 @@ public class Route implements Parcelable {
         dest.writeString(routeTitle);
         dest.writeString(routeDescription);
         dest.writeList(routePath.getPoints());
-        dest.writeMap(routeMarkers);
     }
 
     // de-serialize the object
@@ -133,9 +107,5 @@ public class Route implements Parcelable {
 
     public void setRoutePath(Polyline routePath) {
         this.routePath = routePath;
-    }
-
-    public void setRouteMarkers(Map<Marker, Bitmap> routeMarkers) {
-        this.routeMarkers = routeMarkers;
     }
 }

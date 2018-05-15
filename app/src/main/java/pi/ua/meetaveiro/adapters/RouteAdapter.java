@@ -76,8 +76,8 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        holder.mItem = routeList.get(position);
-        holder.mTitleView.setText(routeList.get(position).getRouteTitle());
+        holder.mItem = routeListFiltered.get(position);
+        holder.mTitleView.setText(routeListFiltered.get(position).getRouteTitle());
 
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {

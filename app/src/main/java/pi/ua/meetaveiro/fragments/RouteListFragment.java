@@ -154,6 +154,7 @@ public class RouteListFragment extends Fragment implements
                         return;
                     }
 
+                    String str = new Gson().toJson(new Object());
                     List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
                     }.getType());
 

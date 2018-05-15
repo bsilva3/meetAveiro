@@ -74,8 +74,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        holder.mItem = eventList.get(position);
-        holder.mTitleView.setText(eventList.get(position).getTitle());
+        holder.mItem = eventListFiltered.get(position);
+        holder.mTitleView.setText(eventListFiltered.get(position).getTitle());
 
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {
@@ -105,8 +105,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.MyViewHolder
 
                         // name match condition. this might differ depending on your requirement
                         // here we are looking for name or phone number match
-                        if (row.getTitle().toLowerCase().contains(charString.toLowerCase()) || row.getLocation().contains(charSequence)) {
+                        if (row.getTitle().toLowerCase().contains(charString.toLowerCase())) {
                             filteredList.add(row);
+                            Log.i("title", row.getTitle());
                         }
                     }
 
@@ -121,6 +122,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.MyViewHolder
             @Override
             protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
                 eventListFiltered = (ArrayList<Event>) filterResults.values;
+                Log.i("eventListFiltered", eventListFiltered.toString());
                 notifyDataSetChanged();
             }
         };

@@ -1243,7 +1243,7 @@ public class RouteActivity extends FragmentActivity implements
         sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
         int tmp = 0;
         List<LatLng> polyPoints  = route.getRoutePath().getPoints();
 
@@ -1269,8 +1269,9 @@ public class RouteActivity extends FragmentActivity implements
         }
         sb.append("],\n");
         sb.append("\"Poly\" : [\n");
-
+*/
         //Poly routePoints
+        /*
         Iterator<LatLng> it = polyPoints.iterator();
         tmp = 0;
         while (it.hasNext()){
@@ -1296,6 +1297,7 @@ public class RouteActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
+        */
     }
     
 }

@@ -313,11 +313,11 @@ public class PhotoLogFragment extends Fragment implements
             else
                 redrawLine(r.getRoutePoints(), true);
             //place the markers with the photos
-            for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
-                mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
-                        .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
-                        .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
-            }
+            //for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
+             //   mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
+               //         .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
+                 //       .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
+            //}
         }
         //when a path is clicked, a menu will appear
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
@@ -1098,7 +1098,7 @@ public class PhotoLogFragment extends Fragment implements
         sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
         int tmp = 0;
         List<LatLng> polyPoints  = route.getRoutePath().getPoints();
 
@@ -1150,7 +1150,7 @@ public class PhotoLogFragment extends Fragment implements
             outputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
-        }
+        }*/
 
     }
 

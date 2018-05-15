@@ -9,8 +9,19 @@ import com.google.android.gms.maps.model.LatLng;
 public class Event {
     private double price;
     private String title;
-    private LatLng coordinates;
+
+    private Double longitude;
+    private Double latitude;
+
     private String location;
+
+    public Event(double price, String title, Double latitude, Double longitude, String location) {
+        this.price = price;
+        this.title = title;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.location = location;
+    }
 
     public String getLocation() {
         return location;
@@ -20,11 +31,20 @@ public class Event {
         this.location = location;
     }
 
-    public Event(double price, String title, LatLng coordinates, String location) {
-        this.price = price;
-        this.title = title;
-        this.coordinates = coordinates;
-        this.location = location;
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
     }
 
     public double getPrice() {
@@ -43,11 +63,14 @@ public class Event {
         this.title = title;
     }
 
-    public LatLng getCoordinates() {
-        return coordinates;
-    }
-
-    public void setCoordinates(LatLng coordinates) {
-        this.coordinates = coordinates;
+    @Override
+    public String toString() {
+        return "Event{" +
+                "price=" + price +
+                ", title='" + title + '\'' +
+                ", longitude=" + longitude +
+                ", latitude=" + latitude +
+                ", location='" + location + '\'' +
+                '}';
     }
 }

@@ -368,6 +368,10 @@ def get_routes(email):
 def get_specific_route(email, id):
     pass
 
+@app.route('/resources/routes/search', methods=['POST'])
+def search_routes(email, id):
+    pass
+
 # Background tasks
 scheduler = BackgroundScheduler()
 scheduler.start()

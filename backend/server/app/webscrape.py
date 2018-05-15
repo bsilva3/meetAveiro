@@ -147,9 +147,9 @@ def search_turismo():
                 seconds = seconds.replace('N', '')
                 seconds = seconds.replace('"', '')
                 if i == 0:
-                    res['lat'] = sum(coords)
+                    res['latitude'] = sum(coords)
                 else:
-                    res['long'] = sum(coords)
+                    res['longitude'] = sum(coords)
                 i+=1
         else:
             res['location'] = ps[1].text.strip()

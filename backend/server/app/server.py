@@ -194,7 +194,7 @@ def send_feedback():
     res = request.get_json(force=True)
     file_id = res['image_id']
     concept = res['concept']
-    feedback = res['feedback']
+    feedback = res['answer']
     print('feedback ' + str(feedback))
     if feedback == 1:
         #req_path = os.path.join('./static/img', concept)
@@ -330,18 +330,25 @@ def receive_routes():
     markers = res['markers']
     trajectory = res['trajectory']
 
+    print('Recebido')
     percurso = addPercurso(email, title, 1, description)
     instancia = addInstanciaPercurso(email, percurso.id, start, end)
+    print('Percurso criado')
 
     for m in markers:
         foto = getFoto(m)
-        ponto = addPonto(foto.latitude, foto.longitude, percurso.id)
+        addPonto(foto.latitude, foto.longitude, percurso.id)
         foto.idinstperc = instancia.id
 
+    print('Markers')
     for coord in trajectory: 
         lat = coord[0]
         lon = coord[1]
-        ponto = addPonto(lat, lon, percurso.id)
+        addPonto(lat, lon, percurso.id)
+
+    print('Trajectory')
+
+    print('Sending answer...')
     
     return jsonify({
         'route': percurso.id,

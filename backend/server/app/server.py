@@ -369,8 +369,25 @@ def get_specific_route(email, id):
     pass
 
 @app.route('/resources/routes/search', methods=['POST'])
-def search_routes(email, id):
-    pass
+def search_routes():
+    req = request.get_json(force=True)
+    user = req['user']
+    concept = req['concept']
+    #user = 'joana@ua.pt'
+    #concept = 'Biblioteca, Universidade de Aveiro'
+    percursos = db.session.query(InstanciaPercurso).filter(InstanciaPercurso.emailc==user).all()
+    res = []
+    for p in percursos:
+        fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==p.id).filter(Fotografia.nomeconc==concept).all()
+        if len(fotos) > 0:
+            perc = db.session.query(Percurso).filter(Percurso.id==p.idperc).first()
+            res.append({
+                'title': perc.titulo,
+                'description': perc.descricao
+            })
+    return jsonify({
+        'percursos': res
+    })
 
 # Background tasks
 scheduler = BackgroundScheduler()

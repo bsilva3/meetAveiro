@@ -542,6 +542,11 @@ public class PhotoLogFragment extends Fragment implements
 
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+
+
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
                     Log.d("lst", mLastKnownLocation.toString());
@@ -564,7 +569,7 @@ public class PhotoLogFragment extends Fragment implements
                                 .snippet(getContext().getString(R.string.unknown_string))
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
-                        imageMarkers.put(m, photo);
+                        imageMarkers.put(m, photoHighQuality);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
                         new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);

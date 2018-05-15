@@ -698,8 +698,13 @@ public class RouteActivity extends FragmentActivity implements
                     //This is to be used in the markers (To fiz the loss of quality)
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+
+
 
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
 
@@ -720,7 +725,7 @@ public class RouteActivity extends FragmentActivity implements
                                 .snippet("Unknown")
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
-                        imageMarkers.put(m, photo);
+                        imageMarkers.put(m, photoHighQuality);
                         //send a base 64 encoded photo to server
                         new UploadFileToServerTask().execute(jsonRequest.toString());
                     }else {

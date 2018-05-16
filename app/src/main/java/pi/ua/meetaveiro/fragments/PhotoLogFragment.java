@@ -1190,7 +1190,7 @@ public class PhotoLogFragment extends Fragment implements
      * }
      * @param route Route to save
      */
-    private void saveRouteToFile(Route route){
+    /*private void saveRouteToFile(Route route){
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         //Title and description
@@ -1198,7 +1198,7 @@ public class PhotoLogFragment extends Fragment implements
         sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        Map<Marker,Bitmap> temp = route.getRouteMarkers();
         int tmp = 0;
         List<LatLng> polyPoints  = route.getRoutePath().getPoints();
 

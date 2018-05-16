@@ -152,10 +152,13 @@ def queriesChico():
     print(searchTodosPercursoContemSubString('a'))
 
 
+
 @app.route('/')
 def index():
-    addInfoExemplo()
-    addUsers()
+    #addInfoExemplo()
+    #addUsers()
+    addFotografia(None, "Biblioteca, Universidade de Aveiro", user_email, lat, lon, '../../../../treino/biblioteca/1.jpg',
+                        None, datetime.datetime.now(), None, 'pending', score, None)
    
     # queriesExemplo()
     #queriesChico()
@@ -174,4 +177,4 @@ def index():
                            totalfotos = nTotalFotos())
 
 if __name__ == '__main__':
-    app.run(port=5000, host='0.0.0.0')
+    app.run(port=6000, host='0.0.0.0')

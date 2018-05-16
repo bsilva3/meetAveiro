@@ -17,7 +17,7 @@ from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
 
 from webscrape import search_turismo, process_search, urls
 from search import search_wiki
-from img_utils import writeImage
+from img_utils import writeImage, readImage
 from prediction import predict_image
 
 import os
@@ -411,13 +411,69 @@ def get_specific_route(id):
     res['trajectory'] = pnts
     return jsonify(res)
 
-@app.route('/resources/routes/instances')
+@app.route('/resources/routes/instances', methods=['POST'])
 def get_route_instances():
-    pass
+    req = request.get_json(force=True)
+    email = req['user']
+    instances = db.session.query(InstanciaPercurso).filter(InstanciaPercurso.emailc == email).all()
+    if len(instances) == 0:
+        return jsonify({
+            'instances': []
+        })
+    res = []
+    for i in instances:
+        temp = {}
+        route = db.session.query(Percurso).get(i.idperc)
+        temp['route'] = route.titulo
+        temp['start'] = i.datainicio
+        temp['end'] = i.datafim
+        temp['rating'] = i.classificacao
+        temp['id'] = i.id
+        res.append(temp)
+
+    return jsonify({
+        'instances': res
+    })
 
 @app.route('/resources/routes/instances/<int:id>', methods=['GET'])
 def get_route_instance(id):
-    pass
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return jsonify({})
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    res = {}
+    res['title'] = route.titulo
+    res['description'] = route.descricao
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    res['markers'] = fotografias
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    res['trajectory'] = pnts    
+
+    return jsonify(res)
 
 @app.route('/resources/atractions/<string:name>', methods=['GET'])
 def get_atraction(name):

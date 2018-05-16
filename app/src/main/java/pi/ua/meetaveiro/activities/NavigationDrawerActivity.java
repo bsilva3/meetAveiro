@@ -55,6 +55,7 @@ import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Event;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.models.RouteInstance;
 import pi.ua.meetaveiro.others.Utils;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
@@ -194,7 +195,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     //Called when a item is clicked on the route list fragment
     @Override
-    public void onRouteSelected(Route item) {
+    public void onRouteInstanceSelected(RouteInstance item) {
 
     }
 

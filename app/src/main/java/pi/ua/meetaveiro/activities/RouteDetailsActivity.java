@@ -1,8 +1,10 @@
 package pi.ua.meetaveiro.activities;
 
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -10,10 +12,12 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,9 +34,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,6 +52,8 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
+
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -55,6 +67,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     //Map
     private GoogleMap mMap;
+
+    //Boolean to check if it is from the storage
+    private boolean isFromServer = false;
+
 
     /**
      * To send here:
@@ -87,6 +103,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         routeDate = findViewById(R.id.DateRoute);
 
 
+        if(b.getString("RouteID") == "null")
+            isFromServer = false;
+        else
+            isFromServer = true;
+
+
     }
 
 
@@ -101,7 +123,13 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 value = b.getString("fileName");
 
             //Get all info
-            reconstructRoute(Utils.getRouteFromFile(value,this.getApplicationContext()));
+            if(!isFromServer)
+                reconstructRoute(Utils.getRouteFromFile(value,this.getApplicationContext()));
+            else
+                //Request from the server the information from the RouteInstance
+
+
+
             adapter = new RouteHistoryDetailAdapter(this, images);
             viewPager.setAdapter(adapter);
 
@@ -231,6 +259,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         getMenuInflater().inflate(R.menu.app_menu_simplified, menu);
         return true;
     }
+
+
+
+
 
 
 

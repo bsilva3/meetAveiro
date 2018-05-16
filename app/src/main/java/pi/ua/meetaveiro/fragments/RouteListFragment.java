@@ -40,6 +40,7 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.models.RouteInstance;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
@@ -59,7 +60,7 @@ public class RouteListFragment extends Fragment implements
 
     private RouteAdapter.OnRouteItemSelectedListener mListener;
 
-    private List<Route> routeList;
+    private List<RouteInstance> routeList;
     private RouteAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
@@ -155,7 +156,7 @@ public class RouteListFragment extends Fragment implements
                     }
 
                     String str = new Gson().toJson(new Object());
-                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
+                    List<RouteInstance> items = new Gson().fromJson(response.toString(), new TypeToken<List<RouteInstance>>() {
                     }.getType());
 
                     // adding contacts to contacts list
@@ -190,7 +191,7 @@ public class RouteListFragment extends Fragment implements
      */
     private void fetchLocalRoutes(){
 
-        List<Route> items = new ArrayList<>();
+        List<RouteInstance> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
             File[] files = directory.listFiles();
@@ -200,7 +201,8 @@ public class RouteListFragment extends Fragment implements
                     String title = files[i].getName().replaceFirst("route","");
                     getRouteFromFile(title);
                     r = new Route(title);
-                    items.add(r);
+                    RouteInstance e = new RouteInstance(r);
+                    items.add(e);
                 }
             }
 

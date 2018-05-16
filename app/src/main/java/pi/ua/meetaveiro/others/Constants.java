@@ -23,7 +23,7 @@ public class Constants {
     // url to fetch all routes
     public static final String URL_ROUTES = API_URL + "/blahblah";
     // url to fetch routes history json
-    public static final String URL_ROUTE_HISTORY = API_URL + "/blahblah";
+    public static final String URL_ROUTE_HISTORY = API_URL + "/resources/routes/byuser";
     // url to fetch routes history json
     public static final String URL_ATTRACTIONS = API_URL + "/blahblah";
     // url to fetch routes history json

@@ -108,4 +108,12 @@ public class Route implements Parcelable {
     public void setRoutePath(Polyline routePath) {
         this.routePath = routePath;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 }

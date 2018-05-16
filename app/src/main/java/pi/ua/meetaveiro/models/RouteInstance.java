@@ -29,6 +29,11 @@ public class RouteInstance {
         routeMarkers = new HashMap<>();
     }
 
+    public RouteInstance(Route r){
+        routeMarkers = new HashMap<>();
+        this.route = r;
+    }
+
     public Date getStartDate() {
         return startDate;
     }
@@ -60,4 +65,7 @@ public class RouteInstance {
     public void setRouteMarkers(Map<Marker, Bitmap> routeMarkers) {
         this.routeMarkers = routeMarkers;
     }
+
+
+
 }

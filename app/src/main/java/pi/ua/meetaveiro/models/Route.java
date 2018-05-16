@@ -19,6 +19,7 @@ public class Route implements Parcelable {
     private Polyline routePath;
     private List<LatLng> routePathPoints; //when we cant use polyline just for the parcelable
     private Map<Marker, Bitmap> routeMarkers;
+    private Map<Marker, Integer> markersID;
     private String routeTitle = "Unnamed"; //default
     private String routeDescription = ""; //default
 
@@ -28,6 +29,16 @@ public class Route implements Parcelable {
         this.routePath = routePath;
         this.routeDescription = routeDescription;
         this.routeMarkers=routeMarkers;
+    }
+
+    public Route(String routeTitle, Polyline routePath, String routeDescription,
+                 Map<Marker, Bitmap> routeMarkers, Map<Marker, Integer> markersID) {
+        COUNTER++;
+        this.routeTitle = routeTitle;
+        this.routePath = routePath;
+        this.routeDescription = routeDescription;
+        this.routeMarkers = routeMarkers;
+        this.markersID = markersID;
     }
 
     public Route(String routeTitle, Polyline routePath, Map<Marker, Bitmap> routeMarkers) {
@@ -62,6 +73,7 @@ public class Route implements Parcelable {
         routeDescription = in.readString();
         routePathPoints = in.readParcelable(getClass().getClassLoader());
         routeMarkers = in.readParcelable(getClass().getClassLoader());
+        markersID = in.readParcelable(getClass().getClassLoader());
     }
 
     public Route(Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
@@ -117,6 +129,7 @@ public class Route implements Parcelable {
         dest.writeString(routeDescription);
         dest.writeList(routePath.getPoints());
         dest.writeMap(routeMarkers);
+        dest.writeMap(markersID);
     }
 
     // de-serialize the object
@@ -137,5 +150,13 @@ public class Route implements Parcelable {
 
     public void setRouteMarkers(Map<Marker, Bitmap> routeMarkers) {
         this.routeMarkers = routeMarkers;
+    }
+
+    public Map<Marker, Integer> getMarkersID() {
+        return markersID;
+    }
+
+    public void setMarkersID(Map<Marker, Integer> markersID) {
+        this.markersID = markersID;
     }
 }

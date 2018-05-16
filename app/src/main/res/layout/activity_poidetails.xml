@@ -89,7 +89,6 @@
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
                 android:lineSpacingExtra="8dp"
-                android:text="@string/loremipsum"
                 android:padding="@dimen/activity_horizontal_margin"/>
 
 

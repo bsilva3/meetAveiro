@@ -141,21 +141,26 @@ def search_turismo():
                 coords = []
                 temp = c.split('°')
                 coords.append(float(temp[0]))
+                #print(temp[0])
                 temp = temp[1].split('\'')
                 coords.append(float(temp[0])/60.0)
+                #print(temp[0])
                 seconds = temp[1].replace('W', '')
                 seconds = seconds.replace('N', '')
                 seconds = seconds.replace('"', '')
                 coords.append(float(seconds)/3600.0)
+                #print(seconds)
                 if i == 0:
                     res['latitude'] = sum(coords)
+                    #print(sum(coords))
                 else:
-                    res['longitude'] = sum(coords)
+                    res['longitude'] = 0 - sum(coords)
+                    #print(sum(coords))
                 i+=1
         else:
             res['location'] = ps[1].text.strip()
         result.append(res)
-
+        #break
     with open('./static/results/events.txt', 'w', encoding='utf8') as json_file:
         json.dump(result, json_file, ensure_ascii=False)
 

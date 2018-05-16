@@ -376,6 +376,10 @@ def get_routes():
     req = request.get_json(force=True)
     email = req['user']
     routes = db.session.query(Percurso).filter(Percurso.emailc == email).all()
+    if len(routes) == 0:
+        return jsonify({
+            "routes": []
+        })
     res = []
     for r in routes:
         temp = {}
@@ -391,8 +395,11 @@ def get_routes():
 @app.route('/resources/routes/<int:id>', methods=['GET'])
 def get_specific_route(id):
     percurso = db.session.query(Percurso).get(id)
+    if percurso is None:
+        return jsonify({})
     pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
     res = {}
+    
     res['title'] = percurso.titulo
     res['description'] = percurso.titulo
     pnts = []

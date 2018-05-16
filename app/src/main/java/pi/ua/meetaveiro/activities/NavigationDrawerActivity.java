@@ -189,7 +189,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onAttractionSelected(Attraction item) {
         Intent intent = new Intent(NavigationDrawerActivity.this, POIDetails.class);
-        intent.putExtra("attraction", (Parcelable) item);
+        intent.putExtra("attraction", item.getName());
         startActivity(intent);
     }
 

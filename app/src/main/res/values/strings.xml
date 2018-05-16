@@ -141,7 +141,7 @@
     <string name="stop_tour_btn">Stop Tour</string>
     <string name="start_tour_btn">Start Tour</string>
     <string name="picture_btn">Take picture</string>
-
+    <string name="unknown_photo_dialog_description">Photo taken on: </string>
     <!--dialog box to save tour-->
     <string name="save_tour_dialog_title">You can now save this tour, but first, please give it a
     name and a description</string>

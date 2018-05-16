@@ -81,6 +81,8 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -101,7 +103,11 @@ import static android.content.Context.MODE_PRIVATE;
 import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
- * Photo logging and route making {@link Fragment} subclass.
+ * Photo logging  {@link Fragment} subclass.
+ * A user takes a photo, and sends the photo to the server. He also sends the current Date
+ * When the server respondes, we see if the image was recognized or not.
+ * If it was, we show a dialog with the concept and its description
+ * else we only show a dialog with the date in which the user took the photo
  */
 public class PhotoLogFragment extends Fragment implements
         OnMapReadyCallback,
@@ -143,6 +149,10 @@ public class PhotoLogFragment extends Fragment implements
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
     private Map<Marker, Bitmap> imageMarkers = new HashMap<>();
+    //stores the id associated for the marker's image
+    private Map<Marker, Integer> markerID = new HashMap<>();
+    //stores the date associated for the marker's image
+    private Map<Marker, Long> markerDate = new HashMap<>();
 
     private FloatingActionButton buttonAddPhoto;
 
@@ -171,8 +181,6 @@ public class PhotoLogFragment extends Fragment implements
     private String[] optionsText;
     //icon for the option
     private Integer[] optionsImages;
-
-
 
     // Used for selecting the current place.
     private static final int M_MAX_ENTRIES = 10;
@@ -320,7 +328,7 @@ public class PhotoLogFragment extends Fragment implements
             //}
         }
         //when a path is clicked, a menu will appear
-        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+        /*mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
                 Log.d("clicked", "line clicked");
@@ -389,7 +397,7 @@ public class PhotoLogFragment extends Fragment implements
                     }
 
              }
-        });
+        });*/
     }
 
     /**
@@ -412,10 +420,6 @@ public class PhotoLogFragment extends Fragment implements
 
         //Initialize Preferences*
         prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
-        Log.d("route", routes.size()+" placing");
-        if (!routes.isEmpty())
-            placeRoutesOnMap(routes);
-
         /*While we have markers stored iterate trough.
         * For each marker add to the map with all information related to it*/
         boolean stop = false;
@@ -425,6 +429,8 @@ public class PhotoLogFragment extends Fragment implements
                 String lat = prefs.getString("Lat" + tmp, "");
                 String lng = prefs.getString("Lng" + tmp, "");
                 String btm = prefs.getString("bmp" + tmp, "");
+                int id = prefs.getInt("ID"+tmp, 0);
+                long date = prefs.getLong("dateTime"+tmp, 0);
                 String snip = prefs.getString("Snip" + tmp, "");
                 String titl = prefs.getString("Titl" + tmp,"");
                 LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
@@ -436,18 +442,41 @@ public class PhotoLogFragment extends Fragment implements
                             .snippet(snip));
                     imageMarkers.put(m,img);
                     markers.put(m,true);
+                    markerID.put(m, id);
+                    markerDate.put(m, date);
+                    //setClickListenersOnMap(id);
 
                 }catch (Exception e){
                     Marker m = mMap.addMarker(new MarkerOptions().position(l)
                             .title(titl)
                             .snippet(snip));
                     markers.put(m,true);
+                    markerID.put(m, id);
+                    markerDate.put(m, date);
                 }
                 tmp++;
             }else{
                 stop = true;
             }
+            //add marker click listener
+            addMarkerListener();
         }
+        //JSONObject j = placeRoutesOnJson();
+        //Log.d("sendRoute", j.toString());
+        //new uploadFileToServerTask().execute(j.toString(), URL_SEND_ROUTE);
+    }
+
+    private void addMarkerListener(){
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                if (markerID.containsKey(m)) {
+                    createAndShowInfoDialog(m, markerID.get(m), false);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     private void updateLocationUI() {
@@ -461,7 +490,54 @@ public class PhotoLogFragment extends Fragment implements
             Log.e("Exception: %s", e.getMessage());
         }
     }
+    //places a route on json (INCOMPLETE!!! missing title and description
+    // put trajectory coordinates as string and marker's id as string)
+    public JSONObject placeRoutesOnJson(){
+        JSONObject j = new JSONObject();
 
+        String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
+        //add markers
+        //send image ids as string (server has problems converting from int[])
+        String listOfMarkers = "";
+
+        //int[] listOfMarkers = new int[markerID.size()];
+        //save for each marker, the image id, and their coords
+        int i = 0;
+        for (Map.Entry<Marker, Integer> entry : markerID.entrySet()){
+            if (i == markerID.size()-1)
+                listOfMarkers+=entry.getValue();
+            else
+                listOfMarkers+=entry.getValue()+",";
+            i++;
+        }
+        try {
+            j.put("title", "ola chico");
+            j.put("description", "ta td??");
+            j.put("start", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("end", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
+            j.put("markers", listOfMarkers);
+            j.put("trajectory", routePoints);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d("ROUTE", j.toString());
+        return j;
+    }
+
+    //when the user taps a marker
+    /*private void setClickListenersOnMap(int id){
+        mMap.setOnMarkerClickListener(mkr -> {
+            Log.d("markerClick", "clicked");
+            if (mkr != null) {
+                Log.d("markerClickI", mkr.getTitle()+", id: "+mkr.getId());
+                //dont show dialog feedback
+                createAndShowInfoDialog(mkr, id, false);
+                return true;
+            }
+            return false;
+        });
+    }*/
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
@@ -549,9 +625,10 @@ public class PhotoLogFragment extends Fragment implements
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
-                    Log.d("lst", mLastKnownLocation.toString());
                     JSONObject jsonRequest = new JSONObject();
+                    long date = Calendar.getInstance().getTimeInMillis();
                     try {
+                        jsonRequest.put("date", date);
                         jsonRequest.put("image", base64Photo);
                         jsonRequest.put("lat", mLastKnownLocation.getLatitude());
                         jsonRequest.put("long", mLastKnownLocation.getLongitude());
@@ -559,7 +636,7 @@ public class PhotoLogFragment extends Fragment implements
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
-
+                    //create marker and store it (also store the date we took the photo for the marker)
                     if (mLastKnownLocation!=null) {
                         //add the marker to the map of markers, but indicate that this marker
                         //does not have an updated info yet
@@ -570,6 +647,8 @@ public class PhotoLogFragment extends Fragment implements
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
+                        imageMarkers.put(m, photo);
+                        markerDate.put(m, date);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
                         new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
@@ -603,9 +682,9 @@ public class PhotoLogFragment extends Fragment implements
         JSONObject json = null;
         try {
             json = new JSONObject(result.toString());
+            Log.d("json", json.toString());
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
-        } catch (java.lang.NullPointerException e){
             Toast.makeText(getContext(), "Connection error. Please try again later", Toast.LENGTH_LONG).show();
             return;
         }
@@ -618,34 +697,36 @@ public class PhotoLogFragment extends Fragment implements
                 break;
             }
         }
+        if (json == null){
+            Toast.makeText(getContext(), "Server is currently unavailable. Please, try again later", Toast.LENGTH_SHORT);
+            return;
+        }
         Marker oldMarker = markerToUpdate;
+        String title = "";
+        String description = "";
         int id = 0;
-        String concept = "";
-        int imageId = 0;
+        //we get the data from the json
+        //if the image was recognized, we get the title, description and id, else
+        //we get unknown (desconhecido) as title, "" as description (still return an id)
         try {
-            markerToUpdate.setTitle(json.get("name").toString());
-            markerToUpdate.setSnippet(json.get("description").toString());
-            concept = json.get("concept").toString();
-            id = Integer.parseInt(json.get("answer").toString());
+            title = json.get("name").toString();
+            description = json.get("description").toString();
+            id = json.getInt("id");
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
+        markerToUpdate.setTitle(title);
+        markerToUpdate.setSnippet(getContext().getString(R.string.unknown_photo_dialog_description)+
+                convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
         markers.put(markerToUpdate, true);
+        markerID.put(markerToUpdate, id);
 
-        //update the marker in the map that stores every marker and the image in the marker
         final int idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
-        mMap.setOnMarkerClickListener(m -> {
-            Log.d("markerClick", "clicked");
-            if (m != null) {
-                Log.d("markerClickI", "clicked with info");
-                createAndShowInfoDialog(m, idFinal);
-                return true;
-            }
-            return false;
-        });
-        //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
-        createAndShowInfoDialog(markerToUpdate, id);
+        //setClickListenersOnMap(id);
+        // show a prompt for user feedback on the first dialog is closed
+        //we only show the feedack prompt when the image is recognized
+        createAndShowInfoDialog(markerToUpdate, id, true);
     }
 
     //when we send feedback
@@ -670,9 +751,10 @@ public class PhotoLogFragment extends Fragment implements
         imageMarkers.put(newMarker, bit);
     }
 
-    private void createAndShowInfoDialog(Marker m, int id){
+    private void createAndShowInfoDialog(Marker m, int id, boolean showFeedback){
         String name = m.getTitle();
         String description = m.getSnippet();
+        //String date = convertTimeInMilisAndFormat(markerDate.get(m));
         Drawable d = new BitmapDrawable(getResources(), imageMarkers.get(m));
         //image was recognized
         if (!name.toLowerCase().equals("desconhecido")) {
@@ -690,7 +772,8 @@ public class PhotoLogFragment extends Fragment implements
                     .onPositive(
                             (dialog12, which) -> {
                                 dialog12.dismiss();
-                                showFeedbackDialogAndSend(name, id, d);
+                                if (showFeedback)
+                                    showFeedbackDialogAndSend(name, id, d);
                             }
                     )
                     .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
@@ -772,6 +855,8 @@ public class PhotoLogFragment extends Fragment implements
     * - Latitude    Lat
     * - Longitude   Lng
     * - Icon        bmp
+    * - ID          ID
+    * - dateTime    dateTime
     * - Title       Titl
     * - Snippet     Snip
     */
@@ -779,6 +864,15 @@ public class PhotoLogFragment extends Fragment implements
     public void onPause() {
         super.onPause();  // Always call the superclass method first
         //Iterate trough all saved markers.
+        saveMarkersOnStorage();
+        imageMarkers = new HashMap<>();
+        markers = new HashMap<>();
+        markerDate = new HashMap<>();
+        markerID = new HashMap<>();
+    }
+
+    //save markers on storage
+    public void saveMarkersOnStorage(){
         int i = 0;
         Iterator<Map.Entry<Marker, Bitmap>> it = imageMarkers.entrySet().iterator();
         while (it.hasNext()) {
@@ -792,6 +886,10 @@ public class PhotoLogFragment extends Fragment implements
             prefs.edit().putString("Lng"+i,String.valueOf(m.getPosition().longitude)).commit();
             prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).commit();
             prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).commit();
+            prefs.edit().putLong("dateTime"+i,Long.valueOf(markerDate.get(m))).commit();
+            Log.d("num", "saveID: "+markerID.get(m)+"");
+            Log.d("num", "saveDate: "+markerDate.get(m)+"");
+            prefs.edit().putInt("ID"+i,Integer.valueOf(markerID.get(m))).commit();
             prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
             i++;
 
@@ -840,12 +938,13 @@ public class PhotoLogFragment extends Fragment implements
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         // Don't forget to shutdown tts!
         if (tts != null) {
             tts.stop();
             tts.shutdown();
         }
-        super.onDestroy();
+
     }
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
@@ -933,7 +1032,6 @@ public class PhotoLogFragment extends Fragment implements
                 onFeedbackResponseReceived(response);
             Log.d("res", response+"");
         }
-
     }
 
     /**
@@ -1083,6 +1181,8 @@ public class PhotoLogFragment extends Fragment implements
      *      Snippet  : "",
      *      Latitude : "",
      *      Longitude : " " ,
+     *      dateTime : "",
+     *      ID: "",
      *      Icon : "bitmaptostring replaced / with // "
      *      }
      *
@@ -1090,7 +1190,7 @@ public class PhotoLogFragment extends Fragment implements
      * }
      * @param route Route to save
      */
-    private void saveRouteToFile(Route route){
+    /*private void saveRouteToFile(Route route){
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         //Title and description
@@ -1098,7 +1198,7 @@ public class PhotoLogFragment extends Fragment implements
         sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        Map<Marker,Bitmap> temp = route.getRouteMarkers();
         int tmp = 0;
         List<LatLng> polyPoints  = route.getRoutePath().getPoints();
 
@@ -1114,8 +1214,12 @@ public class PhotoLogFragment extends Fragment implements
                 sb.append("\"Snippet\" : " + "\"" + entry.getKey().getSnippet() + "\",\n");
                 sb.append("\"Latitude\" : " + "\"" + entry.getKey().getPosition().latitude + "\",\n");
                 sb.append("\"Longitude\" : " + "\"" + entry.getKey().getPosition().longitude + "\",\n");
+                sb.append("\"dateTime\" : " + "\"" + markerDate.get(entry.getKey()) + "\",\n");
                 String tmpo = bitMapToBase64(entry.getValue());
                 String imageFix = tmpo.replaceAll("/","//");
+                Log.d("num", "getID: "+markerID.get(entry.getKey())+"");
+                Log.d("num", "getDate: "+markerDate.get(entry.getKey())+"");
+                sb.append("\"ID\" : " + "\"" +markerID.get(entry.getKey())+ "\",\n");
                 sb.append("\"Icon\" : " + "\"" + imageFix + "\"");
                 //End marker
                 sb.append("}");
@@ -1152,6 +1256,26 @@ public class PhotoLogFragment extends Fragment implements
             Log.e(TAG, e.getMessage());
         }*/
 
+    //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
+    public String convertTimeInMilisAndFormat(long timeInMilis){
+        Date d = new Date(timeInMilis);
+        Calendar cl = Calendar.getInstance();
+        cl.setTime(d);
+        String photoDate = cl.get(Calendar.DAY_OF_MONTH)+"/"+
+                cl.get(Calendar.MONTH)+"/"+cl.get(Calendar.YEAR)+", " +cl.get(Calendar.HOUR_OF_DAY)+
+                ":"+cl.get(Calendar.MINUTE);
+        return photoDate;
+    }
+
+    //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
+    public String convertTimeInMilisAndFormatToServerType(long timeInMilis){
+        Date d = new Date(timeInMilis);
+        Calendar cl = Calendar.getInstance();
+        cl.setTime(d);
+        String photoDate = cl.get(Calendar.YEAR)+"-"+
+                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
+                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
+        return photoDate;
     }
 
 }

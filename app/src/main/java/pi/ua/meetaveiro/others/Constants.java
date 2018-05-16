@@ -20,6 +20,8 @@ public class Constants {
     public final static String IMAGE_SCAN_URL = API_URL + "/search";
     //url to send image feedback
     public final static String FEEDBACK_URL = API_URL + "/search/feedback";
+    //url to send image feedback
+    public final static String URL_SEND_ROUTE = API_URL + "/resources/routes";
     // url to fetch all routes
     public static final String URL_ROUTES = API_URL + "/blahblah";
     // url to fetch routes history json

@@ -370,13 +370,68 @@ def receive_routes():
         'inst': instancia.id
     })
 
-@app.route('/resources/routes/<string:email>', methods=['GET'])
-def get_routes(email):
+
+@app.route('/resources/routes/byuser', methods=['POST'])
+def get_routes():
+    req = request.get_json(force=True)
+    email = req['user']
+    routes = db.session.query(Percurso).filter(Percurso.emailc == email).all()
+    res = []
+    for r in routes:
+        temp = {}
+        temp['id'] = r.id
+        temp['title'] = r.titulo
+        temp['description'] = r.descricao
+        res.append(temp)
+    return jsonify({
+        'routes': res
+    })
+
+
+@app.route('/resources/routes/<int:id>', methods=['GET'])
+def get_specific_route(id):
+    percurso = db.session.query(Percurso).get(id)
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
+    res = {}
+    res['title'] = percurso.titulo
+    res['description'] = percurso.titulo
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+    res['trajectory'] = pnts
+    return jsonify(res)
+
+@app.route('/resources/routes/instances')
+def get_route_instances():
     pass
 
-@app.route('/resources/routes/<string:email>/routes', methods=['GET'])
-def get_specific_route(email, id):
+@app.route('/resources/routes/instances/<int:id>', methods=['GET'])
+def get_route_instance(id):
     pass
+
+@app.route('/resources/atractions/<string:name>', methods=['GET'])
+def get_atraction(name):
+    pass
+
+@app.route('/resources/atractions', methods=['GET'])
+def get_atractions():
+    conceitos = Conceito.query.all()
+    res = []
+
+    for c in conceitos:
+        temp = {}
+        temp['name'] = c.nomeconceito
+        temp['latitude'] = c.latitude
+        temp['longitude'] = c.longitude
+        temp['description'] = c.descricao
+        res.append(temp)
+
+    return jsonify({
+        'atractions': res
+    })
 
 @app.route('/resources/routes/search', methods=['POST'])
 def search_routes():

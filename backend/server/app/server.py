@@ -98,7 +98,7 @@ def process_image_search(query):
 def retrain():
     req = request.get_json(force=True)
     print('OK')
-    subprocess.call('../../../scripts_tensorflow/retrain')
+    subprocess.call('./retrain.sh')
     print('Done')
     pending_requests = get_request_files()
     return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 

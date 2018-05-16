@@ -142,10 +142,11 @@ def search_turismo():
                 temp = c.split('°')
                 coords.append(float(temp[0]))
                 temp = temp[1].split('\'')
-                coords.append(float(temp[0]))
+                coords.append(float(temp[0])/60.0)
                 seconds = temp[1].replace('W', '')
                 seconds = seconds.replace('N', '')
                 seconds = seconds.replace('"', '')
+                coords.append(float(seconds)/3600.0)
                 if i == 0:
                     res['latitude'] = sum(coords)
                 else:

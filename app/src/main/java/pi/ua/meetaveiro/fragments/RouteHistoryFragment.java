@@ -185,7 +185,6 @@ public class RouteHistoryFragment extends Fragment implements
     private void fetchRoutes() {
 
 
-        sendPost();
 
 
         JSONObject jsonRequest = new JSONObject();
@@ -197,48 +196,14 @@ public class RouteHistoryFragment extends Fragment implements
 
         new uploadFileToServerTask().execute(jsonRequest.toString(), URL_ROUTE_HISTORY);
 
-
-        fetchLocalRoutes();
-       /* mShimmerViewContainer.stopShimmerAnimation();
+        // refreshing recycler view
+        mAdapter.notifyDataSetChanged();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
         mShimmerViewContainer.setVisibility(View.GONE);
         // stopping swipe refresh
-        swipeRefreshLayout.setRefreshing(false);*/
+        swipeRefreshLayout.setRefreshing(false);
 
-/*
-         JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
-                response -> {
-                    if (response == null) {
-                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    List<RouteInstance> items = new Gson().fromJson(response.toString(), new TypeToken<List<RouteInstance>>() {
-                    }.getType());
-
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
-
-                    // refreshing recycler view
-                    mAdapter.notifyDataSetChanged();
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }, error -> {
-                    // error in getting json
-                    // stop animating Shimmer and hide the layout
-                    fetchLocalRoutes();
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    Log.e(TAG, "Error: " + error.getMessage());
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-        );
-
-        MyApplication.getInstance().addToRequestQueue(request);*/
     }
 
     /**
@@ -354,52 +319,7 @@ public class RouteHistoryFragment extends Fragment implements
 
 
 
-
-
-
-    public void sendPost() {
-        Thread thread = new Thread(() -> {
-            try {
-                URL url = new URL(URL_ROUTE_HISTORY);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                conn.setRequestProperty("Accept","application/json");
-                conn.setDoOutput(true);
-                conn.setDoInput(true);
-
-                JSONObject jsonParam = new JSONObject();
-                jsonParam.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
-
-                Log.i("JSON", jsonParam.toString());
-                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-                os.writeBytes(jsonParam.toString());
-
-                os.flush();
-                os.close();
-
-                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                Log.i("MSG" , conn.getResponseMessage());
-
-                conn.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-
-        });
-        thread.start();
-
-    }
-
-
-
-
-
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
-        ProgressDialog progDailog;
         String serverUrl;
         @Override
         protected void onPreExecute() {
@@ -471,7 +391,38 @@ public class RouteHistoryFragment extends Fragment implements
         @Override
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
-            Log.d("res", response+"");
+
+
+            try {
+                List<RouteInstance> items = new ArrayList<>();
+                JSONObject js = new JSONObject(response);
+                JSONArray arr = js.getJSONArray("routes");
+                Route r;
+                RouteInstance e;
+
+                if(arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject row = arr.getJSONObject(i);
+                        String desc = row.getString("description");
+                        String title = row.getString("title");
+                        String id = row.getString("id");
+
+                        r = new Route(title);
+                        r.setId(Integer.parseInt(id));
+                        r.setRouteDescription(desc);
+                        e = new RouteInstance(r);
+
+                        items.add(e);
+                    }
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
     }

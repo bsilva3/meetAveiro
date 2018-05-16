@@ -69,6 +69,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -87,6 +88,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -156,6 +158,12 @@ public class RouteActivity extends FragmentActivity implements
     private Map<Marker, Boolean> markers;
     //map that stores the image in each map
     private Map<Marker, Bitmap> imageMarkers = new HashMap<>();
+    //stores the id associated for the marker's image
+    private Map<Marker, Integer> markerID = new HashMap<>();
+    //stores the date associated for the marker's image
+    private Map<Marker, Long> markerDate = new HashMap<>();
+
+
 
     //To store in local
     private SharedPreferences prefs = null;
@@ -196,7 +204,7 @@ public class RouteActivity extends FragmentActivity implements
     /**
      * Used to start the Route
      */
-    private Date begginingDate;
+    private long begginingDate;
 
 
     // Monitors the state of the connection to the service.
@@ -414,8 +422,8 @@ public class RouteActivity extends FragmentActivity implements
             mService.requestLocationUpdates();
         else{
             mService.removeLocationUpdates();
-            System.out.println("YOOOOOOOOOOOOOOOOOOOOOOOOOO");
-            this.begginingDate = new Date();
+            begginingDate = Calendar.getInstance().getTimeInMillis();
+
         }
     }
 
@@ -723,7 +731,12 @@ public class RouteActivity extends FragmentActivity implements
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     try {
+                        long date = Calendar.getInstance().getTimeInMillis();
+                        jsonRequest.put("date", date);
                         jsonRequest.put("image", base64Photo);
+                        jsonRequest.put("lat", mLastKnownLocation.getLatitude());
+                        jsonRequest.put("long", mLastKnownLocation.getLongitude());
+                        jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
@@ -739,7 +752,9 @@ public class RouteActivity extends FragmentActivity implements
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
                         //send a base 64 encoded photo to server
-                        new UploadFileToServerTask().execute(jsonRequest.toString());
+                        new UploadFileToServerTask().execute(jsonRequest.toString(),IMAGE_SCAN_URL);
+
+
                     }else {
                         //Report error to user
                         Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
@@ -788,6 +803,9 @@ public class RouteActivity extends FragmentActivity implements
             Toast.makeText(this, "Connection error", Toast.LENGTH_LONG).show();
             return;
         }
+
+
+        System.out.println(json.toString());
         Marker markerToUpdate = null;
         //search the not yet updated marker
         for(Map.Entry entry : markers.entrySet()){
@@ -797,18 +815,20 @@ public class RouteActivity extends FragmentActivity implements
             }
         }
         Marker oldMarker = markerToUpdate;
-        String id = null;
+        int id = 0;
         try {
             markerToUpdate.setTitle(json.get("name").toString());
             markerToUpdate.setSnippet(json.get("description").toString());
-            id = json.get("id").toString();
+            id = Integer.parseInt(json.get("id").toString());
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
         markers.put(markerToUpdate, true);
+        markerID.put(markerToUpdate, id);
+
 
         //update the marker in the map that stores every marker and the image in the marker
-        final String idFinal = id;
+        final int idFinal = id;
         updateMarkerOnMap(oldMarker, markerToUpdate);
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -816,14 +836,14 @@ public class RouteActivity extends FragmentActivity implements
                 Log.d("markerClick", "clicked");
                 if (m != null) {
                     Log.d("markerClickI", "clicked with info");
-                    createAndShowInfoDialog(m, idFinal);
+                    createAndShowInfoDialog(m, idFinal+"");
                     return true;
                 }
                 return false;
             }
         });
         //shows a dialog with info about the concept. It also shows a prompt for user feedback on the first dialog is closed
-        createAndShowInfoDialog(markerToUpdate, id);
+        createAndShowInfoDialog(markerToUpdate, id+"");
     }
 
     //used to save the updated marker with the info obtained from the server
@@ -973,6 +993,7 @@ public class RouteActivity extends FragmentActivity implements
         }
     }
 
+
     private void speakOut(String text) {
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
     }
@@ -980,10 +1001,10 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onDestroy() {
         // Don't forget to shutdown tts!
-        if (tts != null) {
+        /*if (tts != null) {
             tts.stop();
             tts.shutdown();
-        }
+        }*/
         super.onDestroy();
 
     }
@@ -1005,12 +1026,13 @@ public class RouteActivity extends FragmentActivity implements
         protected String doInBackground(String... params) {
             String JsonResponse;
             String JsonDATA = params[0];
+            String JsonUrl = params[1];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             Log.d("response", "begin");
             try {
                 //Create a URL object holding our url
-                URL url = new URL(API_URL);
+                URL url = new URL(JsonUrl);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
@@ -1212,9 +1234,12 @@ public class RouteActivity extends FragmentActivity implements
                             // get user input and create a route object
                             Route route = new Route (routeTitleBox.getText().toString(), line,
                                     routeDescriptionBox.getText().toString(), imageMarkers);
-                            RouteInstance rt = new RouteInstance(this.begginingDate,new Date(),route,imageMarkers);
+                            RouteInstance rt = new RouteInstance(new Date(begginingDate),new Date(),route,imageMarkers);
 
+                            //Save to Storage and send to the server
                             saveRouteToFile(rt);
+                            JSONObject jsonT = placeRoutesOnJson(rt);
+                            new UploadFileToServerTask().execute(jsonT.toString(),URL_SEND_ROUTE);
 
                             //routePoints.clear();not reseting because we are gonna have only one route
                             //at a time, and this will be to check if a route exists in map
@@ -1316,5 +1341,55 @@ public class RouteActivity extends FragmentActivity implements
         }
 
     }
-    
+
+
+    //places a route on json (INCOMPLETE!!! missing title and description
+    // put trajectory coordinates as string and marker's id as string)
+    public JSONObject placeRoutesOnJson(RouteInstance rt){
+        JSONObject j = new JSONObject();
+
+        String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
+        //add markers
+        //send image ids as string (server has problems converting from int[])
+        String listOfMarkers = "";
+
+        //int[] listOfMarkers = new int[markerID.size()];
+        //save for each marker, the image id, and their coords
+        int i = 0;
+        for (Map.Entry<Marker, Integer> entry : markerID.entrySet()){
+            if (i == markerID.size()-1)
+                listOfMarkers+=entry.getValue();
+            else
+                listOfMarkers+=entry.getValue()+",";
+            i++;
+        }
+        try {
+            j.put("title", rt.getRoute().getRouteTitle());
+            j.put("description", rt.getRoute().getRouteDescription());
+            j.put("start", convertTimeInMilisAndFormatToServerType(begginingDate));
+            j.put("end", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
+            j.put("markers", listOfMarkers);
+            j.put("trajectory", routePoints);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d("ROUTE", j.toString());
+        return j;
+    }
+
+
+    //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
+    public String convertTimeInMilisAndFormatToServerType(long timeInMilis){
+        Date d = new Date(timeInMilis);
+        Calendar cl = Calendar.getInstance();
+        cl.setTime(d);
+        String photoDate = cl.get(Calendar.YEAR)+"-"+
+                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
+                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
+        return photoDate;
+    }
+
+
+
 }

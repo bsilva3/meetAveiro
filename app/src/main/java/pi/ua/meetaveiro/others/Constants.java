@@ -35,6 +35,8 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";
 
+    public static final String ROUTE_BY_ID = API_URL + "/blahhh";
+
     // Geofence related constants
 
     public static final String GEOFENCES_ADDED_KEY = ACTIVITIES_PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";

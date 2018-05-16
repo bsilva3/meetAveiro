@@ -92,10 +92,12 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
                 //Verify if it is local or from the server
                 //From the server an ID is attributed
 
-                if(holder.mItem.getRoute().getId() != 0)
-                    bun.putString("RouteID",holder.mItem.getRoute().getId()+"");
-                else
-                    bun.putString("RouteID","null");
+                if(holder.mItem.getRoute().getId() != 0) {
+                    bun.putString("RouteID", holder.mItem.getRoute().getId() + "");
+                }
+                else {
+                    bun.putString("RouteID", "noNumber");
+                }
 
 
                 //All the names stored locally are in the format route + routeTitle + .json

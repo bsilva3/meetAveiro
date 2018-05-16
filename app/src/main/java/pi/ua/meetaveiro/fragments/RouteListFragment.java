@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -25,14 +26,25 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,42 +157,27 @@ public class RouteListFragment extends Fragment implements
 
 
     /**
-     * fetches json by making http calls
+     * Fetches the user routes and only the USER'S ROUTEINSTANCES
      */
     private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
-                response -> {
-                    if (response == null) {
-                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
 
-                    String str = new Gson().toJson(new Object());
-                    List<RouteInstance> items = new Gson().fromJson(response.toString(), new TypeToken<List<RouteInstance>>() {
-                    }.getType());
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail()+"");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
+        new uploadFileToServerTask().execute(jsonRequest.toString(), URL_ROUTE_HISTORY);
 
-                    // refreshing recycler view
-                    mAdapter.notifyDataSetChanged();
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }, error -> {
-                    // error in getting json
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-        );
+        // refreshing recycler view
+        mAdapter.notifyDataSetChanged();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
+        // stopping swipe refresh
+        swipeRefreshLayout.setRefreshing(false);
 
-        MyApplication.getInstance().addToRequestQueue(request);
     }
 
 
@@ -327,4 +324,129 @@ public class RouteListFragment extends Fragment implements
             fetchLocalRoutes();
         }
     }
+
+
+
+
+
+
+
+
+
+    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+        String serverUrl;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String JsonResponse = null;
+            String JsonDATA = params[0];
+            serverUrl = params[1];
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            Log.d("response", "begin");
+            try {
+                //Create a URL object holding our url
+                URL url = new URL(serverUrl);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setDoOutput(true);
+                // is output buffer writter
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                //set headers and method
+                Writer writer = new BufferedWriter(new OutputStreamWriter
+                        (urlConnection.getOutputStream(), "UTF-8"));
+                writer.write(JsonDATA);
+                // json data
+                writer.close();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                //input stream
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String inputLine;
+                while ((inputLine = reader.readLine()) != null)
+                    buffer.append(inputLine + "\n");
+                if (buffer.length() == 0) {
+                    // Stream was empty. No point in parsing.
+                    return null;
+                }
+                JsonResponse = buffer.toString();
+                //send to post execute
+                return JsonResponse;
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+            super.onPostExecute(response);
+
+
+            try {
+                List<RouteInstance> items = new ArrayList<>();
+                JSONObject js = new JSONObject(response);
+                JSONArray arr = js.getJSONArray("routes");
+                Route r;
+                RouteInstance e;
+
+                if(arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject row = arr.getJSONObject(i);
+                        String desc = row.getString("description");
+                        String title = row.getString("title");
+                        String id = row.getString("id");
+
+                        r = new Route(title);
+                        r.setId(Integer.parseInt(id));
+                        r.setRouteDescription(desc);
+                        e = new RouteInstance(r);
+
+                        items.add(e);
+                    }
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+
+
+
+
+
+
 }

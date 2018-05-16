@@ -19,6 +19,12 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -28,6 +34,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,14 +55,22 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
+import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
+import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.models.RouteInstance;
+import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -62,8 +79,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     RouteHistoryDetailAdapter adapter;
     ArrayList<Bitmap> images = new ArrayList<>();
     private Toolbar mTopToolbar;
-    private String routeTitle = "", routeDesc = "", value ="";
+    private String routeTitle = "", routeDesc = "", value = "";
     private TextView routeDescription, routeDate;
+    private static final String TAG = RouteDetailsActivity.class.getSimpleName();
 
     //Map
     private GoogleMap mMap;
@@ -71,10 +89,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     //Boolean to check if it is from the storage
     private boolean isFromServer = false;
 
+    //Route ID
+    private String routeID;
 
     /**
      * To send here:
-     *
+     * <p>
      * routeTitle: The title of the route (MANDATORY)
      * fileName: The name of the file if it is local
      *
@@ -103,17 +123,24 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         routeDate = findViewById(R.id.DateRoute);
 
 
-        if(b.getString("RouteID") == "null")
+        //Verify if it comes from the server or it is local
+        if (Objects.equals(b.getString("RouteID").toString(), "noNumber")) {
             isFromServer = false;
-        else
+        } else {
             isFromServer = true;
-
+            this.routeID = b.getString("RouteID").toString();
+        }
 
     }
 
 
-
-    private void constructPage(){
+    /**
+     * Constructs the page
+     * Setting all information
+     *
+     * Gets a ROUTE_BY_ID with all the information
+     */
+    private void constructPage() {
         try {
             viewPager = (ViewPager) findViewById(R.id.view_images);
 
@@ -123,23 +150,31 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 value = b.getString("fileName");
 
             //Get all info
-            if(!isFromServer)
-                reconstructRoute(Utils.getRouteFromFile(value,this.getApplicationContext()));
-            else
-                //Request from the server the information from the RouteInstance
+            if (isFromServer == false) {
+                reconstructRoute(Utils.getRouteFromFile(value, this.getApplicationContext()));
+            } else {
+                //Request from the server the information from the Route
+                /*JSONObject jsonRequest = new JSONObject();
+                try {
+                    jsonRequest.put("id", routeID);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }*/
 
+                //TODO: METHOD GET
+
+
+            }
 
 
             adapter = new RouteHistoryDetailAdapter(this, images);
             viewPager.setAdapter(adapter);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
-
-
 
 
     /**
@@ -180,7 +215,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
             Date endDate = new Date(json.get("EndDate").toString());
-            routeDate.setText("Start: " + startDate.toString()+"\nFinished: "+endDate.toString() );
+            routeDate.setText("Start: " + startDate.toString() + "\nFinished: " + endDate.toString());
 
             LatLng markLar = null;
 
@@ -205,7 +240,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                         .snippet(snippet));
 
                 //Put in the map of markers
-                tempMap.put(m,image);
+                tempMap.put(m, image);
 
 
             }
@@ -227,7 +262,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             mMap.addPolyline(options);
 
             //Set the route Description if there is any
-            if(routeDesc != "" || routeDesc!= null)
+            if (routeDesc != "" || routeDesc != null)
                 routeDescription.setText(routeDesc);
 
             return r;
@@ -236,7 +271,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             return null;
         }
     }
-
 
 
     @Override
@@ -259,11 +293,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         getMenuInflater().inflate(R.menu.app_menu_simplified, menu);
         return true;
     }
-
-
-
-
-
 
 
 

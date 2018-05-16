@@ -3,7 +3,7 @@ Servidor, construído sobre Flask, que expõe uma REST API, cujos serviços se
 aplicam à identificação de imagens e recolha de informação pertinente sobre
 o que elas representam (ex: monumentos)
 '''
-import sys
+import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
 
@@ -94,6 +94,16 @@ def process_image_search(query):
         message = search_wiki(query)
     return message
 
+@app.route('/resources/retrain', methods=['POST'])
+def retrain():
+    req = request.get_json(force=True)
+    print('OK')
+    subprocess.call('./retrain.sh')
+    print('Done')
+    pending_requests = get_request_files()
+    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
+        pending=count_elems_dict(pending_requests))
+    
 
 @app.route('/')
 @app.route('/index')
@@ -145,6 +155,7 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
+#    data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -185,7 +196,7 @@ def classify_image():
     return jsonify({
         'name': 'Desconhecido',
         'description': '',
-        'id': None
+        'id': foto.id
     })
 
 @app.route('/search/feedback', methods=['POST'])
@@ -193,7 +204,7 @@ def send_feedback():
     res = request.get_json(force=True)
     file_id = res['image_id']
     concept = res['concept']
-    feedback = res['feedback']
+    feedback = res['answer']
     print('feedback ' + str(feedback))
     if feedback == 1:
         #req_path = os.path.join('./static/img', concept)
@@ -316,6 +327,131 @@ def manage_requests():
         os.remove(req_folder)
         deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
+
+
+@app.route('/resources/routes', methods=['POST'])
+def receive_routes():
+    res = request.get_json(force=True)
+    email = res['user']
+    title = res['title']
+    start = res['start']
+    print('Datas hooray')
+    end = res['end']
+    description = res['description']
+    markers = res['markers']
+    trajectory = res['trajectory']
+
+    print('Recebido')
+    percurso = addPercurso(email, title, 1, description)
+    instancia = addInstanciaPercurso(email, percurso.id, start, end)
+    print('Percurso criado')
+    marks = markers.split(',')
+
+    for m in marks:
+        foto = getFoto(m)
+        addPonto(foto.latitude, foto.longitude, percurso.id)
+        foto.idinstperc = instancia.id
+
+    
+    print('Markers')
+    trajs = trajectory.split(';')
+    for coord in trajs:
+        c = coord.split(',') 
+        lat = c[0]
+        lon = c[1]
+        addPonto(lat, lon, percurso.id)
+
+    print('Trajectory')
+
+    print('Sending answer...')
+    
+    return jsonify({
+        'route': percurso.id,
+        'inst': instancia.id
+    })
+
+
+@app.route('/resources/routes/byuser', methods=['POST'])
+def get_routes():
+    req = request.get_json(force=True)
+    email = req['user']
+    routes = db.session.query(Percurso).filter(Percurso.emailc == email).all()
+    res = []
+    for r in routes:
+        temp = {}
+        temp['id'] = r.id
+        temp['title'] = r.titulo
+        temp['description'] = r.descricao
+        res.append(temp)
+    return jsonify({
+        'routes': res
+    })
+
+
+@app.route('/resources/routes/<int:id>', methods=['GET'])
+def get_specific_route(id):
+    percurso = db.session.query(Percurso).get(id)
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
+    res = {}
+    res['title'] = percurso.titulo
+    res['description'] = percurso.titulo
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+    res['trajectory'] = pnts
+    return jsonify(res)
+
+@app.route('/resources/routes/instances')
+def get_route_instances():
+    pass
+
+@app.route('/resources/routes/instances/<int:id>', methods=['GET'])
+def get_route_instance(id):
+    pass
+
+@app.route('/resources/atractions/<string:name>', methods=['GET'])
+def get_atraction(name):
+    pass
+
+@app.route('/resources/atractions', methods=['GET'])
+def get_atractions():
+    conceitos = Conceito.query.all()
+    res = []
+
+    for c in conceitos:
+        temp = {}
+        temp['name'] = c.nomeconceito
+        temp['latitude'] = c.latitude
+        temp['longitude'] = c.longitude
+        temp['description'] = c.descricao
+        res.append(temp)
+
+    return jsonify({
+        'atractions': res
+    })
+
+@app.route('/resources/routes/search', methods=['POST'])
+def search_routes():
+    req = request.get_json(force=True)
+    user = req['user']
+    concept = req['concept']
+    percursos = db.session.query(InstanciaPercurso).filter(InstanciaPercurso.emailc==user).all()
+    res = []
+    for p in percursos:
+        fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==p.id).filter(Fotografia.nomeconc==concept).all()
+        if len(fotos) > 0:
+            perc = db.session.query(Percurso).filter(Percurso.id==p.idperc).first()
+            res.append({
+                'title': perc.titulo,
+                'description': perc.descricao,
+                'id': perc.id
+            })
+    return jsonify({
+        'routes': res
+    })
 
 # Background tasks
 scheduler = BackgroundScheduler()

@@ -321,11 +321,11 @@ public class PhotoLogFragment extends Fragment implements
             else
                 redrawLine(r.getRoutePoints(), true);
             //place the markers with the photos
-            for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
-                mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
-                        .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
-                        .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
-            }
+            //for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
+             //   mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
+               //         .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
+                 //       .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
+            //}
         }
         //when a path is clicked, a menu will appear
         /*mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
@@ -417,6 +417,7 @@ public class PhotoLogFragment extends Fragment implements
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+
         //Initialize Preferences*
         prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
         /*While we have markers stored iterate trough.
@@ -613,8 +614,15 @@ public class PhotoLogFragment extends Fragment implements
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
+
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+
+
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
@@ -636,8 +644,9 @@ public class PhotoLogFragment extends Fragment implements
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(getContext().getString(R.string.unknown_string))
                                 .snippet(getContext().getString(R.string.unknown_string))
-                                .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
+                        imageMarkers.put(m, photoHighQuality);
                         imageMarkers.put(m, photo);
                         markerDate.put(m, date);
                         //send a base 64 encoded photo to server
@@ -1189,7 +1198,7 @@ public class PhotoLogFragment extends Fragment implements
         sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
         int tmp = 0;
         List<LatLng> polyPoints  = route.getRoutePath().getPoints();
 
@@ -1245,8 +1254,7 @@ public class PhotoLogFragment extends Fragment implements
             outputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
-        }
-    }
+        }*/
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
     public String convertTimeInMilisAndFormat(long timeInMilis){

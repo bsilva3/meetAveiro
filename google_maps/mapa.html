@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 70%;
+        margin: 20px 20px 20px 20px;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+  </head>
+  <body>
+    <h3 style="margin: 20px" >Google Maps</h3>
+    <div id="map"></div><br/>
+    <script>
+        function initMap() {
+
+	  var coord = [{lat: -33.890, lng: 151.274}, 
+                       {lat: -33.82, lng: 151.3}, 
+                       {lat: -33.86, lng: 151.1}]
+                       
+          var urls = ['https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+          			  'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                      'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png']
+          
+          var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 12,
+            center: {lat: -33.8, lng: 151.2}
+          });
+          
+          for (i = 0; i < coord.length; i++) {
+          
+            var image = {
+                    url: urls[i],
+                    // This marker is 20 pixels wide by 32 pixels high.
+                    size: new google.maps.Size(100, 100),
+                    // The origin for this image is (0, 0).
+                    origin: new google.maps.Point(0, 0),
+                    // The anchor for this image is the base of the flagpole at (0, 32).
+                    anchor: new google.maps.Point(0, 0),
+                    scaledSize: new google.maps.Size(25, 25)
+                  };
+          
+            var beachMarker = new google.maps.Marker({
+              position: coord[i],
+              map: map,
+              icon: image
+            });
+          
+          }
+
+	        var flightPath = new google.maps.Polyline({
+                  path: coord,
+                  geodesic: true,
+                  strokeColor: '#FE2E2E',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 6
+                });
+
+          flightPath.setMap(map);
+          
+
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJyCibWzjYod4AYXXIgJXhFyf6f1v7fvc&callback=initMap" async defer></script>
+  </body>
+</html>

@@ -87,6 +87,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -97,6 +98,7 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.models.RouteInstance;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -191,6 +193,12 @@ public class RouteActivity extends FragmentActivity implements
      */
     private PendingIntent mGeofencePendingIntent;
 
+    /**
+     * Used to start the Route
+     */
+    private Date begginingDate;
+
+
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -213,12 +221,6 @@ public class RouteActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
 
-        if (getIntent().getBooleanExtra(
-                EXTRA_STARTED_FROM_NOTIFICATION,
-                false)) {
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
-        }
         locationsReceiver = new LocationsReceiver();
 
         markers = new HashMap<>();
@@ -263,6 +265,7 @@ public class RouteActivity extends FragmentActivity implements
         buttonStartRoute.setOnClickListener(v -> {
             if (routePoints.isEmpty()){
                 onRouteStateChanged(true);
+                Utils.setRouteState(this, ROUTE_STATE.STARTED);
                 updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
             }
             else{
@@ -278,6 +281,7 @@ public class RouteActivity extends FragmentActivity implements
                                 line.remove();
                                 //now procede to the tour
                                 onRouteStateChanged(true);
+                                Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
                                 updateRouteButtons(Utils.getRouteState(RouteActivity.this));
                                 break;
 
@@ -310,35 +314,32 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         //back button (with image)
-        ImageButton back = (ImageButton)findViewById(R.id.back_image_btn);
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which){
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    onBackPressed();
-                                    break;
+        ImageButton back = findViewById(R.id.back_image_btn);
+        back.setOnClickListener(v -> {
+            if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_POSITIVE:
+                                onBackPressed();
+                                break;
 
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    dialog.dismiss();
-                                    break;
-                            }
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                dialog.dismiss();
+                                break;
                         }
-                    };
+                    }
+                };
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
-                    builder.setMessage(getString(R.string.exit_tour_confirmation)).setPositiveButton(getString(R.string.yes), dialogClickListener)
-                            .setNegativeButton(getString(R.string.no), dialogClickListener).show();
-                }
-                else{
-                    onBackPressed();
-                }
-
+                AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                builder.setMessage(getString(R.string.exit_tour_confirmation)).setPositiveButton(getString(R.string.yes), dialogClickListener)
+                        .setNegativeButton(getString(R.string.no), dialogClickListener).show();
             }
+            else{
+                onBackPressed();
+            }
+
         });
 
         updateValuesFromBundle(savedInstanceState);
@@ -363,13 +364,19 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("resume", "onresumecalled");
+        updateRouteButtons(Utils.getRouteState(this));
+        Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
                 .registerReceiver(
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
+        if (getIntent().getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false) &&
+                getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
     }
 
     /**
@@ -405,8 +412,11 @@ public class RouteActivity extends FragmentActivity implements
     public void onRouteStateChanged(boolean started){
         if(started)
             mService.requestLocationUpdates();
-        else
+        else{
             mService.removeLocationUpdates();
+            System.out.println("YOOOOOOOOOOOOOOOOOOOOOOOOOO");
+            this.begginingDate = new Date();
+        }
     }
 
     /**
@@ -443,14 +453,17 @@ public class RouteActivity extends FragmentActivity implements
             buttonStartRoute.setVisibility( View.GONE );
             buttonPauseRoute.setVisibility( View.VISIBLE );
             buttonStopRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.VISIBLE );
         }else if(Constants.ROUTE_STATE.PAUSED.equals(state)){
             buttonStopRoute.setVisibility( View.VISIBLE );
             buttonPauseRoute.setVisibility( View.GONE );
             buttonStartRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.VISIBLE );
         }else if(Constants.ROUTE_STATE.STOPPED.equals(state)){
             buttonStopRoute.setVisibility( View.GONE );
             buttonPauseRoute.setVisibility( View.GONE );
             buttonStartRoute.setVisibility( View.VISIBLE );
+            buttonAddPhoto.setVisibility( View.GONE );
         }
     }
 
@@ -606,7 +619,6 @@ public class RouteActivity extends FragmentActivity implements
 
         //Initialize Preferences*
         prefs = getSharedPreferences("LatLng",MODE_PRIVATE);
-
     }
 
     private void updateLocationUI() {
@@ -693,10 +705,21 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
+                    //To ease the time to send a photo the photo is compressed
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    //This is to be used in the markers (To fix the loss of quality)
+                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+
+
+
                     photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+
+
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     try {
@@ -712,9 +735,9 @@ public class RouteActivity extends FragmentActivity implements
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(this.getString(R.string.unknown_string))
                                 .snippet("Unknown")
-                                .icon(BitmapDescriptorFactory.fromBitmap(photo)));
+                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
-                        imageMarkers.put(m, photo);
+                        imageMarkers.put(m, photoHighQuality);
                         //send a base 64 encoded photo to server
                         new UploadFileToServerTask().execute(jsonRequest.toString());
                     }else {
@@ -750,7 +773,7 @@ public class RouteActivity extends FragmentActivity implements
     public String bitMapToBase64 (Bitmap image){
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
@@ -962,6 +985,7 @@ public class RouteActivity extends FragmentActivity implements
             tts.shutdown();
         }
         super.onDestroy();
+
     }
 
     private class UploadFileToServerTask extends AsyncTask<String, Void, String> {
@@ -1188,8 +1212,9 @@ public class RouteActivity extends FragmentActivity implements
                             // get user input and create a route object
                             Route route = new Route (routeTitleBox.getText().toString(), line,
                                     routeDescriptionBox.getText().toString(), imageMarkers);
+                            RouteInstance rt = new RouteInstance(this.begginingDate,new Date(),route,imageMarkers);
 
-                            saveRouteToFile(route);
+                            saveRouteToFile(rt);
 
                             //routePoints.clear();not reseting because we are gonna have only one route
                             //at a time, and this will be to check if a route exists in map
@@ -1209,6 +1234,8 @@ public class RouteActivity extends FragmentActivity implements
      * Saving in JSON format:
      * { Title : "",
      *   Description : "",
+     *   StartDate: "",
+     *   EndDate: "",
      *   Markers :[
      *
      *      {
@@ -1221,19 +1248,21 @@ public class RouteActivity extends FragmentActivity implements
      *
      *      ]
      * }
-     * @param route Route to save
+     * @param routeInstance RouteInstance to save
      */
-    private void saveRouteToFile(Route route){
+    private void saveRouteToFile(RouteInstance routeInstance){
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         //Title and description
-        sb.append("\"Title\" : " + "\"" + route.getRouteTitle() +"\",\n");
-        sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
+        sb.append("\"Title\" : " + "\"" + routeInstance.getRoute().getRouteTitle() +"\",\n");
+        sb.append("\"Description\" : " + "\"" + routeInstance.getRoute().getRouteDescription() +"\",\n");
+        sb.append("\"StartDate\" : " + "\"" + routeInstance.getStartDate().toString() +"\",\n");
+        sb.append("\"EndDate\" : " + "\"" + routeInstance.getEndDate().toString() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        Map<Marker,Bitmap> temp = routeInstance.getRouteMarkers();
         int tmp = 0;
-        List<LatLng> polyPoints  = route.getRoutePath().getPoints();
+        List<LatLng> polyPoints  = routeInstance.getRoute().getRoutePath().getPoints();
 
         for (Map.Entry<Marker, Bitmap> entry : temp.entrySet())
         {
@@ -1259,6 +1288,7 @@ public class RouteActivity extends FragmentActivity implements
         sb.append("\"Poly\" : [\n");
 
         //Poly routePoints
+
         Iterator<LatLng> it = polyPoints.iterator();
         tmp = 0;
         while (it.hasNext()){
@@ -1275,7 +1305,7 @@ public class RouteActivity extends FragmentActivity implements
         sb.append("]\n");
         sb.append("\n}");
 
-        String filename = "route"+ route.getRouteTitle() +".json";
+        String filename = "route"+ routeInstance.getRoute().getRouteTitle() +".json";
         FileOutputStream outputStream;
         try {
             outputStream = this.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -1284,6 +1314,7 @@ public class RouteActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
+
     }
     
 }

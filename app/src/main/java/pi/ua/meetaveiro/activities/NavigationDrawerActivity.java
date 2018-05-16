@@ -1,22 +1,17 @@
 package pi.ua.meetaveiro.activities;
 
 import android.Manifest;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -34,7 +29,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,25 +43,27 @@ import java.util.List;
 import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
+import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
+import pi.ua.meetaveiro.fragments.EventListFragment;
 import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.fragments.RouteListFragment;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.models.Attraction;
+import pi.ua.meetaveiro.models.Event;
 import pi.ua.meetaveiro.models.Route;
 import pi.ua.meetaveiro.others.Utils;
-import pi.ua.meetaveiro.services.LocationUpdatesService;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         AttractionAdapter.OnAttractionSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener,
-        RouteListsFragment.OnNewRouteListener{
+        RouteListsFragment.OnNewRouteListener,
+        EventAdapter.OnEventItemSelectedListener{
 
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
@@ -95,6 +91,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     private static final String TAG_PHOTO_LOG = "home";
     private static final String TAG_ATTRACTIONS = "attractions";
     private static final String TAG_ROUTES = "routes";
+    private static final String TAG_EVENTS = "events";
     private static final String TAG_HISTORY = "history";
     private static final String TAG_ACCOUNT_SETTINGS = "photos";
     public static String CURRENT_TAG = TAG_PHOTO_LOG;
@@ -115,29 +112,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     private Bundle savedState;
     private boolean mPermissionsGranted = false;
-
-    // A reference to the service used to get location updates.
-    private LocationUpdatesService mService = null;
-
-    // Tracks the bound state of the service.
-    private boolean mBound = false;
-
-    // Monitors the state of the connection to the service.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-            mBound = false;
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,10 +157,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-
-        // Bind to the service. If the service is in foreground mode, this signals to the service
-        // that since this activity is in the foreground, the service can exit foreground mode.
-        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -433,10 +403,14 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 handleTabLayout(true);
                 break;
             case 3:
-                disableCollapse();
+                enableCollapse();
                 handleTabLayout(false);
                 break;
             case 4:
+                disableCollapse();
+                handleTabLayout(false);
+                break;
+            case 5:
                 disableCollapse();
                 handleTabLayout(false);
                 break;
@@ -474,9 +448,12 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 // Route Lists fragment
                 return new RouteListsFragment();
             case 3:
+                // Event List fragment
+                return new EventListFragment();
+            case 4:
                 // History fragment
                 return new HistoryFragment();
-            case 4:
+            case 5:
                 // Account settings fragment
                 return new AccountSettingsFragment();
             default:
@@ -529,12 +506,16 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                         navItemIndex = 2;
                         CURRENT_TAG = TAG_ROUTES;
                         break;
-                    case R.id.option_history:
+                    case R.id.option_events:
                         navItemIndex = 3;
+                        CURRENT_TAG = TAG_EVENTS;
+                        break;
+                    case R.id.option_history:
+                        navItemIndex = 4;
                         CURRENT_TAG = TAG_HISTORY;
                         break;
                     case R.id.option_account_settings:
-                        navItemIndex = 4;
+                        navItemIndex = 5;
                         CURRENT_TAG = TAG_ACCOUNT_SETTINGS;
                         break;
                     case R.id.option_logout:
@@ -616,4 +597,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         NavigationDrawerActivity.this.startActivity(myIntent);
     }
 
+    @Override
+    public void onEventSelected(Event item) {
+
+    }
 }

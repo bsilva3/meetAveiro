@@ -31,7 +31,9 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_ATTRACTION_HISTORY = API_URL + "/blahblah";
     // url to fetch routes that have a certain attraction
-    public static final String URL_ROUTES_ATTRACTION = API_URL + "/resources/routes/search";
+    public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
+    // url to fetch routes history json
+    public static final String URL_EVENTS = API_URL + "/resources/events";
 
     // Geofence related constants
 
@@ -49,6 +51,7 @@ public class Constants {
     // LocationUpdatesServiceConstants
 
     public static final String EXTRA_STARTED_FROM_NOTIFICATION = SERVICES_PACKAGE_NAME + ".started_from_notification";
+    public static final String EXTRA_TAKE_PHOTO = SERVICES_PACKAGE_NAME + ".take_photo";
     public static final String ACTION_BROADCAST = SERVICES_PACKAGE_NAME + ".broadcast";
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
 
@@ -71,10 +74,6 @@ public class Constants {
     static final HashMap<String, LatLng> BAY_AREA_LANDMARKS = new HashMap<>();
 
     static {
-        // San Francisco International Airport.
-        BAY_AREA_LANDMARKS.put("SFO", new LatLng(40.65148, -8.43735));
-
-        // Googleplex.
-        BAY_AREA_LANDMARKS.put("GOOGLE", new LatLng(37.422611,-122.0840577));
+        BAY_AREA_LANDMARKS.put("UA", new LatLng(40.630302, -8.657506));
     }
 }

@@ -70,7 +70,7 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        Attraction attraction = attractionList.get(position);
+        Attraction attraction = attractionListFiltered.get(position);
         holder.mItem = attraction;
         holder.name.setText(attraction.getName());
         holder.city.setText(attraction.getCity());

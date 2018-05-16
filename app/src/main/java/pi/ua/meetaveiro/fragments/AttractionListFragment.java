@@ -100,22 +100,10 @@ public class AttractionListFragment extends Fragment implements
         if (hasNetworkConnection)
             fetchAttractions();
         else {
+            mShimmerViewContainer.setVisibility(View.GONE);
+            mShimmerViewContainer.stopShimmerAnimation();
+            swipeRefreshLayout.setRefreshing(false);
             //fetchLocalAttractions();
-            Attraction attraction = new Attraction();
-            attraction.setName("Moliceiro");
-            attraction.setCity("Aveiro");
-            attraction.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-            //attraction.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-            attraction.setLocation(new LatLng(40.6442700, -8.6455400));
-            Attraction attraction2 = new Attraction();
-            attraction2.setName("Moliceiro");
-            attraction2.setCity("Porto");
-            attraction2.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-            //attraction2.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-            attraction2.setLocation(new LatLng(40.6442700, -8.6455400));
-            attractionList.add(attraction);
-            attractionList.add(attraction2);
-            adapter.notifyDataSetChanged();
         }
     }
 
@@ -170,7 +158,7 @@ public class AttractionListFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_attraction_list, container, false);
 
         mShimmerViewContainer = view.findViewById(R.id.attraction_list_shimmer_view_container);
-        recyclerView = view.findViewById(R.id.recycler_view);
+        recyclerView = view.findViewById(R.id.attraction_list_recycler_view);
         // Set the adapter
         Context context = view.getContext();
         if (mColumnCount <= 1) {
@@ -188,7 +176,8 @@ public class AttractionListFragment extends Fragment implements
          * As animation won't start on onCreate, post runnable is used
          */
         swipeRefreshLayout.post(() -> {
-            swipeRefreshLayout.setRefreshing(true);
+            mShimmerViewContainer.setVisibility(View.VISIBLE);
+            mShimmerViewContainer.startShimmerAnimation();
             (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
         });
 
@@ -198,6 +187,8 @@ public class AttractionListFragment extends Fragment implements
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
 
+        mShimmerViewContainer.setVisibility(View.VISIBLE);
+        mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
@@ -239,12 +230,24 @@ public class AttractionListFragment extends Fragment implements
                     swipeRefreshLayout.setRefreshing(false);
 
                     Log.e(TAG, "Error: " + error.getMessage());
-                    Toast.makeText(getActivity(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     // stopping swipe refresh
                 }
         );
-
-
+        Attraction attraction = new Attraction();
+        attraction.setName("Moliceiro");
+        attraction.setCity("Aveiro");
+        attraction.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        //attraction.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        attraction.setLocation(new LatLng(40.6442700, -8.6455400));
+        Attraction attraction2 = new Attraction();
+        attraction2.setName("Moliceiro");
+        attraction2.setCity("Porto");
+        attraction2.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        //attraction2.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
+        attraction2.setLocation(new LatLng(40.6442700, -8.6455400));
+        attractionList.clear();
+        attractionList.add(attraction);
+        attractionList.add(attraction2);
         adapter.notifyDataSetChanged();
         MyApplication.getInstance().addToRequestQueue(request);
     }

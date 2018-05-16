@@ -3,7 +3,7 @@ Servidor, construído sobre Flask, que expõe uma REST API, cujos serviços se
 aplicam à identificação de imagens e recolha de informação pertinente sobre
 o que elas representam (ex: monumentos)
 '''
-import sys
+import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
 
@@ -94,6 +94,16 @@ def process_image_search(query):
         message = search_wiki(query)
     return message
 
+@app.route('/resources/retrain', methods=['POST'])
+def retrain():
+    req = request.get_json(force=True)
+    print('OK')
+    subprocess.call('../../../scripts_tensorflow/retrain')
+    print('Done')
+    pending_requests = get_request_files()
+    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
+        pending=count_elems_dict(pending_requests))
+    
 
 @app.route('/')
 @app.route('/index')
@@ -373,8 +383,6 @@ def search_routes():
     req = request.get_json(force=True)
     user = req['user']
     concept = req['concept']
-    #user = 'joana@ua.pt'
-    #concept = 'Biblioteca, Universidade de Aveiro'
     percursos = db.session.query(InstanciaPercurso).filter(InstanciaPercurso.emailc==user).all()
     res = []
     for p in percursos:

@@ -154,8 +154,9 @@ def queriesChico():
 
 @app.route('/')
 def index():
+    addInfoExemplo()
     addUsers()
-    #addInfoExemplo()
+   
     # queriesExemplo()
     #queriesChico()
     print(getInfoConceito('Biblioteca, Universidade de Aveiro'))

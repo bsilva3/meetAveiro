@@ -20,7 +20,9 @@ class Tipo(db.Model):
 
 class Utilizador(db.Model):
     __tablename__ = 'utilizador'
-    email = db.Column('email', db.String(80), primary_key=True)
+    id = db.Column('id', db.Integer, primary_key=True)
+
+    email = db.Column('email', db.String(80), unique=True)
 
     # o id é fk da tabela do utilizador
     tipoid = db.Column('tipo', db.Integer, db.ForeignKey('tipo.id'))

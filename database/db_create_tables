@@ -5,7 +5,8 @@ CREATE TABLE Tipo(
 );
 
 CREATE TABLE Utilizador (
-    Email text,
+	Id SERIAL,
+    Email text UNIQUE NOT NULL,
     Tipo integer NOT NULL,
     PRIMARY KEY (Email),
     FOREIGN KEY (Tipo) REFERENCES Tipo(Id)

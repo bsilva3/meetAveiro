@@ -87,6 +87,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -97,6 +98,7 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.models.RouteInstance;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -190,6 +192,12 @@ public class RouteActivity extends FragmentActivity implements
      * Used when requesting to add or remove geofences.
      */
     private PendingIntent mGeofencePendingIntent;
+
+    /**
+     * Used to start the Route
+     */
+    private Date begginingDate;
+
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -404,8 +412,11 @@ public class RouteActivity extends FragmentActivity implements
     public void onRouteStateChanged(boolean started){
         if(started)
             mService.requestLocationUpdates();
-        else
+        else{
             mService.removeLocationUpdates();
+            System.out.println("YOOOOOOOOOOOOOOOOOOOOOOOOOO");
+            this.begginingDate = new Date();
+        }
     }
 
     /**
@@ -696,7 +707,7 @@ public class RouteActivity extends FragmentActivity implements
                 if (resultCode == Activity.RESULT_OK) {
                     //To ease the time to send a photo the photo is compressed
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
-                    //This is to be used in the markers (To fiz the loss of quality)
+                    //This is to be used in the markers (To fix the loss of quality)
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
@@ -762,7 +773,7 @@ public class RouteActivity extends FragmentActivity implements
     public String bitMapToBase64 (Bitmap image){
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
@@ -974,6 +985,7 @@ public class RouteActivity extends FragmentActivity implements
             tts.shutdown();
         }
         super.onDestroy();
+
     }
 
     private class UploadFileToServerTask extends AsyncTask<String, Void, String> {
@@ -1200,8 +1212,9 @@ public class RouteActivity extends FragmentActivity implements
                             // get user input and create a route object
                             Route route = new Route (routeTitleBox.getText().toString(), line,
                                     routeDescriptionBox.getText().toString(), imageMarkers);
+                            RouteInstance rt = new RouteInstance(this.begginingDate,new Date(),route,imageMarkers);
 
-                            saveRouteToFile(route);
+                            saveRouteToFile(rt);
 
                             //routePoints.clear();not reseting because we are gonna have only one route
                             //at a time, and this will be to check if a route exists in map
@@ -1221,6 +1234,8 @@ public class RouteActivity extends FragmentActivity implements
      * Saving in JSON format:
      * { Title : "",
      *   Description : "",
+     *   StartDate: "",
+     *   EndDate: "",
      *   Markers :[
      *
      *      {
@@ -1233,19 +1248,21 @@ public class RouteActivity extends FragmentActivity implements
      *
      *      ]
      * }
-     * @param route Route to save
+     * @param routeInstance RouteInstance to save
      */
-    private void saveRouteToFile(Route route){
+    private void saveRouteToFile(RouteInstance routeInstance){
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         //Title and description
-        sb.append("\"Title\" : " + "\"" + route.getRouteTitle() +"\",\n");
-        sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
+        sb.append("\"Title\" : " + "\"" + routeInstance.getRoute().getRouteTitle() +"\",\n");
+        sb.append("\"Description\" : " + "\"" + routeInstance.getRoute().getRouteDescription() +"\",\n");
+        sb.append("\"StartDate\" : " + "\"" + routeInstance.getStartDate().toString() +"\",\n");
+        sb.append("\"EndDate\" : " + "\"" + routeInstance.getEndDate().toString() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        /*Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        Map<Marker,Bitmap> temp = routeInstance.getRouteMarkers();
         int tmp = 0;
-        List<LatLng> polyPoints  = route.getRoutePath().getPoints();
+        List<LatLng> polyPoints  = routeInstance.getRoute().getRoutePath().getPoints();
 
         for (Map.Entry<Marker, Bitmap> entry : temp.entrySet())
         {
@@ -1269,9 +1286,9 @@ public class RouteActivity extends FragmentActivity implements
         }
         sb.append("],\n");
         sb.append("\"Poly\" : [\n");
-*/
+
         //Poly routePoints
-        /*
+
         Iterator<LatLng> it = polyPoints.iterator();
         tmp = 0;
         while (it.hasNext()){
@@ -1288,7 +1305,7 @@ public class RouteActivity extends FragmentActivity implements
         sb.append("]\n");
         sb.append("\n}");
 
-        String filename = "route"+ route.getRouteTitle() +".json";
+        String filename = "route"+ routeInstance.getRoute().getRouteTitle() +".json";
         FileOutputStream outputStream;
         try {
             outputStream = this.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -1297,7 +1314,7 @@ public class RouteActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-        */
+
     }
     
 }

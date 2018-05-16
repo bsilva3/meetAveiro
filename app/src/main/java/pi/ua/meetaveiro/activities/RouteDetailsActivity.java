@@ -34,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -145,9 +146,14 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             r = new Route(json.get("Title").toString());
             routeTitle = json.get("Title").toString();
-
+            //Get Route Description
             r.setRouteDescription(json.get("Description").toString());
             routeDesc = json.get("Description").toString();
+            //Get the dates and set them in the view date
+            Date startDate = new Date(json.get("StartDate").toString());
+            Date endDate = new Date(json.get("EndDate").toString());
+            routeDate.setText("Start: " + startDate.toString()+"\nFinished: "+endDate.toString() );
+
             LatLng markLar = null;
 
             //Iterate trough the array of markers

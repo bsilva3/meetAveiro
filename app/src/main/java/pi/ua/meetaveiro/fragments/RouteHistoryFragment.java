@@ -53,6 +53,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,7 @@ import pi.ua.meetaveiro.others.Utils;
 import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.FEEDBACK_URL;
 import static pi.ua.meetaveiro.others.Constants.IMAGE_SCAN_URL;
+import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_USER;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
@@ -180,12 +182,10 @@ public class RouteHistoryFragment extends Fragment implements
 
 
     /**
-     * fetches json by making http calls
+     * Fetches all the instances from the server
+     * Only for the current user
      */
-    private void fetchRoutes() {
-
-
-
+    private void fetchAllInstances() {
 
         JSONObject jsonRequest = new JSONObject();
         try {
@@ -194,7 +194,7 @@ public class RouteHistoryFragment extends Fragment implements
             e.printStackTrace();
         }
 
-        new uploadFileToServerTask().execute(jsonRequest.toString(), URL_ROUTE_HISTORY);
+        new uploadFileToServerTask().execute(jsonRequest.toString(), INSTANCE_BY_USER);
 
         // refreshing recycler view
         mAdapter.notifyDataSetChanged();
@@ -210,7 +210,7 @@ public class RouteHistoryFragment extends Fragment implements
      * Gets all the route names saved in the phone.
      * The file name is route (name of route).json
      */
-    private void fetchLocalRoutes() {
+    private void fetchAllLocal() {
         List<RouteInstance> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
@@ -298,6 +298,9 @@ public class RouteHistoryFragment extends Fragment implements
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Stops all animations
+     */
     @Override
     public void onRefresh() {
         mShimmerViewContainer.setVisibility(View.VISIBLE);
@@ -306,19 +309,26 @@ public class RouteHistoryFragment extends Fragment implements
     }
 
 
-
+    /**
+     * Having a network connection will trigger the fetchAllInstances
+     * Not having will trrigger the fetchAllLocal
+     * @param hasNetworkConnection
+     */
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
         if (hasNetworkConnection) {
-            fetchRoutes();
+            fetchAllInstances();
         }else {
-            fetchLocalRoutes();
+            fetchAllLocal();
         }
     }
 
 
-
-
+    /**
+     * Used to send a POST call
+     * Will recieve all the instances from the server.
+     * Needs to include the email
+     */
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
         String serverUrl;
         @Override
@@ -396,22 +406,25 @@ public class RouteHistoryFragment extends Fragment implements
             try {
                 List<RouteInstance> items = new ArrayList<>();
                 JSONObject js = new JSONObject(response);
-                JSONArray arr = js.getJSONArray("routes");
+                System.out.println(js.toString());
+                JSONArray arr = js.getJSONArray("instances");
                 Route r;
                 RouteInstance e;
 
                 if(arr != null) {
                     for (int i = 0; i < arr.length(); i++) {
                         JSONObject row = arr.getJSONObject(i);
-                        String desc = row.getString("description");
-                        String title = row.getString("title");
-                        String id = row.getString("id");
+                        String title = row.getString("route");
+                        String idInstance = row.getString("id");
+                        String dateStart = row.getString("start");
+                        String dateEnd = row.getString("end");
 
                         r = new Route(title);
-                        r.setId(Integer.parseInt(id));
-                        r.setRouteDescription(desc);
+                        r.setType("Instance");
                         e = new RouteInstance(r);
-
+                        e.setIdInstance(Integer.parseInt(idInstance));
+                        e.setStartDate(new Date(dateStart));
+                        e.setEndDate(new Date(dateEnd));
                         items.add(e);
                     }
                     // adding contacts to contacts list

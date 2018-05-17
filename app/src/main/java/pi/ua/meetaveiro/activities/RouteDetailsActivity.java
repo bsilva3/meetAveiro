@@ -51,7 +51,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -68,6 +70,8 @@ import pi.ua.meetaveiro.models.RouteInstance;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
+import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
@@ -75,22 +79,26 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 
+    private static final String TAG = RouteDetailsActivity.class.getSimpleName();
     ViewPager viewPager;
     RouteHistoryDetailAdapter adapter;
     ArrayList<Bitmap> images = new ArrayList<>();
     private Toolbar mTopToolbar;
     private String routeTitle = "", routeDesc = "", value = "";
     private TextView routeDescription, routeDate;
-    private static final String TAG = RouteDetailsActivity.class.getSimpleName();
-
     //Map
     private GoogleMap mMap;
 
     //Boolean to check if it is from the storage
     private boolean isFromServer = false;
 
-    //Route ID
+    //RouteInstanceID
+    private String routeInstanceID;
+
     private String routeID;
+
+
+    private String inFo;
 
     /**
      * To send here:
@@ -124,11 +132,11 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
         //Verify if it comes from the server or it is local
-        if (Objects.equals(b.getString("RouteID").toString(), "noNumber")) {
+        if (Objects.equals(b.getString("RouteInstanceID").toString(), "noNumber")) {
             isFromServer = false;
         } else {
             isFromServer = true;
-            this.routeID = b.getString("RouteID").toString();
+            this.routeInstanceID = b.getString("RouteInstanceID").toString();
         }
 
     }
@@ -137,7 +145,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     /**
      * Constructs the page
      * Setting all information
-     *
+     * <p>
      * Gets a ROUTE_BY_ID with all the information
      */
     private void constructPage() {
@@ -153,16 +161,17 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             if (isFromServer == false) {
                 reconstructRoute(Utils.getRouteFromFile(value, this.getApplicationContext()));
             } else {
-                //Request from the server the information from the Route
-                /*JSONObject jsonRequest = new JSONObject();
-                try {
-                    jsonRequest.put("id", routeID);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }*/
-
                 //TODO: METHOD GET
+                if (b.getString("Type").equals("Route")) {
 
+                    this.routeID = b.getString("RouteID").toString();
+                    new fetchDataAsRoute().execute();
+                    rearrangeJSONDataRoute();
+                } else {
+                    //Do as it is a Instance that has all the information
+                    new fetchDataAsRouteInstance().execute();
+                    rearrangeJSONDataInstance();
+                }
 
             }
 
@@ -273,6 +282,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     }
 
 
+    /**
+     * Go back
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -287,6 +302,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Create a simplefied menu
+     *
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -294,6 +315,109 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         return true;
     }
 
+
+    private void rearrangeJSONDataRoute(){
+        /*
+        {
+  "description": "Conhece a UA",
+  "title": "Conhece a UA",
+  "trajectory": [
+    {
+      "latitude": 40.6310031,
+      "longitude": -8.65964259999998
+    },
+    {
+      "latitude": 40.633175,
+      "longitude": -8.659496
+    },
+    {
+      "latitude": 40.630349,
+      "longitude": -8.658214
+    }
+  ]
+}
+         */
+    }
+
+
+    private void rearrangeJSONDataInstance(){
+
+        //description
+        //markers : [ {date: "" , id:, img: base64, latitude,longitude}
+        //title
+        //trajectory: [ {latitude,longitude}]
+    }
+
+
+
+
+
+
+
+    // Fetch the data as it was a Route  only trajectory and description/name
+    public class fetchDataAsRouteInstance extends AsyncTask<Void, Void, Void> {
+        String data = "";
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                URL url = new URL(INSTANCE_BY_ID + routeInstanceID);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line = "";
+                while (line != null) {
+                    line = bufferedReader.readLine();
+                    System.out.println(line);
+                    data = data + line;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            inFo = data;
+        }
+    }
+
+
+    // Fetch the data as it was a Route  only trajectory and description/name
+    public class fetchDataAsRoute extends AsyncTask<Void, Void, Void> {
+        String data = "";
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                URL url = new URL(ROUTE_BY_ID + routeID);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line = "";
+                while (line != null) {
+                    line = bufferedReader.readLine();
+                    System.out.println(line + "   " + routeID);
+                    data = data + line;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            inFo = data;
+        }
+    }
 
 
 }

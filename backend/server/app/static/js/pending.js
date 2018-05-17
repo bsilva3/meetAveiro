@@ -6,7 +6,7 @@ function confirmRequest(elemName, topic, methodType) {
     xhr.setRequestHeader("Content-type", "application/json");
 
     xhr.onreadystatechange = function() {//Call a function when the state changes.
-        if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+        if(xhr.readyState == XMLHttpRequest.DONE) {
             console.log("Done");
             location.reload(true);
         }
@@ -29,7 +29,7 @@ function changeRequest(elemName, topic) {
     xhr.setRequestHeader("Content-type", "application/json");
 
     xhr.onreadystatechange = function() {//Call a function when the state changes.
-        if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+        if(xhr.readyState == XMLHttpRequest.DONE) {
             console.log("Done");
             location.reload(true);
         }

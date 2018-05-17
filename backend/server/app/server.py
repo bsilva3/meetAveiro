@@ -516,6 +516,11 @@ def search_routes():
         'routes': res
     })
 
+
+@app.route('/resources/routes/instances/<int:id>/share', methods=['GET'])
+def share_map(id):
+    return render_template('instance.html')
+
 # Background tasks
 scheduler = BackgroundScheduler()
 scheduler.start()

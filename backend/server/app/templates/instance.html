@@ -30,20 +30,32 @@
 <script>
     function initMap() {
 
-        var coord = [{lat: -33.890, lng: 151.274}, 
-                         {lat: -33.82, lng: 151.3}, 
-                         {lat: -33.86, lng: 151.1}]
-                         
-            var urls = ['https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
-                          'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
-                        'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png']
+        //var coord = [{lat: -33.890, lng: 151.274}, 
+        //                 {lat: -33.82, lng: 151.3}, 
+        //                 {lat: -33.86, lng: 151.1}]
+         
+        var coord = []
+
+        {% for p in points %}
+            coord.push({lat: {{p['latitude']}}, lng: {{p['longitude']}}});
+        {% endfor %}
+
+        var urls = []
+    
+        {% for f in fotos %}
+            urls.push("{{f['path']}}");
+        {% endfor %}
+
+        // var urls = ['https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+        //                  'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+        //                'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png']
             
             var map = new google.maps.Map(document.getElementById('map'), {
               zoom: 12,
-              center: {lat: -33.8, lng: 151.2}
+              center: coord[0]
             });
             
-            for (i = 0; i < coord.length; i++) {
+            for (i = 0; i < urls.length; i++) {
             
               var image = {
                       url: urls[i],

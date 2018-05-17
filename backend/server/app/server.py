@@ -519,7 +519,49 @@ def search_routes():
 
 @app.route('/resources/routes/instances/<int:id>/share', methods=['GET'])
 def share_map(id):
-    return render_template('instance.html')
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return '<h1>Not Found</h1>'
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    res = {}
+    res['title'] = route.titulo
+    res['description'] = route.descricao
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                foto['path'] = '/sendimage/' + temp
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['path'] = '/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    res['markers'] = fotografias
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    res['trajectory'] = pnts
+    return render_template('instance.html', points=pnts, fotos=fotografias)
 
 # Background tasks
 scheduler = BackgroundScheduler()

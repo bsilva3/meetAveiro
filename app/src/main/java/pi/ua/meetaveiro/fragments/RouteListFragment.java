@@ -170,6 +170,7 @@ public class RouteListFragment extends Fragment implements
 
         new uploadFileToServerTask().execute(jsonRequest.toString(), URL_ROUTE_HISTORY);
 
+
         // refreshing recycler view
         mAdapter.notifyDataSetChanged();
         // stop animating Shimmer and hide the layout
@@ -409,6 +410,7 @@ public class RouteListFragment extends Fragment implements
 
             try {
                 List<RouteInstance> items = new ArrayList<>();
+                System.out.println(response);
                 JSONObject js = new JSONObject(response);
                 JSONArray arr = js.getJSONArray("routes");
                 Route r;
@@ -422,6 +424,7 @@ public class RouteListFragment extends Fragment implements
                         String id = row.getString("id");
 
                         r = new Route(title);
+                        r.setType("Route");
                         r.setId(Integer.parseInt(id));
                         r.setRouteDescription(desc);
                         e = new RouteInstance(r);

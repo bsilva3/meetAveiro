@@ -1,30 +1,20 @@
 package pi.ua.meetaveiro.activities;
 
-import android.app.ProgressDialog;
+
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
-import android.util.Log;
+
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -34,47 +24,30 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
-import pi.ua.meetaveiro.fragments.RouteHistoryFragment;
-import pi.ua.meetaveiro.models.Attraction;
 import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
-import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -97,8 +70,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     private String routeID;
 
-
-    private String inFo;
 
     /**
      * To send here:
@@ -136,7 +107,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             isFromServer = false;
         } else {
             isFromServer = true;
-            this.routeInstanceID = b.getString("RouteInstanceID").toString();
+            if(b.getString("Type").equals("Route"))
+                this.routeID = b.getString("RouteInstanceID").toString();
+            else
+                this.routeInstanceID = b.getString("RouteInstanceID").toString();
         }
 
     }
@@ -163,14 +137,11 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             } else {
                 //TODO: METHOD GET
                 if (b.getString("Type").equals("Route")) {
-
-                    this.routeID = b.getString("RouteID").toString();
+                    //Do as it is a Route
                     new fetchDataAsRoute().execute();
-                    rearrangeJSONDataRoute();
                 } else {
                     //Do as it is a Instance that has all the information
                     new fetchDataAsRouteInstance().execute();
-                    rearrangeJSONDataInstance();
                 }
 
             }
@@ -204,10 +175,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     /**
      * Reconstructs the Route with all the markers from the storage
-     *
-     * @param datax
+     * @param datax JSON data
      */
-    private Route reconstructRoute(String datax) {
+    private void reconstructRoute(String datax) {
 
         Route r;
         Map<Marker, Bitmap> tempMap = new HashMap<>();
@@ -274,10 +244,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             if (routeDesc != "" || routeDesc != null)
                 routeDescription.setText(routeDesc);
 
-            return r;
+            return;
         } catch (JSONException e) {
             e.printStackTrace();
-            return null;
+            return;
         }
     }
 
@@ -285,8 +255,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     /**
      * Go back
      *
-     * @param item
-     * @return
+     * @param item menu Item
+     * @return True or False
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -305,8 +275,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     /**
      * Create a simplefied menu
      *
-     * @param menu
-     * @return
+     * @param menu Menu
+     * @return True or False
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -316,7 +286,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     }
 
 
-    private void rearrangeJSONDataRoute(){
+    private void rearrangeJSONDataRoute(String inFo){
         /*
         {
   "description": "Conhece a UA",
@@ -340,22 +310,64 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     }
 
 
-    private void rearrangeJSONDataInstance(){
+    private void rearrangeJSONDataInstance(String inFo){
+        try {
+            JSONObject json = new JSONObject(inFo);
 
-        //description
-        //markers : [ {date: "" , id:, img: base64, latitude,longitude}
-        //title
-        //trajectory: [ {latitude,longitude}]
+            routeTitle = json.getString("title");
+            String description = json.getString("description");
+
+
+
+            routeDescription.setText(description);
+            getSupportActionBar().setTitle(routeTitle);
+
+
+
+            JSONArray jarrMarkers = json.getJSONArray("markers");
+            //Marker array
+            for(int i = 0; i<jarrMarkers.length();i++){
+                JSONObject obj = jarrMarkers.getJSONObject(i);
+                String img = obj.getString("img");
+                String latitude = obj.getString("latitude");
+                String longitude = obj.getString("longitude");
+                LatLng l = new LatLng(Double.parseDouble(latitude),Double.parseDouble(longitude));
+                String dateTime = obj.getString("date");
+
+                images.add(Utils.StringToBitMap(img));
+                Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                        .icon(BitmapDescriptorFactory.fromBitmap(Utils.StringToBitMap(img))).title(dateTime)
+                        .snippet(dateTime));
+
+            }
+
+            JSONArray jarrTrajectory = json.getJSONArray("trajectory");
+            PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
+
+            for (int i = 0;i<jarrTrajectory.length();i++){
+                JSONObject obj = jarrTrajectory.getJSONObject(i);
+                String lat = obj.get("latitude").toString();
+                String longi = obj.get("longitude").toString();
+                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                options.add(l);
+            }
+
+            mMap.addPolyline(options);
+
+            Bundle b = getIntent().getExtras();
+            routeDate.setText("Start: " + b.getString("StartDate") + "\nFinished: " + b.getString("EndDate"));
+
+            adapter.notifyDataSetChanged();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
 
-
-
-
-
     // Fetch the data as it was a Route  only trajectory and description/name
-    public class fetchDataAsRouteInstance extends AsyncTask<Void, Void, Void> {
+    private class fetchDataAsRouteInstance extends AsyncTask<Void, Void, Void> {
         String data = "";
 
         @Override
@@ -382,7 +394,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            inFo = data;
+            rearrangeJSONDataInstance(data);
         }
     }
 
@@ -415,7 +427,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            inFo = data;
+            rearrangeJSONDataRoute(data);
         }
     }
 

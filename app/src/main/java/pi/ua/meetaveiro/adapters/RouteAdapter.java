@@ -89,23 +89,46 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
                 //Add arguments to the Activity
                 Bundle bun = new Bundle();
 
-                //Verify if it is local or from the server
-                //First we will check if it has an id
-                //If not then it is local and it will trigger local read in the RouteDetailsActivity
-                if(holder.mItem.getIdInstance() != 0) {
-                    bun.putString("RouteInstanceID", holder.mItem.getIdInstance() + "");
-                }
-                else {
-                    bun.putString("RouteInstanceID", "noNumber");
-                    //All the names stored locally are in the format route + routeTitle + .json
-                    bun.putString("fileName", "route"+holder.mItem.getRoute().getRouteTitle()+".json");
-                }
-
-                //Send the route Title
-                bun.putString("routeTitle",holder.mItem.getRoute().getRouteTitle()+"");
                 //The type will determine if it is a UserRoute (that he made and its in the history)
                 //OR if it is a Route that needs NO MARKERS ONLY DESCRIPTION TITLE AND THE POINTS
                 bun.putString("Type",holder.mItem.getRoute().getType());
+
+
+                //Verify if it is local or from the server
+                //First we will check if it has an id
+                //If not then it is local and it will trigger local read in the RouteDetailsActivity
+                if(holder.mItem.getRoute().getType() == "Instance") {
+                    if (holder.mItem.getIdInstance() != 0) {
+                        bun.putString("RouteInstanceID", holder.mItem.getIdInstance() + "");
+                    } else {
+                        bun.putString("RouteInstanceID", "noNumber");
+                        //All the names stored locally are in the format route + routeTitle + .json
+                        bun.putString("fileName", "route" + holder.mItem.getRoute().getRouteTitle() + ".json");
+                    }
+                }
+
+                if(holder.mItem.getRoute().getType() == "Route") {
+                    if (holder.mItem.getRoute().getId() != 0) {
+                        bun.putString("RouteInstanceID",holder.mItem.getRoute().getId() + "");
+                    } else {
+                        bun.putString("RouteInstanceID", "noNumber");
+                        //All the names stored locally are in the format route + routeTitle + .json
+                        bun.putString("fileName", "route" + holder.mItem.getRoute().getRouteTitle() + ".json");
+                    }
+                }
+
+
+
+                //Send the route Title
+                bun.putString("routeTitle",holder.mItem.getRoute().getRouteTitle()+"");
+
+
+                //End and start date
+                try {
+                    bun.putString("StartDate",holder.mItem.getStartDate().toString());
+                    bun.putString("EndDate",holder.mItem.getEndDate().toString());
+
+                }catch (Exception e){}
 
 
                 intent.putExtras(bun);

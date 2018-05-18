@@ -174,7 +174,7 @@ def create_topic():
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
-            addConceito(topic, 'admin@admin.pt')
+            addConceito(topic, 'admin@ua.pt')
     return redirect(url_for('index'))
 
 @app.route('/resources/topics/manage', methods=['POST'])
@@ -267,6 +267,7 @@ def classify_image():
     print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
     img_name = classification[0]
+    conceito = db.session.query(Conceito).get(img_name)
     score = classification[1]
     print(img_name, score)
     folder = os.path.join('./static/img', img_name)
@@ -295,7 +296,8 @@ def classify_image():
     print("Enviando resposta...")
     if float(score) >= 0.8:
         return jsonify({
-            'name' : img_name,
+            'concept_id' : img_name,
+            'name': conceito.nome,
             'description' : desc,
             'id' : foto.id
         })
@@ -557,6 +559,7 @@ def get_photo_history():
             foto['latitude'] = f.latitude
             foto['longitude'] = f.longitude
             foto['date'] = f.datafoto
+            foto['concept'] = f.nomeconc
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
@@ -568,9 +571,7 @@ def get_photo_history():
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)
-    return jsonify({
-        'photos': fotografias
-    })
+    return jsonify(fotografias)
 
 
 @app.route('/resources/routes/search', methods=['POST'])

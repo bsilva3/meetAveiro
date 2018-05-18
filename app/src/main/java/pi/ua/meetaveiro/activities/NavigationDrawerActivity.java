@@ -44,7 +44,9 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.adapters.EventAdapter;
+import pi.ua.meetaveiro.adapters.PhotoAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.EventListFragment;
@@ -52,9 +54,10 @@ import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
-import pi.ua.meetaveiro.models.Attraction;
-import pi.ua.meetaveiro.models.Event;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Event;
+import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.fragments.SlideshowDialogFragment;
 import pi.ua.meetaveiro.others.Utils;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
@@ -63,7 +66,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener,
         RouteListsFragment.OnNewRouteListener,
-        EventAdapter.OnEventItemSelectedListener{
+        EventAdapter.OnEventItemSelectedListener,
+        PhotoAdapter.OnPhotoItemSelectedListener {
 
     public static final int PERMISSIONS_REQUEST = 1889;
     private static final String TAG = NavigationDrawerActivity.class.getSimpleName();
@@ -323,6 +327,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        // refresh toolbar menu
         if(navItemIndex==0)
             getMenuInflater().inflate(R.menu.current_place_menu, menu);
         return true;
@@ -368,6 +373,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
             public void run() {
                 // update the main content by replacing fragments
                 currentFragment = getHomeFragment();
+                Log.i("Fraggg", "homefragggggg");
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
                 fragmentTransaction.replace(R.id.frame, currentFragment, CURRENT_TAG);
@@ -383,40 +389,37 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         //Closing drawer on item click
         drawer.closeDrawers();
 
-        // refresh toolbar menu
-        invalidateOptionsMenu();
-
     }
 
     private void handleCollapse(){
         switch (navItemIndex) {
             case 0:
-                disableCollapse();
                 handleTabLayout(false);
+                disableCollapse();
                 break;
             case 1:
-                enableCollapse();
                 handleTabLayout(false);
+                enableCollapse();
                 break;
             case 2:
-                enableCollapse();
                 handleTabLayout(true);
+                enableCollapse();
                 break;
             case 3:
-                enableCollapse();
                 handleTabLayout(false);
+                enableCollapse();
                 break;
             case 4:
-                disableCollapse();
                 handleTabLayout(false);
+                disableCollapse();
                 break;
             case 5:
-                disableCollapse();
                 handleTabLayout(false);
+                disableCollapse();
                 break;
             default:
-                disableCollapse();
                 handleTabLayout(false);
+                disableCollapse();
                 break;
         }
     }
@@ -599,6 +602,23 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     @Override
     public void onEventSelected(Event item) {
+
+    }
+
+    @Override
+    public void onPhotoSelected(View view, ArrayList<Photo> images, int position) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("images", images);
+        bundle.putInt("position", position);
+
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
+        newFragment.setArguments(bundle);
+        newFragment.show(ft, "slideshow");
+    }
+
+    @Override
+    public void onLongPhotoSelected(View view, int position) {
 
     }
 }

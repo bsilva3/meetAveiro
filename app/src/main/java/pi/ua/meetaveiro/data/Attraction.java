@@ -1,4 +1,4 @@
-package pi.ua.meetaveiro.models;
+package pi.ua.meetaveiro.data;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -7,9 +7,6 @@ import android.os.Parcelable;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-
-import java.io.Serializable;
-import java.net.URI;
 
 /**
  * A simple shared tourist attraction class to easily pass data around.

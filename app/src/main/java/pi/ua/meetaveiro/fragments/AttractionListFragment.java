@@ -18,7 +18,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
@@ -34,14 +33,13 @@ import java.util.List;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.models.Attraction;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTES;
 
 /**
  * A fragment representing a list of Items.

@@ -16,8 +16,7 @@ import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteDetailsActivity;
-import pi.ua.meetaveiro.fragments.PhotoLogFragment;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Route;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +25,17 @@ import java.util.List;
  * {@link RecyclerView.Adapter} that can display a {@link Route} and makes a call to the
  * specified {@link OnRouteItemSelectedListener}.
  */
-public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements Filterable, SectionTitleProvider {
+public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements
+        Filterable,
+        SectionTitleProvider {
 
     private Context context;
     private List<Route> routeList;
+
+    public List<Route> getRouteList() {
+        return routeList;
+    }
+
     private List<Route> routeListFiltered;
     private OnRouteItemSelectedListener listener;
 

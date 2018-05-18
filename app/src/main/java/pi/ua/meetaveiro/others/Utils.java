@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.others;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -32,9 +33,8 @@ public class Utils {
      * @param context The {@link Context}.
      */
     public static Constants.ROUTE_STATE getRouteState(Context context) {
-        String stringValue = PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getString(KEY_ROUTE_STATE, Constants.ROUTE_STATE.STOPPED.toString());
+        String stringValue = context.getSharedPreferences("route_state", Context.MODE_PRIVATE).getString(KEY_ROUTE_STATE, Constants.ROUTE_STATE.STOPPED.toString());
+        Log.i("stringvalue", stringValue);
         return Constants.ROUTE_STATE.toMyEnum(stringValue);
     }
 
@@ -43,10 +43,8 @@ public class Utils {
      * @param route_state The route state.
      */
     public static void setRouteState(Context context, Constants.ROUTE_STATE route_state) {
-        PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
-                .putString(KEY_ROUTE_STATE, route_state.toString())
-                .apply();
+        SharedPreferences settings = context.getSharedPreferences("route_state", Context.MODE_PRIVATE);
+        settings.edit().putString(KEY_ROUTE_STATE, route_state.toString()).apply();
     }
 
     /**

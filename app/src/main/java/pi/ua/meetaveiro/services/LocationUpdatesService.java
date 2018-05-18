@@ -17,6 +17,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -150,11 +151,12 @@ public class LocationUpdatesService extends Service {
         // We got here because the user decided to remove location updates from the notification.
         if (startedFromNotification) {
             if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
-                removeLocationUpdates();
+                pauseLocationUpdates();
             else if(Utils.getRouteState(this).equals(ROUTE_STATE.PAUSED))
                 requestLocationUpdates();
             startForeground(NOTIFICATION_ID, getNotification());
         }
+        Log.i("stateeee", Utils.getRouteState(this).toString());
         // Tells the system to not try to recreate the service after it has been killed.
         return START_NOT_STICKY;
     }
@@ -227,6 +229,21 @@ public class LocationUpdatesService extends Service {
      * Removes location updates. Note that in this sample we merely log the
      * {@link SecurityException}.
      */
+    public void pauseLocationUpdates() {
+        Log.i(TAG, "Removing location updates");
+        try {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            Utils.setRouteState(this, ROUTE_STATE.PAUSED);
+        } catch (SecurityException unlikely) {
+            Utils.setRouteState(this, ROUTE_STATE.STARTED);
+            Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
+        }
+    }
+
+    /**
+     * Removes location updates. Note that in this sample we merely log the
+     * {@link SecurityException}.
+     */
     public void removeLocationUpdates() {
         Log.i(TAG, "Removing location updates");
         try {
@@ -250,13 +267,26 @@ public class LocationUpdatesService extends Service {
 
         //Activity Intent
         Intent activityIntent = new Intent(this, RouteActivity.class);
-        activityIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, false);
-        activityIntent.putExtra(EXTRA_TAKE_PHOTO, false);
 
         //Activity Photo Intent
         Intent activityPhotoIntent = new Intent(this, RouteActivity.class);
-        activityPhotoIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, false);
         activityPhotoIntent.putExtra(EXTRA_TAKE_PHOTO, true);
+
+
+        // Create the TaskStackBuilder and add the intent, which inflates the back stack
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addNextIntentWithParentStack(activityIntent);
+        // Get the PendingIntent containing the entire back stack
+        PendingIntent activityPendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        // Create the TaskStackBuilder and add the intent, which inflates the back stack
+        TaskStackBuilder photoStackBuilder = TaskStackBuilder.create(this);
+        photoStackBuilder.addNextIntentWithParentStack(activityPhotoIntent);
+        // Get the PendingIntent containing the entire back stack
+        PendingIntent activityPhotoPendingIntent =
+                photoStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
         // The PendingIntent that leads to a call to onStartCommand() in this service.
@@ -266,45 +296,27 @@ public class LocationUpdatesService extends Service {
                 serviceIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // The PendingIntent to launch activity.
-        PendingIntent activityPendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                activityIntent,
-                0);
-
-        // The PendingIntent to launch activity.
-        PendingIntent activityPhotoPendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                activityPhotoIntent,
-                0);
-
         CharSequence text = getString(R.string.notification_on_a_route);
 
         Notification notification;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            Notification.Builder builder = new Notification.Builder(this)
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                     .setContentTitle(text)
-                    .setPriority(Notification.PRIORITY_HIGH)
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setWhen(System.currentTimeMillis())
                     .setOngoing(true)
-                    .setChannelId(CHANNEL_ID)
                     .setContentIntent(activityPendingIntent)
                     //.setStyle(new Notification.MediaStyle())
-                    .addAction(new Notification.Action.Builder(R.drawable.ic_add_photo,
-                            getString(R.string.take_picture),
-                            activityPhotoPendingIntent).build());
+                    .addAction(R.drawable.ic_add_photo, getString(R.string.take_picture), activityPhotoPendingIntent);
 
             if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
-                builder.addAction(new Notification.Action.Builder(R.drawable.ic_pause,
+                builder.addAction(R.drawable.ic_pause,
                         getString(R.string.pause_route),
-                        servicePendingIntent).build());
+                        servicePendingIntent);
             else
-                builder.addAction(new Notification.Action.Builder(R.drawable.ic_play_arrow_black_24dp,
+                builder.addAction(R.drawable.ic_play_arrow_black_24dp,
                         getString(R.string.return_route),
-                        servicePendingIntent).build());
+                        servicePendingIntent);
 
             notification = builder.build();
         }

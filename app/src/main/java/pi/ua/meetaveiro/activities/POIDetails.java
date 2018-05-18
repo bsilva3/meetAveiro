@@ -2,14 +2,11 @@ package pi.ua.meetaveiro.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -21,16 +18,7 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,25 +35,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
 
 import me.relex.circleindicator.CircleIndicator;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionImageSliderAdapter;
-import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.adapters.RouteExpandable;
-import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-import pi.ua.meetaveiro.models.Attraction;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Route;
 
-import static pi.ua.meetaveiro.activities.NavigationDrawerActivity.navItemIndex;
-import static pi.ua.meetaveiro.others.Constants.API_URL;
-import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
 //TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff

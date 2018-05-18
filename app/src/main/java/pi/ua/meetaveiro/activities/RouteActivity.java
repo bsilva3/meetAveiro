@@ -35,7 +35,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -96,9 +95,9 @@ import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-import pi.ua.meetaveiro.models.Attraction;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -266,30 +265,28 @@ public class RouteActivity extends FragmentActivity implements
             if (routePoints.isEmpty()){
                 onRouteStateChanged(true);
                 Utils.setRouteState(this, ROUTE_STATE.STARTED);
+                Log.i("updateee1", Utils.getRouteState(this).toString());
                 updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
             }
             else{
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which){
-                            case DialogInterface.BUTTON_POSITIVE:
-                                //clean all points and markers from previous tour
-                                markers.clear();
-                                routePoints.clear();
-                                imageMarkers.clear();
-                                line.remove();
-                                //now procede to the tour
-                                onRouteStateChanged(true);
-                                Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
-                                updateRouteButtons(Utils.getRouteState(RouteActivity.this));
-                                break;
+                DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
+                    switch (which){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //clean all points and markers from previous tour
+                            markers.clear();
+                            routePoints.clear();
+                            imageMarkers.clear();
+                            line.remove();
+                            //now procede to the tour
+                            onRouteStateChanged(true);
+                            Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
+                            updateRouteButtons(Utils.getRouteState(RouteActivity.this));
+                            break;
 
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                //tour wont start
-                                dialog.dismiss();
-                                break;
-                        }
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //tour wont start
+                            dialog.dismiss();
+                            break;
                     }
                 };
 
@@ -343,8 +340,6 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         updateValuesFromBundle(savedInstanceState);
-        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
-        updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -365,6 +360,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onResume() {
         super.onResume();
         updateRouteButtons(Utils.getRouteState(this));
+        Log.i("state....",  Utils.getRouteState(this).toString());
         Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
@@ -372,11 +368,11 @@ public class RouteActivity extends FragmentActivity implements
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
-        if (getIntent().getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false) &&
-                getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+        if (getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         }
+
     }
 
     /**

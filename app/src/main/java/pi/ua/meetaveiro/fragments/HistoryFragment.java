@@ -1,7 +1,6 @@
 package pi.ua.meetaveiro.fragments;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -14,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -70,7 +68,7 @@ public class HistoryFragment extends Fragment {
                     return true;
                 case R.id.option_attractions:
                     toolbar.setTitle("Attractions History");
-                    fragment = new AttractionHistoryFragment();
+                    fragment = new PhotoHistoryFragment();
                     loadFragment(fragment);
                     return true;
             }

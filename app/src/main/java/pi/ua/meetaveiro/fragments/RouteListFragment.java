@@ -1,28 +1,20 @@
 package pi.ua.meetaveiro.fragments;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
@@ -39,7 +31,7 @@ import java.util.List;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
@@ -57,18 +49,23 @@ public class RouteListFragment extends Fragment implements
 
     private static final String TAG = RouteListFragment.class.getSimpleName();
 
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+
     private RouteAdapter.OnRouteItemSelectedListener mListener;
 
     private List<Route> routeList;
     private RouteAdapter mAdapter;
+
     private RecyclerView recyclerView;
-    private SearchView searchView;
 
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private ShimmerFrameLayout mShimmerViewContainer;
 
     private FastScroller fastScroller;
+
+    private String url;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -77,10 +74,27 @@ public class RouteListFragment extends Fragment implements
     public RouteListFragment() {
     }
 
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param url Parameter 1.
+     * @return A new instance of fragment RouteListFragment.
+     */
+    public static RouteListFragment newInstance(String url) {
+        RouteListFragment fragment = new RouteListFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, url);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        if (getArguments() != null) {
+            this.url = getArguments().getString(ARG_PARAM1);
+        }
     }
 
     @Override
@@ -108,6 +122,7 @@ public class RouteListFragment extends Fragment implements
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -123,7 +138,6 @@ public class RouteListFragment extends Fragment implements
 
         return view;
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -147,7 +161,7 @@ public class RouteListFragment extends Fragment implements
      * fetches json by making http calls
      */
     private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
+        JsonArrayRequest request = new JsonArrayRequest(url,
                 response -> {
                     if (response == null) {
                         Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
@@ -176,6 +190,14 @@ public class RouteListFragment extends Fragment implements
                     mShimmerViewContainer.setVisibility(View.GONE);
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
+
+
+            // adding contacts to contacts list
+            routeList.clear();
+            routeList.add(new Route("route 1", "desc"));
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
                 }
         );
 
@@ -219,64 +241,6 @@ public class RouteListFragment extends Fragment implements
             Log.e(TAG, e.getMessage());
         }
 
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
-
-        try {
-            Glide.with(getActivity()).load(R.drawable.beach).into(collImgView);
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.search_menu, menu);
-
-        // Associate searchable configuration with the SearchView
-        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
-        searchView = (SearchView) menu.findItem(R.id.action_search)
-                .getActionView();
-        searchView.setSearchableInfo(searchManager
-                .getSearchableInfo(getActivity().getComponentName()));
-        searchView.setMaxWidth(Integer.MAX_VALUE);
-
-        // listening to search query text change
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                // filter recycler view when query submitted
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String query) {
-                // filter recycler view when text is changed
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-        });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

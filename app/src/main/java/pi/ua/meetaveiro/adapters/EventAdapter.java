@@ -18,7 +18,7 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.EventDetailsActivity;
-import pi.ua.meetaveiro.models.Event;
+import pi.ua.meetaveiro.data.Event;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Event} and makes a call to the

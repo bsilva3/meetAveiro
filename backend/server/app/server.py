@@ -7,7 +7,7 @@ import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
 
-
+import random
 import datetime
 import requests
 from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
@@ -155,7 +155,7 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
-#    data = res['date']
+    # data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -180,7 +180,7 @@ def classify_image():
         desc = img_name
     while(True):
         print("Looping...")
-        foto = addFotografia(None, "Biblioteca, Universidade de Aveiro", user_email, lat, lon, filename,
+        foto = addFotografia(None, img_name, user_email, lat, lon, filename,
                         None, datetime.datetime.now(), None, 'pending', score, None)
         if foto is None:
             continue
@@ -475,9 +475,38 @@ def get_route_instance(id):
 
     return jsonify(res)
 
-@app.route('/resources/atractions/<string:name>', methods=['GET'])
-def get_atraction(name):
-    pass
+@app.route('/resources/atractions/<string:id>', methods=['GET'])
+def get_atraction(id):
+    conceito = db.session.query(Conceito).get('biblioteca')
+    temp = db.session.query(Fotografia).filter(Fotografia.nomeconc=='biblioteca').all()
+    fotos = []
+    fotos.append(random.choice(temp))
+    fotos.append(random.choice(temp))
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            readImage(f.path)
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+    res = {}
+    #res['name'] = conceito.nome
+    res['name'] = 'Biblioteca, Universidade de Aveiro'
+    res['description'] = conceito.descricao
+    res['latitude'] = conceito.latitude
+    res['longitude'] = conceito.longitude
+    res['photos'] = fotografias
+    return jsonify(res)
+
 
 @app.route('/resources/atractions', methods=['GET'])
 def get_atractions():

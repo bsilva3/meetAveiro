@@ -53,18 +53,20 @@ class Conceito(db.Model):
     longitude = db.Column('longitude', db.Float)
     raio = db.Column('raio', db.Float)
     descricao = db.Column('descricao', db.String(80))
+    nome = db.Column('nome', db.String(200))
     classificacao = db.Column('classificacao', db.Float)
 
     conc = db.relationship('Fotografia', back_populates="nomeconceito")
 
     def __init__(self, nomeconceito, emailc, latitude=None, longitude=None,
-                 raio=None, descricao=None, classificacao=None):
+                 raio=None, descricao=None, nome=None, classificacao=None):
         self.nomeconceito = nomeconceito
         self.emailc = emailc
         self.latitude = latitude
         self.longitude = longitude
         self.raio = raio
         self.descricao = descricao
+        self.nome = nome
         self.classificacao = classificacao
 
 class Percurso(db.Model):
@@ -193,8 +195,8 @@ def addUtilizador(email, tipoid):
 
 # Adição de Conceitos
 def addConceito(nomeconceito, emailcriador, latitude=None, longitude=None,
-                raio=None, descricao=None, classificacao=None):
-    conceito = Conceito(nomeconceito, emailcriador, latitude, longitude, raio, descricao, classificacao)
+                raio=None, descricao=None, nome=None, classificacao=None):
+    conceito = Conceito(nomeconceito, emailcriador, latitude, longitude, raio, descricao, nome, classificacao)
     db.session.add(conceito)
     db.session.commit()
     return conceito

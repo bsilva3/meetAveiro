@@ -496,6 +496,35 @@ def get_atractions():
         'atractions': res
     })
 
+@app.route('/resources/photos/byuser', methods=['POST'])
+def get_photo_history():
+    req = request.get_json(force=True)
+    user = req['user']
+    fotos = db.session.query(Fotografia).filter(Fotografia.emailinst == user).order_by(Fotografia.datafoto).all()
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['date'] = f.datafoto
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['img'] = '/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['img'] = '/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+    return jsonify({
+        'photos': fotografias
+    })
+
+
 @app.route('/resources/routes/search', methods=['POST'])
 def search_routes():
     req = request.get_json(force=True)
@@ -541,7 +570,8 @@ def share_map(id):
             foto['date'] = f.datafoto
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
-                foto['path'] = '/sendimage/' + temp
+                temp = temp.split('/')
+                foto['path'] = '/sendimage/pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')

@@ -148,81 +148,6 @@ def do_search(query):
         'description' : message
     })
 
-@app.route('/search', methods=['POST'])
-def classify_image():
-    res = request.get_json(force=True)
-    image = res['image']
-    user_email = res['user']
-    lat = res['lat']
-    lon = res['long']
-    # data = res['date']
-    print("Request received")
-    writeImage(image)
-    print("Calling tensorflow.....")
-    classification = predict_image('./temp.jpg')
-    img_name = classification[0]
-    score = classification[1]
-    print(img_name, score)
-    folder = os.path.join('./static/img', img_name)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    files = os.listdir(folder)
-    print("Folder created")
-    file_id = str(len(files)) + '.jpg'
-    filename = os.path.join(folder, file_id)
-    os.rename('./temp.jpg', filename)
-    print("Imagem gravada")
-    desc = ''
-
-    try:
-        desc = infos[img_name.lower()]
-    except KeyError:
-        desc = img_name
-    while(True):
-        print("Looping...")
-        foto = addFotografia(None, img_name, user_email, lat, lon, filename,
-                        None, datetime.datetime.now(), None, 'pending', score, None)
-        if foto is None:
-            continue
-        else:
-            break
-    print("Enviando resposta...")
-    if float(score) >= 0.8:
-        return jsonify({
-            'name' : img_name,
-            'description' : desc,
-            'id' : foto.id
-        })
-    return jsonify({
-        'name': 'Desconhecido',
-        'description': '',
-        'id': foto.id
-    })
-
-@app.route('/search/feedback', methods=['POST'])
-def send_feedback():
-    res = request.get_json(force=True)
-    file_id = res['image_id']
-    concept = res['concept']
-    feedback = res['answer']
-    print('feedback ' + str(feedback))
-    if feedback == 1:
-        #req_path = os.path.join('./static/img', concept)
-        #file_path = os.path.join(req_path, file_id)
-        foto = getFoto(file_id)
-        file_path = foto.path
-        dest_path = os.path.join(IMAGE_FOLDER, concept)
-        if not os.path.exists(dest_path):
-            os.makedirs(dest_path)
-        new_id = str(len(os.listdir(dest_path))) + '.jpg'
-        new_file_path = os.path.join(dest_path, new_id)
-        os.rename(file_path, os.path.join(new_file_path))
-        updateFotografia(file_id, None, new_file_path)
-        print('feedback')
-    return jsonify({
-        'status': str(feedback)
-    })
-
 @app.route('/resources/delimage', methods=['POST'])
 def delete_image():
     res = request.get_json(force=True)
@@ -241,12 +166,6 @@ def upload(topic):
         # print(destination)
         file.save(destination)
     return redirect(url_for('show_gallery', query=topic))
-
-@app.route('/resources/events', methods=['GET'])
-def get_events():
-    with open('./static/results/events.txt') as fp:
-        events = fp.read()
-    return events
 
 @app.route('/resources/topics', methods=['POST'])
 def create_topic():
@@ -327,6 +246,96 @@ def manage_requests():
         os.remove(req_folder)
         deleteFoto(req_folder)
     return redirect(url_for('show_requests'))
+
+
+#######################################################
+######################################################
+###################### API ##########################
+#######################################################
+#######################################################
+
+@app.route('/search', methods=['POST'])
+def classify_image():
+    res = request.get_json(force=True)
+    image = res['image']
+    user_email = res['user']
+    lat = res['lat']
+    lon = res['long']
+    # data = res['date']
+    print("Request received")
+    writeImage(image)
+    print("Calling tensorflow.....")
+    classification = predict_image('./temp.jpg')
+    img_name = classification[0]
+    score = classification[1]
+    print(img_name, score)
+    folder = os.path.join('./static/img', img_name)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    files = os.listdir(folder)
+    print("Folder created")
+    file_id = str(len(files)) + '.jpg'
+    filename = os.path.join(folder, file_id)
+    os.rename('./temp.jpg', filename)
+    print("Imagem gravada")
+    desc = ''
+
+    try:
+        desc = infos[img_name.lower()]
+    except KeyError:
+        desc = img_name
+    while(True):
+        print("Looping...")
+        foto = addFotografia(None, img_name, user_email, lat, lon, filename,
+                        None, datetime.datetime.now(), None, 'pending', score, None)
+        if foto is None:
+            continue
+        else:
+            break
+    print("Enviando resposta...")
+    if float(score) >= 0.8:
+        return jsonify({
+            'name' : img_name,
+            'description' : desc,
+            'id' : foto.id
+        })
+    return jsonify({
+        'name': 'Desconhecido',
+        'description': '',
+        'id': foto.id
+    })
+
+@app.route('/search/feedback', methods=['POST'])
+def send_feedback():
+    res = request.get_json(force=True)
+    file_id = res['image_id']
+    concept = res['concept']
+    feedback = res['answer']
+    print('feedback ' + str(feedback))
+    if feedback == 1:
+        #req_path = os.path.join('./static/img', concept)
+        #file_path = os.path.join(req_path, file_id)
+        foto = getFoto(file_id)
+        file_path = foto.path
+        dest_path = os.path.join(IMAGE_FOLDER, concept)
+        if not os.path.exists(dest_path):
+            os.makedirs(dest_path)
+        new_id = str(len(os.listdir(dest_path))) + '.jpg'
+        new_file_path = os.path.join(dest_path, new_id)
+        os.rename(file_path, os.path.join(new_file_path))
+        updateFotografia(file_id, None, new_file_path)
+        print('feedback')
+    return jsonify({
+        'status': str(feedback)
+    })
+
+
+
+@app.route('/resources/events', methods=['GET'])
+def get_events():
+    with open('./static/results/events.txt') as fp:
+        events = fp.read()
+    return events
 
 
 @app.route('/resources/routes', methods=['POST'])
@@ -452,7 +461,15 @@ def get_route_instance(id):
     for f in fotos:
         try:
             foto = {}
-            foto['img'] = readImage(f.path)
+            readImage(f.path)
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
             foto['latitude'] = f.latitude
             foto['longitude'] = f.longitude
             foto['id'] = f.id
@@ -485,22 +502,23 @@ def get_atraction(id):
     fotografias = []
     for f in fotos:
         try:
-            foto = {}
+            foto = ""
             readImage(f.path)
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                foto = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+                foto = 'http://192.168.160.192:8080/sendimage/' + temp
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)
     res = {}
     #res['name'] = conceito.nome
     res['name'] = 'Biblioteca, Universidade de Aveiro'
+    res['id'] = conceito.nomeconceito
     res['description'] = conceito.descricao
     res['latitude'] = conceito.latitude
     res['longitude'] = conceito.longitude
@@ -515,7 +533,8 @@ def get_atractions():
 
     for c in conceitos:
         temp = {}
-        temp['name'] = c.nomeconceito
+        temp['id'] = c.nomeconceito
+        temp['name'] = c.nome
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao

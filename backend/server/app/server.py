@@ -516,7 +516,7 @@ def get_photo_history():
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto['img'] = '/sendimage/' + temp
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)

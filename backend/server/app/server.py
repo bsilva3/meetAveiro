@@ -512,7 +512,7 @@ def get_photo_history():
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto['img'] = '/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')

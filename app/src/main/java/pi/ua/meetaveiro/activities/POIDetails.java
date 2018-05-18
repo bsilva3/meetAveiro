@@ -72,7 +72,8 @@ import pi.ua.meetaveiro.others.MyApplication;
 import static pi.ua.meetaveiro.activities.NavigationDrawerActivity.navItemIndex;
 import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
+import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTION_INFO;
+import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_IN_ATTRACTION;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 //TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff
@@ -192,6 +193,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onStart() {
         super.onStart();
         //requestRoutes();
+        getAttractionInfo();
         getRoutesThatHaveAttraction();
     }
 
@@ -285,6 +287,45 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         listView.requestLayout();
     }
 
+    private void getAttractionInfo() {
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("concept", attractionName);
+        } catch (JSONException e) {
+            Log.e("Request Route Error", e.toString());
+        }
+        //start shimmer effect
+        mShimmerViewContainer.startShimmerAnimation();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                URL_ATTRACTION_INFO, jsonRequest, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("ERROR", response.toString());
+                description = findViewById(R.id.attraction_description);
+                //images.add();
+                // stop animating Shimmer and hide the layout
+                mShimmerViewContainer.stopShimmerAnimation();
+                mShimmerViewContainer.setVisibility(View.GONE);
+                //initImageSlider();
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("ERROR", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+                // stop animating Shimmer and hide the layout
+                mShimmerViewContainer.stopShimmerAnimation();
+                mShimmerViewContainer.setVisibility(View.GONE);
+            }
+        });
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
     private void getRoutesThatHaveAttraction() {
         JSONObject jsonRequest = new JSONObject();
         try {
@@ -296,7 +337,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         //start shimmer effect
         mShimmerViewContainer.startShimmerAnimation();
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                URL_ROUTES_ATTRACTION, jsonRequest, new Response.Listener<JSONObject>() {
+                URL_ROUTES_IN_ATTRACTION, jsonRequest, new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
@@ -357,7 +398,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             Log.e("Request Route Error", e.toString());
         }
 
-        new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString(), URL_ROUTES_ATTRACTION);
+        new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString(), URL_ATTRACTION_INFO);
     }
 
     private class getRoutesFromServerTask extends AsyncTask<String, Void, String> {

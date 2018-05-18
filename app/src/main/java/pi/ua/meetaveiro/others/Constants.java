@@ -31,6 +31,10 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_ATTRACTION_HISTORY = API_URL + "/blahblah";
     // url to fetch routes that have a certain attraction
+    public static final String URL_ROUTES_IN_ATTRACTION = API_URL + "/resources/routes/search";
+    // url to fetch information of an attraction (aka concept)
+    public static final String URL_ATTRACTION_INFO = API_URL + "/resources/routes";
+    // url to fetch information of an attraction (aka concept)
     public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";

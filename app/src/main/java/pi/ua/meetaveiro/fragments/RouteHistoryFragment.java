@@ -185,7 +185,7 @@ public class RouteHistoryFragment extends Fragment implements
     private void fetchRoutes() {
 
 
-        sendPost();
+        //sendPost();
 
 
         JSONObject jsonRequest = new JSONObject();
@@ -387,8 +387,6 @@ public class RouteHistoryFragment extends Fragment implements
                 e.printStackTrace();
             }
 
-
-
         });
         thread.start();
 
@@ -447,6 +445,7 @@ public class RouteHistoryFragment extends Fragment implements
                     return null;
                 }
                 JsonResponse = buffer.toString();
+                Log.d("asyncRes", JsonResponse);
                 //send to post execute
                 return JsonResponse;
 

@@ -293,11 +293,7 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-
-        routes = myApp.getRoutes();
-        if (routes == null)
-            routes = new ArrayList<>();
-        Log.d("route", routes.size()+"");
+        getMarkersFromStorage();
     }
 
     @Override
@@ -418,52 +414,67 @@ public class PhotoLogFragment extends Fragment implements
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        //Initialize Preferences*
-        prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
-        /*While we have markers stored iterate trough.
-        * For each marker add to the map with all information related to it*/
-        boolean stop = false;
-        int tmp = 0;
-        while (!stop){
-            if (prefs.contains("Lat" + tmp)) {
-                String lat = prefs.getString("Lat" + tmp, "");
-                String lng = prefs.getString("Lng" + tmp, "");
-                String btm = prefs.getString("bmp" + tmp, "");
-                int id = prefs.getInt("ID"+tmp, 0);
-                long date = prefs.getLong("dateTime"+tmp, 0);
-                String snip = prefs.getString("Snip" + tmp, "");
-                String titl = prefs.getString("Titl" + tmp,"");
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-                Bitmap img = Utils.StringToBitMap(btm);
-                try {
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .icon(BitmapDescriptorFactory.fromBitmap(img))
-                            .title(titl)
-                            .snippet(snip));
-                    imageMarkers.put(m,img);
-                    markers.put(m,true);
-                    markerID.put(m, id);
-                    markerDate.put(m, date);
-                    //setClickListenersOnMap(id);
-
-                }catch (Exception e){
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .title(titl)
-                            .snippet(snip));
-                    markers.put(m,true);
-                    markerID.put(m, id);
-                    markerDate.put(m, date);
-                }
-                tmp++;
-            }else{
-                stop = true;
-            }
-            //add marker click listener
-            addMarkerListener();
-        }
+        getMarkersFromStorage();
         //JSONObject j = placeRoutesOnJson();
         //Log.d("sendRoute", j.toString());
         //new uploadFileToServerTask().execute(j.toString(), URL_SEND_ROUTE);
+    }
+
+    public void getMarkersFromStorage(){
+        //Initialize Preferences*
+        if (mMap != null) {
+            prefs = getActivity().getSharedPreferences("LatLng", MODE_PRIVATE);
+        /*While we have markers stored iterate trough.
+        * For each marker add to the map with all information related to it*/
+            boolean stop = false;
+            int tmp = 0;
+            while (!stop) {
+                if (prefs.contains("Lat" + tmp)) {
+                    String lat = prefs.getString("Lat" + tmp, "");
+                    String lng = prefs.getString("Lng" + tmp, "");
+                    String btm = prefs.getString("bmp" + tmp, "");
+                    int id = prefs.getInt("ID" + tmp, 0);
+                    long date = prefs.getLong("dateTime" + tmp, 0);
+                    String snip = prefs.getString("Snip" + tmp, "");
+                    String titl = prefs.getString("Titl" + tmp, "");
+                    LatLng l = null;
+                    try {
+                        l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+                    } catch(NumberFormatException e ) {
+                        //there were no double parselable coordinates found, marker will not be placed
+                        Log.e("ERROR", e.toString());
+                        tmp++;
+                        continue;
+                    }
+                    Bitmap img = Utils.StringToBitMap(btm);
+                    try {
+                        Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                                .icon(BitmapDescriptorFactory.fromBitmap(img))
+                                .title(titl)
+                                .snippet(snip));
+                        imageMarkers.put(m, img);
+                        markers.put(m, true);
+                        markerID.put(m, id);
+                        markerDate.put(m, date);
+                        Log.d("marker", "ids load: " + markerID);
+                        //setClickListenersOnMap(id);
+
+                    } catch (Exception e) {
+                        Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                                .title(titl)
+                                .snippet(snip));
+                        markers.put(m, true);
+                        markerID.put(m, id);
+                        markerDate.put(m, date);
+                    }
+                    tmp++;
+                } else {
+                    stop = true;
+                }
+                //add marker click listener
+                addMarkerListener();
+            }
+        }
     }
 
     private void addMarkerListener(){
@@ -513,8 +524,8 @@ public class PhotoLogFragment extends Fragment implements
         try {
             j.put("title", "ola chico");
             j.put("description", "ta td??");
-            j.put("start", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
-            j.put("end", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("start", convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
+            j.put("end", convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
             j.put("trajectory", routePoints);
@@ -616,14 +627,14 @@ public class PhotoLogFragment extends Fragment implements
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
 
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    //ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
 
 
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
-                    String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+                    String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
@@ -720,8 +731,7 @@ public class PhotoLogFragment extends Fragment implements
                 convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
-
-        final int idFinal = id;
+        Log.d("marker", "ids: "+markerID);
         updateMarkerOnMap(oldMarker, markerToUpdate);
         //setClickListenersOnMap(id);
         // show a prompt for user feedback on the first dialog is closed
@@ -865,10 +875,6 @@ public class PhotoLogFragment extends Fragment implements
         super.onPause();  // Always call the superclass method first
         //Iterate trough all saved markers.
         saveMarkersOnStorage();
-        imageMarkers = new HashMap<>();
-        markers = new HashMap<>();
-        markerDate = new HashMap<>();
-        markerID = new HashMap<>();
     }
 
     //save markers on storage
@@ -879,7 +885,6 @@ public class PhotoLogFragment extends Fragment implements
             Map.Entry<Marker, Bitmap> pair = it.next();
             Bitmap img = pair.getValue();
             Marker m = pair.getKey();
-
             //Add to the preferences the information of the markers
 
             prefs.edit().putString("Lat"+i,String.valueOf(m.getPosition().latitude)).commit();
@@ -944,6 +949,10 @@ public class PhotoLogFragment extends Fragment implements
             tts.stop();
             tts.shutdown();
         }
+        imageMarkers = new HashMap<>();
+        markers = new HashMap<>();
+        markerDate = new HashMap<>();
+        markerID = new HashMap<>();
 
     }
 
@@ -1188,7 +1197,7 @@ public class PhotoLogFragment extends Fragment implements
      *
      *      ]
      * }
-     * @param route Route to save
+     * //@param route Route to save
      */
     /*private void saveRouteToFile(Route route){
         StringBuilder sb = new StringBuilder();
@@ -1257,18 +1266,9 @@ public class PhotoLogFragment extends Fragment implements
         }*/
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormat(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.DAY_OF_MONTH)+"/"+
-                cl.get(Calendar.MONTH)+"/"+cl.get(Calendar.YEAR)+", " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE);
-        return photoDate;
-    }
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormatToServerType(long timeInMilis){
+    public String convertTimeInMilisAndFormat(long timeInMilis){
         Date d = new Date(timeInMilis);
         Calendar cl = Calendar.getInstance();
         cl.setTime(d);

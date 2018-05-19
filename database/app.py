@@ -95,9 +95,78 @@ def addInstanciaPercursoExemplo():
     addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00', 4.4)
 
 def addFotografiaExemplo():
-    addFotografia(1, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
-    addFotografia(2, 'deti', 'joana@ua.pt',  40.633175, -8.659496, '../../../../treino/deti/20.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
-    addFotografia(3, 'dmat', 'joana@ua.pt', 40.630349, -8.658214, '../../../../treino/dmat/01.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(None, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/0002.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    
+    addFotografia(None, 'bugas', 'joana@ua.pt',  40.642599, -8.649559, '../../../../treino/bugas/IMG_20180321_102018.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'bugas', 'joana@ua.pt',  40.642599, -8.649559, '../../../../treino/bugas/IMG_20180321_102057.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'cantina', 'joana@ua.pt',  40.630797222222, -8.6591805555556, '../../../../treino/cantina/46.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'cantina', 'joana@ua.pt',  40.630797222222, -8.6591805555556, '../../../../treino/cantina/47.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'centro_cultural_dos_congressos', 'joana@ua.pt',  40.639141, -8.644020, '../../../../treino/centro_cultural_dos_congressos/04.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'centro_cultural_dos_congressos', 'joana@ua.pt',  40.639141, -8.644020, '../../../../treino/centro_cultural_dos_congressos/IMG_20180321_095530.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'complexo_pedagogico', 'joana@ua.pt',  40.630383, -8.655780, '../../../../treino/complexo_pedagogico/Complexo_Pedagógico_016.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'complexo_pedagogico', 'joana@ua.pt',  40.630383, -8.655780, '../../../../treino/complexo_pedagogico/IMG_20180305_113705.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'convento_museu_santa_joana', 'joana@ua.pt',  40.640305, -8.651056, '../../../../treino/convento_museu_santa_joana/167010.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'convento_museu_santa_joana', 'joana@ua.pt',  40.640305, -8.651056, '../../../../treino/convento_museu_santa_joana/DSCN1656.JPG', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'degeit', 'joana@ua.pt',  40.631779, -8.656965, '../../../../treino/degeit/0001.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'degeit', 'joana@ua.pt',  40.631779, -8.656965, '../../../../treino/degeit/0002.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'deti', 'joana@ua.pt',  40.633175, -8.659496, '../../../../treino/deti/20.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(None, 'deti', 'joana@ua.pt',  40.633175, -8.659496, '../../../../treino/deti/0001.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'dmat', 'joana@ua.pt',  40.630349, -8.658214, '../../../../treino/dmat/IMG_20180308_090741.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'dmat', 'joana@ua.pt', 40.630349, -8.658214, '../../../../treino/dmat/01.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+
+    addFotografia(None, 'estacao_de_comboios', 'joana@ua.pt',  40.644323, -8.640550, '../../../../treino/estacao_de_comboios/IMG_20180318_175535.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'estacao_de_comboios', 'joana@ua.pt',  40.644323, -8.640550, '../../../../treino/estacao_de_comboios/IMG_20180318_175844.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'estatua_manuel_firmino', 'joana@ua.pt', 40.642677, -8.648802, '../../../../treino/estatua_manuel_firmino/IMG_20180312_120445.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'estatua_manuel_firmino', 'joana@ua.pt', 40.642677, -8.648802, '../../../../treino/estatua_manuel_firmino/IMG_20180312_120516.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'estatua_princesa_santa_joana', 'joana@ua.pt', 40.6310031, -8.659642599999984, '../../../../treino/estatua_princesa_santa_joana/IMG_20180312_130637.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'estatua_princesa_santa_joana', 'joana@ua.pt', 40.6310031, -8.659642599999984, '../../../../treino/estatua_princesa_santa_joana/IMG_20180312_130727.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'forum_aveiro', 'joana@ua.pt', 40.6409015, -8.6515224, '../../../../treino/forum_aveiro/IMG_20180312_120208.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'forum_aveiro', 'joana@ua.pt', 40.6409015, -8.6515224, '../../../../treino/forum_aveiro/IMG_20180312_120312.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'ieeta', 'joana@ua.pt', 40.6331317, -8.6601875, '../../../../treino/ieeta/IMG_20180308_083320.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'ieeta', 'joana@ua.pt', 40.6331317, -8.6601875, '../../../../treino/ieeta/IMG_20180308_083337.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'jardim_galitos', 'joana@ua.pt', 40.6371452, -8.6412406, '../../../../treino/jardim_galitos/IMG_20180312_122341.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'jardim_galitos', 'joana@ua.pt', 40.6371452, -8.6412406, '../../../../treino/jardim_galitos/IMG_20180312_122343.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'mercado_manuel_firmino', 'joana@ua.pt', 40.6416997, -8.6488876, '../../../../treino/mercado_manuel_firmino/49.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'mercado_manuel_firmino', 'joana@ua.pt', 40.6416997, -8.6488876, '../../../../treino/mercado_manuel_firmino/IMG_20180312_120607.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'parque_da_macaca', 'joana@ua.pt', 40.63654705, -8.65331663, '../../../../treino/parque_da_macaca/5282885.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'parque_da_macaca', 'joana@ua.pt', 40.63654705, -8.65331663, '../../../../treino/parque_da_macaca/IMG_20180312_114447.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'parque_drinks', 'joana@ua.pt', 40.63770034, -8.65513497, '../../../../treino/parque_drinks/IMG_20180312_114632.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'parque_drinks', 'joana@ua.pt', 40.63770034, -8.65513497, '../../../../treino/parque_drinks/IMG_20180312_114653.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'ponte_dos_lacos', 'joana@ua.pt', 40.64157707, -8.65003158, '../../../../treino/ponte_dos_lacos/1313065243885_f.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'ponte_dos_lacos', 'joana@ua.pt', 40.64157707, -8.65003158, '../../../../treino/ponte_dos_lacos/207619_194010250636057_6797.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'ponte_pedonal_parque_macaca_drinks', 'joana@ua.pt', 40.63653796, -8.65410014, '../../../../treino/ponte_pedonal_parque_macaca_drinks/DSC89791.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'ponte_pedonal_parque_macaca_drinks', 'joana@ua.pt', 40.63653796, -8.65410014, '../../../../treino/ponte_pedonal_parque_macaca_drinks/IMG_20180312_114404.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'reitoria', 'joana@ua.pt', 40.63118, -8.657398, '../../../../treino/reitoria/0001.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'reitoria', 'joana@ua.pt', 40.63118, -8.657398, '../../../../treino/reitoria/0002.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'ria_de_aveiro', 'joana@ua.pt', 40.6409015, -8.6515224, '../../../../treino/ria_de_aveiro/15234391022_5d7e39497c_o.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'ria_de_aveiro', 'joana@ua.pt', 40.6409015, -8.6515224, '../../../../treino/ria_de_aveiro/36955390932_17b379639c_o.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'se_de_aveiro', 'joana@ua.pt', 40.63960346, -8.65026632, '../../../../treino/se_de_aveiro/13079449.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'se_de_aveiro', 'joana@ua.pt', 40.63960346, -8.65026632, '../../../../treino/se_de_aveiro/IMG_20180312_124133.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
+    addFotografia(None, 'torre_de_agua', 'joana@ua.pt', 40.62902601, -8.65545995, '../../../../treino/torre_de_agua/IMG_20180301_141628.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(None, 'torre_de_agua', 'joana@ua.pt', 40.62902601, -8.65545995, '../../../../treino/torre_de_agua/IMG_20180301_141820.jpg', None, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+
 
 def addInfoExemplo():
     addTiposExemplo()

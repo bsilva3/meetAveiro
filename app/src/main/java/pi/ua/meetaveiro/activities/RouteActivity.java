@@ -37,7 +37,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -101,9 +100,9 @@ import java.util.Map;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
-import pi.ua.meetaveiro.models.Attraction;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -115,6 +114,7 @@ import static pi.ua.meetaveiro.others.Constants.*;
 
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
+        DataReceiver,
         TextToSpeech.OnInitListener,
         OnCompleteListener<Void> {
 
@@ -364,6 +364,12 @@ public class RouteActivity extends FragmentActivity implements
                             }
                         }
                     };
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //tour wont start
+                            dialog.dismiss();
+                            break;
+                    }
+                };
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
                     builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
@@ -415,8 +421,6 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         updateValuesFromBundle(savedInstanceState);
-        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
-        updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -437,6 +441,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onResume() {
         super.onResume();
         updateRouteButtons(Utils.getRouteState(this));
+        Log.i("state....",  Utils.getRouteState(this).toString());
         Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
@@ -444,8 +449,7 @@ public class RouteActivity extends FragmentActivity implements
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
-        if (getIntent().getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false) &&
-                getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+        if (getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         }
@@ -766,11 +770,11 @@ public class RouteActivity extends FragmentActivity implements
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Log.i(TAG, "User agreed to make required location settings changes.");
+                        Log.i("ERROR", "User agreed to make required location settings changes.");
                         // Nothing to do. startLocationupdates() gets called in onResume again.
                         break;
                     case Activity.RESULT_CANCELED:
-                        Log.i(TAG, "User chose not to make required location settings changes.");
+                        Log.i("ERROR", "User chose not to make required location settings changes.");
                         mRequestingLocationUpdates = false;
                         updateLocationUI();
                         break;
@@ -778,7 +782,9 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
+                    //To ease the time to send a photo the photo is compressed
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    //This is to be used in the markers (To fix the loss of quality)
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
 
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -1032,7 +1038,9 @@ public class RouteActivity extends FragmentActivity implements
                 )
                 .setNeutralText(this.getString(R.string.dont_answer));
         dialog.show();
+        speakOut(name+". "+ description);
     }
+
 
     /*
     * When the app is in background and when a different fragment is selected

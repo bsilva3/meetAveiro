@@ -12,7 +12,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Route;
 
 public class RouteExpandable extends BaseExpandableListAdapter {
 

@@ -1,4 +1,4 @@
-package pi.ua.meetaveiro.models;
+package pi.ua.meetaveiro.data;
 
 import java.io.Serializable;
 

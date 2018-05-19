@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.models.Event;
+import pi.ua.meetaveiro.data.Event;
 
 public class EventDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -93,11 +93,12 @@ public class EventDetailsActivity extends AppCompatActivity implements OnMapRead
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setScrollGesturesEnabled(false);
+        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(event.getLatitude(), event.getLongitude());
         mMap.addMarker(new MarkerOptions().position(sydney).title(event.getTitle()));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        mMap.animateCamera( CameraUpdateFactory.zoomTo( 7.0f ) );
+        mMap.animateCamera( CameraUpdateFactory.zoomTo( 17.0f ) );
     }
 }

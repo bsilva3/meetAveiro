@@ -9,7 +9,6 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.models.Attraction;
+import pi.ua.meetaveiro.data.Attraction;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Attraction} and makes a call to the

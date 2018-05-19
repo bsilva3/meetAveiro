@@ -16,9 +16,7 @@ import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteDetailsActivity;
-import pi.ua.meetaveiro.fragments.PhotoLogFragment;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
+import pi.ua.meetaveiro.data.Route;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,22 +25,29 @@ import java.util.List;
  * {@link RecyclerView.Adapter} that can display a {@link Route} and makes a call to the
  * specified {@link OnRouteItemSelectedListener}.
  */
-public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements Filterable, SectionTitleProvider {
+public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder> implements
+        Filterable,
+        SectionTitleProvider {
 
     private Context context;
-    private List<RouteInstance> routeList;
-    private List<RouteInstance> routeListFiltered;
+    private List<Route> routeList;
+
+    public List<Route> getRouteList() {
+        return routeList;
+    }
+
+    private List<Route> routeListFiltered;
     private OnRouteItemSelectedListener listener;
 
     @Override
     public String getSectionTitle(int position) {
-        return routeList.get(position).getRoute().getRouteTitle().substring(0, 1);
+        return routeList.get(position).getRouteTitle().substring(0, 1);
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mTitleView;
-        public RouteInstance mItem;
+        public Route mItem;
 
         public MyViewHolder(View view) {
             super(view);
@@ -50,7 +55,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
             mTitleView = view.findViewById(R.id.route_title);
             view.setOnClickListener(view1 -> {
                 // send selected Route in callback
-                listener.onRouteInstanceSelected(routeListFiltered.get(getAdapterPosition()));
+                listener.onRouteSelected(routeListFiltered.get(getAdapterPosition()));
             });
         }
 
@@ -61,7 +66,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
     }
 
 
-    public RouteAdapter(Context context, List<RouteInstance> routeList, OnRouteItemSelectedListener listener) {
+    public RouteAdapter(Context context, List<Route> routeList, OnRouteItemSelectedListener listener) {
         this.context = context;
         this.listener = listener;
         this.routeList = routeList;
@@ -78,49 +83,29 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
         holder.mItem = routeListFiltered.get(position);
-        holder.mTitleView.setText(routeListFiltered.get(position).getRoute().getRouteTitle());
+        holder.mTitleView.setText(routeListFiltered.get(position).getRouteTitle());
 
-        //When it is clicked all these actions will follow
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {
+                Log.d("clicked!", "route"+holder.mItem +".json" );
+
                 //context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
                 Intent intent = new Intent(context, RouteDetailsActivity.class);
-
                 //Add arguments to the Activity
                 Bundle bun = new Bundle();
-
-                //Verify if it is local or from the server
-                //First we will check if it has an id
-                //If not then it is local and it will trigger local read in the RouteDetailsActivity
-                if(holder.mItem.getIdInstance() != 0) {
-                    bun.putString("RouteInstanceID", holder.mItem.getIdInstance() + "");
-                }
-                else {
-                    bun.putString("RouteInstanceID", "noNumber");
-                    //All the names stored locally are in the format route + routeTitle + .json
-                    bun.putString("fileName", "route"+holder.mItem.getRoute().getRouteTitle()+".json");
-                }
-
+                //All the names stored locally are in the format route + routeTitle + .json
+                bun.putString("fileName", "route"+holder.mItem+".json");
                 //Send the route Title
-                bun.putString("routeTitle",holder.mItem.getRoute().getRouteTitle()+"");
-                //The type will determine if it is a UserRoute (that he made and its in the history)
-                //OR if it is a Route that needs NO MARKERS ONLY DESCRIPTION TITLE AND THE POINTS
-                bun.putString("Type",holder.mItem.getRoute().getType());
-
-
+                bun.putString("routeTitle",holder.mItem+"");
                 intent.putExtras(bun);
                 context.startActivity(intent);
 
                 //GO TO MAP AND SHOW THE ROUTE HERE
-                listener.onRouteInstanceSelected(holder.mItem);
+                listener.onRouteSelected(holder.mItem);
             }
         });
     }
 
-    /**
-     * Filters the results
-     * @return
-     */
     @Override
     public Filter getFilter() {
         return new Filter() {
@@ -130,12 +115,12 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
                 if (charString.isEmpty()) {
                     routeListFiltered = routeList;
                 } else {
-                    List<RouteInstance> filteredList = new ArrayList<>();
-                    for (RouteInstance row : routeList) {
+                    List<Route> filteredList = new ArrayList<>();
+                    for (Route row : routeList) {
 
                         // name match condition. this might differ depending on your requirement
                         // here we are looking for name or phone number match
-                        if (row.getRoute().getRouteTitle().toLowerCase().contains(charString.toLowerCase()) || row.getRoute().getRouteDescription().contains(charSequence)) {
+                        if (row.getRouteTitle().toLowerCase().contains(charString.toLowerCase()) || row.getRouteDescription().contains(charSequence)) {
                             filteredList.add(row);
                         }
                     }
@@ -150,16 +135,12 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
 
             @Override
             protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                routeListFiltered = (ArrayList<RouteInstance>) filterResults.values;
+                routeListFiltered = (ArrayList<Route>) filterResults.values;
                 notifyDataSetChanged();
             }
         };
     }
 
-    /**
-     * Get's the item count in the filtered list
-     * @return
-     */
     @Override
     public int getItemCount() {
         return routeListFiltered.size();
@@ -172,7 +153,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
      * activity.
      */
     public interface OnRouteItemSelectedListener {
-        void onRouteInstanceSelected(RouteInstance item);
+        void onRouteSelected(Route item);
     }
 
 }

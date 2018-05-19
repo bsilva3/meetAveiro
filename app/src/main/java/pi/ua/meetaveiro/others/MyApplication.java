@@ -11,7 +11,7 @@ import com.android.volley.toolbox.Volley;
 import java.util.ArrayList;
 import java.util.List;
 
-import pi.ua.meetaveiro.models.Route;
+import pi.ua.meetaveiro.data.Route;
 
 public class MyApplication extends Application {
 

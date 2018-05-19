@@ -108,7 +108,7 @@
     <string name="unknown_geofence_transition">Unknown Transition</string>
 
     <string name="geofence_transition_notification_text">
-        Click notification to return to know more
+        Click notification to know more about this attraction
     </string>
 
     <string name="insufficient_permissions">Insufficient permissions.</string>
@@ -292,4 +292,5 @@
     <string name="event_detail_location">Location</string>
     <string name="event_detail_title">Title</string>
     <string name="title_activity_maps">Map</string>
+    <string name="option_photos">Photos</string>
 </resources>

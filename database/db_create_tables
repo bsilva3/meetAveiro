@@ -18,6 +18,7 @@ CREATE TABLE Conceito (
 	Longitude float,
 	Raio float,	
 	Descricao text,
+	Nome text,
 	Classificacao float,
 	PRIMARY KEY (NomeConceito),
     FOREIGN KEY (EmailCriador) REFERENCES Utilizador(Email)

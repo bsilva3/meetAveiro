@@ -1,22 +1,35 @@
 package pi.ua.meetaveiro.fragments;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.adapters.ViewPagerAdapter;
+
+import static pi.ua.meetaveiro.others.Constants.URL_COMMUNITY_ROUTES;
+import static pi.ua.meetaveiro.others.Constants.URL_CREATED_ROUTES;
 
 public class RouteListsFragment extends Fragment {
 
@@ -26,6 +39,10 @@ public class RouteListsFragment extends Fragment {
 
     private OnNewRouteListener mListener;
 
+    private ViewPager viewPager;
+
+    private SearchView searchView;
+
     public RouteListsFragment() {
         // Required empty public constructor
     }
@@ -33,7 +50,7 @@ public class RouteListsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -42,7 +59,7 @@ public class RouteListsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_route_lists, container, false);
 
-        final ViewPager viewPager = view.findViewById(R.id.htab_viewpager);
+        viewPager = view.findViewById(R.id.htab_viewpager);
         setupViewPager(viewPager);
 
         TabLayout tabLayout = getActivity().findViewById(R.id.collapsing_tabs);
@@ -53,9 +70,11 @@ public class RouteListsFragment extends Fragment {
 
                 viewPager.setCurrentItem(tab.getPosition());
                 Log.d(TAG, "onTabSelected: pos: " + tab.getPosition());
-
+                invalidateFragmentMenus(tab.getPosition());
                 switch (tab.getPosition()) {
                     case 0:
+                        break;
+                    case 1:
                         break;
                 }
             }
@@ -79,6 +98,59 @@ public class RouteListsFragment extends Fragment {
         return view;
     }
 
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.search_menu, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        searchView = (SearchView) menu.findItem(R.id.action_search)
+                .getActionView();
+        searchView.setSearchableInfo(searchManager
+                .getSearchableInfo(getActivity().getComponentName()));
+        searchView.setMaxWidth(Integer.MAX_VALUE);
+
+        // listening to search query text change
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // filter recycler view when query submitted
+                //mAdapter.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String query) {
+                // filter recycler view when query submitted
+                //mAdapter.getFilter().filter(query);
+                return false;
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_search) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void invalidateFragmentMenus(int position){
+        for(int i = 0; i < viewPager.getAdapter().getCount(); i++){
+            ((ViewPagerAdapter)viewPager.getAdapter()).getItem(i).setHasOptionsMenu(i == position);
+        }
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -97,10 +169,22 @@ public class RouteListsFragment extends Fragment {
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getFragmentManager());
-        adapter.addFrag(new RouteListFragment(), "Community");
-        adapter.addFrag(new RouteListFragment(), "Created");
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getChildFragmentManager());
+        adapter.addFrag(RouteListFragment.newInstance(URL_COMMUNITY_ROUTES), "Community");
+        adapter.addFrag(RouteListFragment.newInstance(URL_CREATED_ROUTES), "Created");
         viewPager.setAdapter(adapter);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
+
+        try {
+            Glide.with(getActivity()).load(R.drawable.beach).into(collImgView);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**
@@ -113,32 +197,4 @@ public class RouteListsFragment extends Fragment {
         void onNewRoute();
     }
 
-    private static class ViewPagerAdapter extends FragmentPagerAdapter {
-        private final List<Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
-
-        public ViewPagerAdapter(FragmentManager manager) {
-            super(manager);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(Fragment fragment, String title) {
-            mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
-        }
-    }
 }

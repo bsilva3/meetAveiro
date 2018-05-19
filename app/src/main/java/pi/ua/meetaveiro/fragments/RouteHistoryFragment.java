@@ -1,12 +1,7 @@
 package pi.ua.meetaveiro.fragments;
 
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,7 +11,6 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,17 +18,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,9 +29,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,31 +39,22 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import pi.ua.meetaveiro.activities.RouteDetailsActivity;
-import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.interfaces.DataReceiver;
+import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
-import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.API_URL;
-import static pi.ua.meetaveiro.others.Constants.FEEDBACK_URL;
-import static pi.ua.meetaveiro.others.Constants.IMAGE_SCAN_URL;
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_USER;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
  * A fragment representing a list of routes
- * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
+ * Activities containing this fragment MUST implement the {@link RouteInstanceAdapter.OnRouteInstanceItemSelectedListener}
  * interface.
  */
 public class RouteHistoryFragment extends Fragment implements
@@ -87,12 +63,10 @@ public class RouteHistoryFragment extends Fragment implements
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
 
-
-
-    private RouteAdapter.OnRouteItemSelectedListener mListener;
+    private RouteInstanceAdapter.OnRouteInstanceItemSelectedListener mListener;
 
     private List<RouteInstance> routeList;
-    private RouteAdapter mAdapter;
+    private RouteInstanceAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -145,7 +119,7 @@ public class RouteHistoryFragment extends Fragment implements
         });
 
         routeList = new ArrayList<>();
-        mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+        mAdapter = new RouteInstanceAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -166,8 +140,8 @@ public class RouteHistoryFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof RouteAdapter.OnRouteItemSelectedListener) {
-            mListener = (RouteAdapter.OnRouteItemSelectedListener) context;
+        if (context instanceof RouteInstanceAdapter.OnRouteInstanceItemSelectedListener) {
+            mListener = (RouteInstanceAdapter.OnRouteInstanceItemSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInte ractionListener");
@@ -255,6 +229,7 @@ public class RouteHistoryFragment extends Fragment implements
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
+
         inflater.inflate(R.menu.search_menu, menu);
 
         // Associate searchable configuration with the SearchView

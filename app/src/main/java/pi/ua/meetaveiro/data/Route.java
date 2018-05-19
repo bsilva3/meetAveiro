@@ -1,6 +1,5 @@
-package pi.ua.meetaveiro.models;
+package pi.ua.meetaveiro.data;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -9,12 +8,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import pi.ua.meetaveiro.R;
-
-public class Route implements Parcelable {
+public class Route implements Parcelable, Serializable {
     private int id;
     private Polyline routePath;
     private List<LatLng> routePathPoints; //when we cant use polyline just for the parcelable

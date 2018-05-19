@@ -81,6 +81,7 @@
         <activity android:name=".activities.POIDetails" />
         <activity
             android:name=".activities.RouteActivity"
+            android:parentActivityName=".activities.NavigationDrawerActivity"
             android:label="@string/title_activity_route">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

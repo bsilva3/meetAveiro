@@ -1,58 +1,37 @@
 package pi.ua.meetaveiro.fragments;
 
-import android.app.SearchManager;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.models.Route;
-import pi.ua.meetaveiro.models.RouteInstance;
+import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
@@ -70,18 +49,23 @@ public class RouteListFragment extends Fragment implements
 
     private static final String TAG = RouteListFragment.class.getSimpleName();
 
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+
     private RouteAdapter.OnRouteItemSelectedListener mListener;
 
-    private List<RouteInstance> routeList;
+    private List<Route> routeList;
     private RouteAdapter mAdapter;
+
     private RecyclerView recyclerView;
-    private SearchView searchView;
 
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private ShimmerFrameLayout mShimmerViewContainer;
 
     private FastScroller fastScroller;
+
+    private String url;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -90,10 +74,27 @@ public class RouteListFragment extends Fragment implements
     public RouteListFragment() {
     }
 
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param url Parameter 1.
+     * @return A new instance of fragment RouteListFragment.
+     */
+    public static RouteListFragment newInstance(String url) {
+        RouteListFragment fragment = new RouteListFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, url);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        if (getArguments() != null) {
+            this.url = getArguments().getString(ARG_PARAM1);
+        }
     }
 
     @Override
@@ -121,6 +122,7 @@ public class RouteListFragment extends Fragment implements
 
         routeList = new ArrayList<>();
         mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -136,7 +138,6 @@ public class RouteListFragment extends Fragment implements
 
         return view;
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -157,27 +158,50 @@ public class RouteListFragment extends Fragment implements
 
 
     /**
-     * Fetches the user routes and only the USER'S ROUTEINSTANCES
+     * fetches json by making http calls
      */
     private void fetchRoutes() {
+        JsonArrayRequest request = new JsonArrayRequest(url,
+                response -> {
+                    if (response == null) {
+                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
 
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail()+"");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+                    String str = new Gson().toJson(new Object());
+                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
+                    }.getType());
 
-        new uploadFileToServerTask().execute(jsonRequest.toString(), URL_ROUTE_HISTORY);
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
 
-        // refreshing recycler view
-        mAdapter.notifyDataSetChanged();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-        // stopping swipe refresh
-        swipeRefreshLayout.setRefreshing(false);
+                    // refreshing recycler view
+                    mAdapter.notifyDataSetChanged();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
+                }, error -> {
+                    // error in getting json
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
 
+
+            // adding contacts to contacts list
+            routeList.clear();
+            routeList.add(new Route("route 1", "desc"));
+
+            // refreshing recycler view
+            mAdapter.notifyDataSetChanged();
+                }
+        );
+
+        MyApplication.getInstance().addToRequestQueue(request);
     }
 
 
@@ -188,7 +212,7 @@ public class RouteListFragment extends Fragment implements
      */
     private void fetchLocalRoutes(){
 
-        List<RouteInstance> items = new ArrayList<>();
+        List<Route> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
             File[] files = directory.listFiles();
@@ -198,8 +222,7 @@ public class RouteListFragment extends Fragment implements
                     String title = files[i].getName().replaceFirst("route","");
                     getRouteFromFile(title);
                     r = new Route(title);
-                    RouteInstance e = new RouteInstance(r);
-                    items.add(e);
+                    items.add(r);
                 }
             }
 
@@ -218,64 +241,6 @@ public class RouteListFragment extends Fragment implements
             Log.e(TAG, e.getMessage());
         }
 
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        ImageView collImgView = getActivity().findViewById(R.id.collapsing_toolbar_image);
-
-        try {
-            Glide.with(getActivity()).load(R.drawable.beach).into(collImgView);
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.search_menu, menu);
-
-        // Associate searchable configuration with the SearchView
-        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
-        searchView = (SearchView) menu.findItem(R.id.action_search)
-                .getActionView();
-        searchView.setSearchableInfo(searchManager
-                .getSearchableInfo(getActivity().getComponentName()));
-        searchView.setMaxWidth(Integer.MAX_VALUE);
-
-        // listening to search query text change
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                // filter recycler view when query submitted
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String query) {
-                // filter recycler view when text is changed
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-        });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -324,129 +289,4 @@ public class RouteListFragment extends Fragment implements
             fetchLocalRoutes();
         }
     }
-
-
-
-
-
-
-
-
-
-    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
-        String serverUrl;
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            String JsonResponse = null;
-            String JsonDATA = params[0];
-            serverUrl = params[1];
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            Log.d("response", "begin");
-            try {
-                //Create a URL object holding our url
-                URL url = new URL(serverUrl);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setDoOutput(true);
-                // is output buffer writter
-                urlConnection.setRequestMethod("POST");
-                urlConnection.setRequestProperty("Content-Type", "application/json");
-                urlConnection.setRequestProperty("Accept", "application/json");
-                //set headers and method
-                Writer writer = new BufferedWriter(new OutputStreamWriter
-                        (urlConnection.getOutputStream(), "UTF-8"));
-                writer.write(JsonDATA);
-                // json data
-                writer.close();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                //input stream
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String inputLine;
-                while ((inputLine = reader.readLine()) != null)
-                    buffer.append(inputLine + "\n");
-                if (buffer.length() == 0) {
-                    // Stream was empty. No point in parsing.
-                    return null;
-                }
-                JsonResponse = buffer.toString();
-                //send to post execute
-                return JsonResponse;
-
-            } catch (IOException e) {
-                Log.e(TAG, e.getMessage());
-
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(TAG, "Error closing stream", e);
-                    }
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String response) {
-            super.onPostExecute(response);
-
-
-            try {
-                List<RouteInstance> items = new ArrayList<>();
-                JSONObject js = new JSONObject(response);
-                JSONArray arr = js.getJSONArray("routes");
-                Route r;
-                RouteInstance e;
-
-                if(arr != null) {
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject row = arr.getJSONObject(i);
-                        String desc = row.getString("description");
-                        String title = row.getString("title");
-                        String id = row.getString("id");
-
-                        r = new Route(title);
-                        r.setId(Integer.parseInt(id));
-                        r.setRouteDescription(desc);
-                        e = new RouteInstance(r);
-
-                        items.add(e);
-                    }
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
-
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-
-
-
-
-
-
-
-
 }

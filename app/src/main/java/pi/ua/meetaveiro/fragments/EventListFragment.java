@@ -33,12 +33,10 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.EventAdapter;
-import pi.ua.meetaveiro.models.Event;
+import pi.ua.meetaveiro.data.Event;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
-import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_EVENTS;
 
 /**
@@ -80,6 +78,7 @@ public class EventListFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i("createviewcalled", "createeeddd");
         View view = inflater.inflate(R.layout.fragment_route_list, container, false);
 
         mShimmerViewContainer = view.findViewById(R.id.route_list_shimmer_view_container);

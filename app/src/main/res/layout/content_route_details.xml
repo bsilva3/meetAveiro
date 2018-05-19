@@ -18,13 +18,15 @@
         <TextView
             android:id="@+id/descriptRoute"
             android:layout_width="366dp"
-            android:layout_height="79dp"
+            android:layout_height="114dp"
             android:layout_margin="@dimen/text_margin"
             android:layout_marginBottom="3dp"
+            android:layout_marginEnd="2dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
             app:layout_constraintBottom_toBottomOf="@+id/DateRoute"
             app:layout_constraintBottom_toTopOf="@+id/view_images"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="MissingConstraints" />

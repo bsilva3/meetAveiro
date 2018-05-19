@@ -20,6 +20,10 @@ public class Constants {
     public final static String IMAGE_SCAN_URL = API_URL + "/search";
     //url to send image feedback
     public final static String FEEDBACK_URL = API_URL + "/search/feedback";
+    // url to fetch all community routes
+    public static final String URL_COMMUNITY_ROUTES = API_URL + "/blahblah";
+    // url to fetch all created routes
+    public static final String URL_CREATED_ROUTES = API_URL + "/blahblah";
     //url to send image feedback
     public final static String URL_SEND_ROUTE = API_URL + "/resources/routes";
     // url to fetch all routes
@@ -29,7 +33,7 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_ATTRACTIONS = API_URL + "/blahblah";
     // url to fetch routes history json
-    public static final String URL_ATTRACTION_HISTORY = API_URL + "/blahblah";
+    public static final String URL_PHOTO_HISTORY = API_URL + "/resources/photos/byuser";
     // url to fetch routes that have a certain attraction
     public static final String URL_ROUTES_IN_ATTRACTION = API_URL + "/resources/routes/search";
     // url to fetch information of an attraction (aka concept)

@@ -1,6 +1,7 @@
 package pi.ua.meetaveiro.activities;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -118,6 +119,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     private Bundle savedState;
     private boolean mPermissionsGranted = false;
+    private static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,6 +158,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
         getPermissions();
 
         setupNavigationFragments();
+        context = getApplicationContext();
 
     }
 
@@ -627,5 +630,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onRouteSelected(Route item) {
 
+    }
+
+    public static Context getContextOfApplication(){
+        return context;
     }
 }

@@ -13,6 +13,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.Marker;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -24,15 +26,20 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class Utils {
 
     public static final String KEY_ROUTE_STATE = "route_state";
 
     public static boolean uncompletedCameraRequest = true;
-
 
     /**
      * Returns the route state from shared preferences.
@@ -44,7 +51,6 @@ public class Utils {
         Log.i("stringvalue", stringValue);
         return Constants.ROUTE_STATE.toMyEnum(stringValue);
     }
-
 
     /**
      * Stores the route state in SharedPreferences.
@@ -197,7 +203,6 @@ public class Utils {
             NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
             return activeNetworkInfo != null;
         }
-
     }
 
     public static String convertTimeInMilisAndFormat(long timeInMilis){
@@ -206,6 +211,16 @@ public class Utils {
         cl.setTime(d);
         String photoDate = cl.get(Calendar.YEAR)+"-"+
                 cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
+                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
+        return photoDate;
+    }
+
+    public static String convertTimeInMilisAndFormatPretty(long timeInMilis){
+        Date d = new Date(timeInMilis);
+        Calendar cl = Calendar.getInstance();
+        cl.setTime(d);
+        String photoDate = cl.get(Calendar.DAY_OF_MONTH)+"/"+
+                cl.get(Calendar.MONTH)+"/"+cl.get(Calendar.YEAR)+", " +cl.get(Calendar.HOUR_OF_DAY)+
                 ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
         return photoDate;
     }

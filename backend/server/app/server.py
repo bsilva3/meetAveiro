@@ -6,6 +6,7 @@ o que elas representam (ex: monumentos)
 import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
+from math import sqrt
 
 import random
 import datetime
@@ -259,8 +260,22 @@ def classify_image():
     print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
     img_name = classification[0]
+    img_name = img_name.replace(' ', '_')
+    print('Conceito: ' + img_name)
     conceito = db.session.query(Conceito).get(img_name)
     score = classification[1]
+
+    if float(score) < 0.8:
+        img_name = 'desconhecido'
+
+    conc_lat = conceito.latitude
+    conc_long = conceito.longitude
+    raio = conceito.raio
+
+    if sqrt((lat-conc_lat)**2 + (lon-conc_long)**2) > raio:
+        img_name = 'desconhecido'
+
+    
     print(img_name, score)
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):
@@ -271,7 +286,7 @@ def classify_image():
     filename = os.path.join(folder, file_id)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
-    
+
     while(True):
         print("Looping...")
         foto = addFotografia(None, img_name, user_email, lat, lon, filename,
@@ -281,7 +296,7 @@ def classify_image():
         else:
             break
     print("Enviando resposta...")
-    if float(score) >= 0.8:
+    if img_name != 'desconhecido':
         return jsonify({
             'concept_id' : img_name,
             'name': conceito.nome,
@@ -289,7 +304,7 @@ def classify_image():
             'id' : foto.id
         })
     return jsonify({
-        'concept_id': 'Desconhecido',
+        'concept_id': 'desconhecido',
         'name': 'Desconhecido',
         'description': '',
         'id': foto.id
@@ -547,7 +562,10 @@ def get_photo_history():
             foto['latitude'] = f.latitude
             foto['longitude'] = f.longitude
             foto['date'] = f.datafoto
-            foto['concept'] = f.nomeconc
+            if f.nomeconc == 'desconhecido':
+                foto['concept'] = ''
+            else:
+                foto['concept'] = f.nomeconc
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')

@@ -1522,7 +1522,6 @@ public class RouteActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-
     }
 
 

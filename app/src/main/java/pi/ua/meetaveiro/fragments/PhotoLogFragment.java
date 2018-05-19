@@ -536,7 +536,7 @@ public class PhotoLogFragment extends Fragment implements
 
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-
+                    resetMarkers();
 
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
@@ -633,20 +633,23 @@ public class PhotoLogFragment extends Fragment implements
         Marker oldMarker = markerToUpdate;
         String title = "";
         String description = "";
+        String conceptID = "";
         int id = 0;
         //we get the data from the json
         //if the image was recognized, we get the title, description and id, else
         //we get unknown (desconhecido) as title, "" as description (still return an id)
         try {
-            title = json.get("name").toString();
-            description = json.get("description").toString();
+            title = json.getString("name");
+            description = json.getString("description");
             id = json.getInt("id");
+            conceptID = json.getString("concept_id");
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
         markerToUpdate.setTitle(title);
         markerToUpdate.setSnippet(getContext().getString(R.string.unknown_photo_dialog_description)+
-                Utils.convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
+                Utils.convertTimeInMilisAndFormatPretty(markerDate.get(markerToUpdate))+" \n"+description);
+        markerToUpdate.setTag(conceptID);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
         Log.d("marker", "ids: "+markerID);
@@ -655,6 +658,7 @@ public class PhotoLogFragment extends Fragment implements
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
         createAndShowInfoDialog(markerToUpdate, id, true);
+        saveMarkersOnStorage();
     }
 
     //when we send feedback
@@ -791,8 +795,7 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
-        //Iterate trough all saved markers.
-        saveMarkersOnStorage();
+        resetMarkers();
     }
 
     //save markers on storage
@@ -803,17 +806,18 @@ public class PhotoLogFragment extends Fragment implements
             Map.Entry<Marker, Bitmap> pair = it.next();
             Bitmap img = pair.getValue();
             Marker m = pair.getKey();
+            Log.d("save", "t: "+m.getTitle());
             //Add to the preferences the information of the markers
 
-            prefs.edit().putString("Lat"+i,String.valueOf(m.getPosition().latitude)).commit();
-            prefs.edit().putString("Lng"+i,String.valueOf(m.getPosition().longitude)).commit();
-            prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).commit();
-            prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).commit();
-            prefs.edit().putLong("dateTime"+i,Long.valueOf(markerDate.get(m))).commit();
+            prefs.edit().putString("Lat"+i,String.valueOf(m.getPosition().latitude)).apply();
+            prefs.edit().putString("Lng"+i,String.valueOf(m.getPosition().longitude)).apply();
+            prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).apply();
+            prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).apply();
+            prefs.edit().putLong("dateTime"+i,Long.valueOf(markerDate.get(m))).apply();
             Log.d("num", "saveID: "+markerID.get(m)+"");
             Log.d("num", "saveDate: "+markerDate.get(m)+"");
-            prefs.edit().putInt("ID"+i,Integer.valueOf(markerID.get(m))).commit();
-            prefs.edit().putString("bmp"+i,BitMapToString(img)).commit();
+            prefs.edit().putInt("ID"+i,Integer.valueOf(markerID.get(m))).apply();
+            prefs.edit().putString("bmp"+i,BitMapToString(img)).apply();
             i++;
 
         }
@@ -867,11 +871,14 @@ public class PhotoLogFragment extends Fragment implements
             tts.stop();
             tts.shutdown();
         }
+
+    }
+
+    public void resetMarkers(){
         imageMarkers = new HashMap<>();
         markers = new HashMap<>();
         markerDate = new HashMap<>();
         markerID = new HashMap<>();
-
     }
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {

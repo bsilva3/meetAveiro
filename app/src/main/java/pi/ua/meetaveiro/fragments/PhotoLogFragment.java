@@ -430,8 +430,8 @@ public class PhotoLogFragment extends Fragment implements
         try {
             j.put("title", "ola chico");
             j.put("description", "ta td??");
-            j.put("start", convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
-            j.put("end", convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
+            j.put("start", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
+            j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
             j.put("trajectory", routePoints);
@@ -564,7 +564,6 @@ public class PhotoLogFragment extends Fragment implements
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
-                        imageMarkers.put(m, photo);
                         markerDate.put(m, date);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
@@ -607,6 +606,18 @@ public class PhotoLogFragment extends Fragment implements
         } catch (NullPointerException e){
             Log.e(TAG, e.getMessage());
             Toast.makeText(getContext(), "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
+            Marker markerToUpdate = null;
+            for(Map.Entry entry : markers.entrySet()){
+                if(entry.getValue().equals(false)){
+                    //remove this image and marker
+                    markerToUpdate = (Marker) entry.getKey();
+                    imageMarkers.remove(markerToUpdate);
+                    markerDate.remove(markerToUpdate);
+                    markers.remove(markerToUpdate);
+                    markerToUpdate.remove();
+                    break;
+                }
+            }
             return;
         }
 
@@ -617,10 +628,6 @@ public class PhotoLogFragment extends Fragment implements
                 markerToUpdate = (Marker) entry.getKey();
                 break;
             }
-        }
-        if (json == null){
-            Toast.makeText(getContext(), "Server is currently unavailable. Please, try again later", Toast.LENGTH_SHORT);
-            return;
         }
         Marker oldMarker = markerToUpdate;
         String title = "";
@@ -638,7 +645,7 @@ public class PhotoLogFragment extends Fragment implements
         }
         markerToUpdate.setTitle(title);
         markerToUpdate.setSnippet(getContext().getString(R.string.unknown_photo_dialog_description)+
-                convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
+                Utils.convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
         Log.d("marker", "ids: "+markerID);
@@ -895,6 +902,7 @@ public class PhotoLogFragment extends Fragment implements
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
                 urlConnection.setRequestMethod("POST");
+                urlConnection.setConnectTimeout(15000);//stop after 15 secs
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept", "application/json");
                 //set headers and method
@@ -1150,14 +1158,5 @@ public class PhotoLogFragment extends Fragment implements
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormat(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.YEAR)+"-"+
-                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
-        return photoDate;
-    }
 
 }

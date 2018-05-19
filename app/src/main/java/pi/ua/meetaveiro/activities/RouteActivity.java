@@ -422,6 +422,13 @@ public class RouteActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.route_map);
         mapFragment.getMapAsync(this);
+
+        //start text to speech
+        tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+            }
+        });
     }
 
     @Override
@@ -437,6 +444,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onResume() {
         super.onResume();
         updateRouteButtons(Utils.getRouteState(this));
+        Log.i("state....",  Utils.getRouteState(this).toString());
         Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
@@ -444,11 +452,11 @@ public class RouteActivity extends FragmentActivity implements
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
-        if (getIntent().getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false) &&
-                getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+        if (getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         }
+
     }
 
     /**
@@ -680,6 +688,7 @@ public class RouteActivity extends FragmentActivity implements
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -766,11 +775,11 @@ public class RouteActivity extends FragmentActivity implements
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Log.i(TAG, "User agreed to make required location settings changes.");
+                        Log.i("ERROR", "User agreed to make required location settings changes.");
                         // Nothing to do. startLocationupdates() gets called in onResume again.
                         break;
                     case Activity.RESULT_CANCELED:
-                        Log.i(TAG, "User chose not to make required location settings changes.");
+                        Log.i("ERROR", "User chose not to make required location settings changes.");
                         mRequestingLocationUpdates = false;
                         updateLocationUI();
                         break;
@@ -778,21 +787,25 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
-                    Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    //To ease the time to send a photo the photo is compressed
+                    //Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    //This is to be used in the markers (To fix the loss of quality)
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
-
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-
-
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
+
+
+
+                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
+
                     String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
+
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
-                    long date = Calendar.getInstance().getTimeInMillis();
                     try {
+                        long date = Calendar.getInstance().getTimeInMillis();
                         jsonRequest.put("date", date);
                         jsonRequest.put("image", base64Photo);
                         jsonRequest.put("lat", mLastKnownLocation.getLatitude());
@@ -801,22 +814,21 @@ public class RouteActivity extends FragmentActivity implements
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
-                    //create marker and store it (also store the date we took the photo for the marker)
+
                     if (mLastKnownLocation!=null) {
                         //add the marker to the map of markers, but indicate that this marker
                         //does not have an updated info yet
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(this.getString(R.string.unknown_string))
-                                .snippet(this.getString(R.string.unknown_string))
+                                .snippet("Unknown")
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
-                        imageMarkers.put(m, photo);
-                        markerDate.put(m, date);
                         //send a base 64 encoded photo to server
-                        Log.d("req", jsonRequest.toString()+"");
-                        new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                        new UploadFileToServerTask().execute(jsonRequest.toString(),IMAGE_SCAN_URL);
+
+
                     }else {
                         //Report error to user
                         Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
@@ -837,7 +849,19 @@ public class RouteActivity extends FragmentActivity implements
             return;
         } catch (NullPointerException e){
             Log.e(TAG, e.getMessage());
-            Toast.makeText(this, "Server is currently unavailable. Please try again later", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
+            Marker markerToUpdate = null;
+            for(Map.Entry entry : markers.entrySet()){
+                if(entry.getValue().equals(false)){
+                    //remove this image and marker
+                    markerToUpdate = (Marker) entry.getKey();
+                    imageMarkers.remove(markerToUpdate);
+                    markerDate.remove(markerToUpdate);
+                    markers.remove(markerToUpdate);
+                    markerToUpdate.remove();
+                    break;
+                }
+            }
             return;
         }
 
@@ -865,7 +889,7 @@ public class RouteActivity extends FragmentActivity implements
         }
         markerToUpdate.setTitle(title);
         markerToUpdate.setSnippet(this.getString(R.string.unknown_photo_dialog_description)+
-                convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
+                Utils.convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
         Log.d("marker", "ids: "+markerID);
@@ -941,7 +965,7 @@ public class RouteActivity extends FragmentActivity implements
     private void createAndShowInfoDialog(Marker m, int id, boolean showFeedback){
         String name = m.getTitle();
         String description = m.getSnippet();
-        //String date = convertTimeInMilisAndFormat(markerDate.get(m));
+        //String date = Utils.convertTimeInMilisAndFormat(markerDate.get(m));
         Drawable d = new BitmapDrawable(getResources(), imageMarkers.get(m));
         //image was recognized
         if (!name.toLowerCase().equals("desconhecido")) {
@@ -1129,10 +1153,10 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onDestroy() {
         // Don't forget to shutdown tts!
-        /*if (tts != null) {
+        if (tts != null) {
             tts.stop();
             tts.shutdown();
-        }*/
+        }
         super.onDestroy();
 
     }
@@ -1326,7 +1350,7 @@ public class RouteActivity extends FragmentActivity implements
         @Override
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(EXTRA_LOCATION);
-            if (location != null && !Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)&& !isFollowingTour) {
+            if (location != null) {
                 //add routePoints and redraw the trajectory line
                 routePoints.add(new LatLng(location.getLatitude(), location.getLongitude()));
                 redrawLine();
@@ -1334,6 +1358,7 @@ public class RouteActivity extends FragmentActivity implements
             }
         }
     }
+
 
     private void redrawLine(){
         PolylineOptions options = new PolylineOptions()
@@ -1448,7 +1473,7 @@ public class RouteActivity extends FragmentActivity implements
                 if (tmp > 0)
                     sb.append(",\n");
                 sb.append("{");
-                //Marker information <missing date and id>
+                //Marker information
                 sb.append("\"Titl\" : " + "\"" + entry.getKey().getTitle() + "\",\n");
                 sb.append("\"Snippet\" : " + "\"" + entry.getKey().getSnippet() + "\",\n");
                 sb.append("\"Latitude\" : " + "\"" + entry.getKey().getPosition().latitude + "\",\n");
@@ -1518,8 +1543,8 @@ public class RouteActivity extends FragmentActivity implements
         try {
             j.put("title", rt.getRoute().getRouteTitle());
             j.put("description", rt.getRoute().getRouteDescription());
-            j.put("start", convertTimeInMilisAndFormatToServerType(begginingDate));
-            j.put("end", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("start", Utils.convertTimeInMilisAndFormat(begginingDate));
+            j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
             j.put("trajectory", routePoints);
@@ -1529,28 +1554,5 @@ public class RouteActivity extends FragmentActivity implements
         Log.d("ROUTE", j.toString());
         return j;
     }
-
-
-    //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormatToServerType(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.YEAR)+"-"+
-                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
-        return photoDate;
-    }
-
-    public String convertTimeInMilisAndFormat(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.YEAR)+"-"+
-                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
-        return photoDate;
-    }
-
 
 }

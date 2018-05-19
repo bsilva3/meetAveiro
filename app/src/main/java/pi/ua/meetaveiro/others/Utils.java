@@ -9,18 +9,12 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +29,9 @@ public class Utils {
 
     public static final String KEY_ROUTE_STATE = "route_state";
 
+    public static boolean uncompletedCameraRequest = true;
+
+
     /**
      * Returns the route state from shared preferences.
      *
@@ -46,6 +43,7 @@ public class Utils {
         return Constants.ROUTE_STATE.toMyEnum(stringValue);
     }
 
+
     /**
      * Stores the route state in SharedPreferences.
      *
@@ -56,14 +54,6 @@ public class Utils {
         settings.edit().putString(KEY_ROUTE_STATE, route_state.toString()).apply();
     }
 
-    /**
-     * Returns the {@code location} object as a human readable string.
-     *
-     * @param location The {@link Location}.
-     */
-    public static String getLocationText(Location location) {
-        return location == null ? "Unknown location" : "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
-    }
 
     /**
      * @param bitmap {@link Bitmap}
@@ -74,6 +64,7 @@ public class Utils {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
     }
+
 
     /**
      * @param encodedString
@@ -122,7 +113,6 @@ public class Utils {
     }
 
 
-
     public static Bitmap downloadImage(String url) {
         Bitmap bitmap = null;
         InputStream stream = null;
@@ -139,6 +129,7 @@ public class Utils {
         }
         return bitmap;
     }
+
 
     public static InputStream getHttpConnection(String urlString) throws IOException {
 
@@ -160,9 +151,6 @@ public class Utils {
         }
         return stream;
     }
-
-
-
 
 
     public static class NetworkCheckTask extends AsyncTask<String, Void, Boolean> {
@@ -208,9 +196,6 @@ public class Utils {
             return activeNetworkInfo != null;
         }
 
-
-
     }
-
 
 }

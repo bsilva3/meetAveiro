@@ -240,10 +240,10 @@ public class RouteActivity extends FragmentActivity implements
         // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
         mGeofencePendingIntent = null;
 
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
+
         // Fetch simple attractions from server.
         fetchGeofences();
-
-        mGeofencingClient = LocationServices.getGeofencingClient(this);
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this);
@@ -353,6 +353,12 @@ public class RouteActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.route_map);
         mapFragment.getMapAsync(this);
+
+        if (Utils.uncompletedCameraRequest && getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
+            Utils.uncompletedCameraRequest = false;
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+        }
     }
 
     @Override
@@ -367,19 +373,17 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onResume() {
         super.onResume();
+        if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
+            onRouteStateChanged(true);
         updateRouteButtons(Utils.getRouteState(this));
         Log.i("state....",  Utils.getRouteState(this).toString());
-        Log.i("onresume", Utils.getRouteState(this).toString());
         LocalBroadcastManager
                 .getInstance(this)
                 .registerReceiver(
                         locationsReceiver,
                         new IntentFilter(ACTION_BROADCAST)
                 );
-        if (getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
-        }
+        Log.i("intent_photo",  String.valueOf(getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)));
 
     }
 
@@ -387,7 +391,7 @@ public class RouteActivity extends FragmentActivity implements
      * fetches json by making http calls
      */
     private void fetchGeofences() {
-        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
+       JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
                 response -> {
                     if (response == null) {
                         Log.e(TAG, "Couldn't fetch the attractions.");
@@ -410,6 +414,7 @@ public class RouteActivity extends FragmentActivity implements
         );
 
         MyApplication.getInstance().addToRequestQueue(request);
+
     }
 
     //Called when Start/Stop route button is pressed
@@ -756,6 +761,7 @@ public class RouteActivity extends FragmentActivity implements
                         Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
                     }
                 }
+                Utils.uncompletedCameraRequest = false;
                 break;
         }
     }

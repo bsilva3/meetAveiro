@@ -28,6 +28,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -266,28 +267,31 @@ public class LocationUpdatesService extends Service {
         serviceIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
 
         //Activity Intent
-        Intent activityIntent = new Intent(this, RouteActivity.class);
+        Intent activityIntent = new Intent(getApplicationContext(), RouteActivity.class);
 
         //Activity Photo Intent
-        Intent activityPhotoIntent = new Intent(this, RouteActivity.class);
+        Intent activityPhotoIntent = new Intent(getApplicationContext(), RouteActivity.class);
         activityPhotoIntent.putExtra(EXTRA_TAKE_PHOTO, true);
 
 
         // Create the TaskStackBuilder and add the intent, which inflates the back stack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntentWithParentStack(activityIntent);
+        stackBuilder.addParentStack(RouteActivity.class);
+        stackBuilder.addNextIntent(activityIntent);
         // Get the PendingIntent containing the entire back stack
         PendingIntent activityPendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+        activityPhotoIntent.setAction("action1");
 
         // Create the TaskStackBuilder and add the intent, which inflates the back stack
         TaskStackBuilder photoStackBuilder = TaskStackBuilder.create(this);
-        photoStackBuilder.addNextIntentWithParentStack(activityPhotoIntent);
+        photoStackBuilder.addParentStack(NavigationDrawerActivity.class);
+        photoStackBuilder.addParentStack(RouteActivity.class);
+        photoStackBuilder.addNextIntent(activityPhotoIntent);
         // Get the PendingIntent containing the entire back stack
         PendingIntent activityPhotoPendingIntent =
-                photoStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
+                photoStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+        activityPhotoIntent.setAction("action2");
 
         // The PendingIntent that leads to a call to onStartCommand() in this service.
         PendingIntent servicePendingIntent = PendingIntent.getService(

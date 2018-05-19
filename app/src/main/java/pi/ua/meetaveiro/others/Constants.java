@@ -1,14 +1,10 @@
 package pi.ua.meetaveiro.others;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import java.util.HashMap;
-
 public class Constants {
 
     private Constants() {}
 
-    // Pakcage Names
+    // Package Names
 
     private static final String ACTIVITIES_PACKAGE_NAME = "pi.ua.meetaveiro.activities";
     private static final String SERVICES_PACKAGE_NAME = "pi.ua.meetaveiro.services";
@@ -57,7 +53,7 @@ public class Constants {
     // For this sample, geofences expire after twelve hours.
     public static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
-    public static final float GEOFENCE_RADIUS_IN_METERS = 209; // 0.2 km
+    public static final float GEOFENCE_RADIUS_IN_METERS = 20; // 0.2 km
 
     // LocationUpdatesServiceConstants
 
@@ -77,14 +73,5 @@ public class Constants {
                 return STARTED;
             }
         }
-    }
-
-    /**
-     * Map for storing geofence locations (current is just for testing)
-     */
-    static final HashMap<String, LatLng> BAY_AREA_LANDMARKS = new HashMap<>();
-
-    static {
-        BAY_AREA_LANDMARKS.put("UA", new LatLng(40.630302, -8.657506));
     }
 }

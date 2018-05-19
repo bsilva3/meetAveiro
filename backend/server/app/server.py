@@ -46,15 +46,6 @@ mynav = Navbar('MeetAveiro',
 nav.register_element('mynavbar', mynav)
 
 
-infos = {
-    'biblioteca': 'Localizada no centro do Campus Universitário da UA, a Biblioteca da Universidade de Aveiro constitui-se como um agradável local para leitura, estudo e pesquisa acessível a toda a comunidade académica. Nela são disponibilizados os necessários recursos informativos que servem de suporte ao ensino, aprendizagem e à investigação na Universidade de Aveiro. ',
-    'reitoria': 'A Universidade de Aveiro (UA) é um estabelecimento de ensino superior público em Portugal, sediado na cidade de Aveiro. Criada em 1973, num contexto de expansão e renovação do ensino superior em Portugal, a UA logo se transformou numa universidade de referência devido à alta qualidade da sua investigação, do seu corpo docente e das suas infraestruturas.',
-    'cantina': 'O edifício onde funciona o Refeitório de Santiago compreende um projecto da autoria do arquitecto Rebello de Andrade (constituído por uma área de 1200 metros quadrados). O Refeitório de Santiago, constituído por duas salas de 400 lugares cada, situa-se no edifício central dos Serviços de Acção Social, onde podem ser fornecidas cerca de 4.000 refeições por dia.',
-    'deti': 'O Departamento de Eletrónica, Telecomunicações e Informática (DETI) foi fundado em 1974, com o nome de Departamento de Eletrónica e Telecomunicações, tendo sido um dos primeiros departamentos a iniciar atividade após a criação da Universidade de Aveiro em 1973. Em 2006 foi alterada a sua designação por forma a espelhar a atividade existente no Departamento na área da Informática.',
-    'ieeta': 'IEETA is a Computer Science and Engineering / Electronics and Electrical Engineering research unit with 29.55 full-time equivalent (FTE) members with PhD. It is organized in three Groups, two of them more application oriented (Biomedical Informatics and Technologies, and Intelligent Robotics and Systems), the other one of a more fundamental nature (Information Systems and Processing), mapping the major scientific areas of activity of its researchers. Empowered by its internal diversity and strong collaborative environment, IEETA has been able to provide important contributions in problems that require a high level of multidisciplinarity.',
-    'complexo pedagógico' : 'Complexo Pedagógico, Tecnológico e Científico da Universidade de Aveiro'
-}
-
 #firebase_admin.initialize_app(options={
 #    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
 #})
@@ -302,6 +293,7 @@ def classify_image():
             'id' : foto.id
         })
     return jsonify({
+        'concept_id': 'Desconhecido',
         'name': 'Desconhecido',
         'description': '',
         'id': foto.id
@@ -602,10 +594,6 @@ def share_map(id):
         return '<h1>Not Found</h1>'
     route = db.session.query(Percurso).get(instance.idperc)
 
-    res = {}
-    res['title'] = route.titulo
-    res['description'] = route.descricao
-
     fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==id).all()
 
     fotografias = []
@@ -629,7 +617,6 @@ def share_map(id):
         except:
             print('Could not find: ' + f.path)
 
-    res['markers'] = fotografias
     pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
 
     pnts = []
@@ -638,9 +625,19 @@ def share_map(id):
         temp['latitude'] = p.latitude
         temp['longitude'] = p.longitude
         pnts.append(temp)
+    
+    center = {}
 
-    res['trajectory'] = pnts
-    return render_template('instance.html', points=pnts, fotos=fotografias)
+    latitudes = 0
+    longitudes = 0
+    for p in pnts:
+        latitudes += p['latitude']
+        longitudes += p['longitude']
+
+    center['latitude'] = latitudes/len(pnts)
+    center['longitude'] = longitudes/len(pnts) 
+
+    return render_template('instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo, desc=route.descricao)
 
 # Background tasks
 scheduler = BackgroundScheduler()

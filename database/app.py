@@ -25,6 +25,7 @@ def addUsers():
     addUtilizador('youngf3@live.com.pt',1)
     addUtilizador('joaoserpa1997@outlook.com',1)
     addUtilizador('admin@ua.pt',1)
+    addUtilizador('joana@ua.pt', 2)
 
 
 def addTiposExemplo():
@@ -52,34 +53,35 @@ def addUtilizadoresExemplo():
 
 def addConceitosExemplo():
     # Adição de conceitos
-    addConceito('biblioteca', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
-    addConceito('deti', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
-    addConceito('dmat', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('reitoria', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('bugas', 'maria@ua.pt', 40.642599, -8.649559, 1, 'Loja das Bugas', 'Loja das Bugas', 4.5)
-    '''addConceito('cantina', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Cantina Santiago', 'Cantina Santiago',4.9)
-    addConceito('centro_cultural_dos_congressos', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('complexo_pedagogico', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('convento_museu_santa_joana', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
-    addConceito('degeit', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
-    addConceito('estacao_de_comboios', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('estatua_manuel_firmino', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('estatua_princesa_santa_joana', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
-    addConceito('forum_aveiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
-    addConceito('ieeta', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('jardim_galitos', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('mercado_manuel_firmino', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
-    addConceito('moliceiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
-    addConceito('parque_drinks', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('parque_da_macaca', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('ponte_dos_lacos', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
-    addConceito('ponte_pedonal_parque_macaca_drinks', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
-    addConceito('ria_de_aveiro', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
-    addConceito('se_de_aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
-    addConceito('torre_de_agua', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)'''
+    addConceito('biblioteca', 'admin@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('deti', 'admin@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('dmat', 'admin@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('reitoria', 'admin@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('bugas', 'admin@ua.pt', 40.642599, -8.649559, 1, 'Loja das Bugas', 'Loja das Bugas', 4.5)
+    addConceito('cantina', 'admin@ua.pt', 40.630797222222, -8.6591805555556, 0.3, 'O edifício onde funciona o Refeitório de Santiago compreende um projecto da autoria do arquitecto Rebello de Andrade (constituído por uma área de 1200 metros quadrados). O Refeitório de Santiago, constituído por duas salas de 400 lugares cada, situa-se no edifício central dos Serviços de Acção Social, onde podem ser fornecidas cerca de 4.000 refeições por dia.', 'Cantina Santiago, Universidade de Aveiro',4.9)
+    addConceito('centro_cultural_dos_congressos', 'admin@ua.pt', 40.639141, -8.644020, 0.6, 'O Centro Cultural e de Congressos (CCCA) é um espaço profundamente ligado à cidade. A sua localização, central, faz dele um edifício referência e um marco para quem visita Aveiro. A modernidade das funções inserida na beleza e tradição da Antiga Fábrica Jeronymo Pereira de Campos fazem deste edifício um local óptimo para a realização de todo o tipo de eventos.', 'Centro Cultural e de Congressos', 4.3)
+    addConceito('complexo_pedagogico', 'admin@ua.pt', 40.630383, -8.655780, 0.5, 'Complexo Pedagógico, Tecnológico e Científico da Universidade de Aveiro', 'Complexo Pedagógica, Universidade de Aveiro', 4.3)
+    addConceito('convento_museu_santa_joana', 'admin@ua.pt', 40.640305, -8.651056, 1, 'As notáveis coleções do Museu de Aveiro de temática ou função sacra integram núcleos de pintura, escultura, talha, azulejaria, ourivesaria, mobiliário e paramentaria. São na maioria provenientes do Convento de Jesus ou de outros conventos extintos da cidade e do País e documentam épocas diversas, desde o século XV ao século XX, com relevância para o período barroco.', 'Museu de Aveiro - Santa Joana', 4.5)
+    addConceito('degeit', 'admin@ua.pt', 40.631779, -8.656965, 0.3, 'Departamento de Economia, Gestão e Engenharia Industrial da Universidade de Aveiro', 'Departamento de Economia, Gestão e Engenharia Industrial',4.9)
+    addConceito('estacao_de_comboios', 'admin@ua.pt', 40.644323, -8.640550, 0.6, 'A estação da CP de Aveiro é um dos belos edifícios que compõem esta capital da arte nova e é uma autêntica homenagem ao azulejo Português, de confecção local tão abundante. Vale a pena ver com calma todos os painéis que compõem toda a construção pois cada um tem uma mensagem implícita que cada qual pode tirar as suas próprias conclusões.', 'Estação Ferroviária de Aveiro', 4.3)
+    addConceito('estatua_manuel_firmino', 'admin@ua.pt', 40.642677, -8.648802, 0.5, 'Busto em homenagem a Manuel Firmino', 'Estátua de Manuel Firmino', 4.3)
+    addConceito('estatua_princesa_santa_joana', 'admin@ua.pt', 40.6310031, -8.659642599999984, 1, 'Filha de D. Afonso V, rei de Portugal, a Princesa Santa Joana nasceu na cidade de Lisboa, em 6 de fevereiro de 1452. Órfã de mãe aos quatro anos, procurou desde menina praticar sempre a mais edificante virtude, tanto no desprendimento das grandezas da corte e das vaidades do mundo, como na profunda piedade e vida interior, na sincera devoção à paixão de Cristo e na desinteressada caridade a favor dos pobres. Como manifestação de tal género de sentir e viver, escolheu para seu distintivo a coroa de espinhos. Aos dezanove anos, recolheu-se no mosteiro de Odivelas; mas, em 4 de agosto de 1472, mudou para o mosteiro de Jesus da então vila de Aveiro, a que ela chamava «a sua Lisboa, a pequena». Aí viveu em austeridade e fervor religioso, sob o hábito dominicano, até ao seu falecimento, ocorrido em 12 de maio de 1490; tinha trinta e oito anos de idade. Foi sepultada no coro do convento. Logo após a sua morte, o povo de Aveiro começou a venerá-la por santa, considerando-a mesmo, mais tarde, como protetora da cidade; o seu culto foi confirmado pelo papa Inocêncio XII, em 4 de abril de 1693. O papa Paulo VI, em 5 de janeiro de 1965, constituiu-a padroeira principal da cidade e da diocese de Aveiro.', 'Estátua de Santa Joana Princesa', 4.5)
+    addConceito('forum_aveiro', 'admin@ua.pt', 40.6409015, -8.6515224, 0.3, 'O Forum Aveiro, gerido pela CBRE Asset Services, possui uma forte característica diferenciadora, sendo o 1º centro comercial ao ar livre do país e representa um novo tipo de conceito de centros comerciais em Portugal, onde os jardins, as áreas verdes e os espaços públicos predominam.', 'Forum Aveiro',4.9)
+    addConceito('ieeta', 'admin@ua.pt', 40.6331317, -8.6601875, 0.6, 'O Instituto de Engenharia Electrónica e Telemática de Aveiro - IEETA é uma associação científica e técnica sem fins lucrativos, tendo como missão a investigação multidisciplinar e desenvolvimento avançado em  Electrónica e Telemática, integrados na comunidade de investigação cientifica internacional e contribuindo para o desenvolvimento tecnológico e social nacionais. Integram-se neste Instituto os elementos do DETI-UA que pertenciam ao INESC - Unidade de Aveiro, bem como à Unidade de Investigação 127/94 INESC - Pólo da UA.', ' Instituto de Engenharia Electrónica e Telemática de Aveiro (IEETA)', 4.3)
+    addConceito('jardim_galitos', 'admin@ua.pt', 40.6371452, -8.6412406, 0.5, 'O Jardim dos Galitos é um bom local para passeios em família. Tem um parque para as crianças, existe um bar ao lado, já para não falar nos campos de ténis e basquetebol ao ar livre.', 'Jardim dos Galitos', 4.3)
+    addConceito('mercado_manuel_firmino', 'admin@ua.pt', 40.6416997, -8.6488876, 1, 'O Mercado Manuel Firmino é um mercado retalhista, instalado em recinto próprio e coberto, destinando-se os lugares de venda à comercialização de fruta, produtos hortícolas, sementes, flores, plantas, carnes, peixes e muitos outros... Está também vocacionado para as demais atividades autorizadas pela Câmara Municipal de Aveiro.', 'Mercado Manuel Firmino', 4.5)
+    addConceito('parque_drinks', 'admin@ua.pt', 40.63770034, -8.65513497, 0.6, 'O parque do drinks é um local bastante frequentado por estudantes universitários. Possui máquinas para fazer exercício físico, campos para atividades ao ar livre... ', 'Parque do Drinks', 4.3)
+    addConceito('parque_da_macaca', 'admin@ua.pt', 40.63654705, -8.65331663, 0.5, 'O parque Dom Pedro Infante, mais conhecido como parque da macaca é um ótimo local para descançar no meio da natureza. Construído na antiga propriedade de frades franciscanos, foi preparado a partir de 1862 na zona que pertencia ao Convento de Santo António. Aproveitou-se a ribeira que atravessava o parque para se desenvolver um espaço com lagos e fontes inserido no arvoredo envolvente. Possui coreto de Arte Nova tardia, escadaria com fonte, cascata e alguns painéis de azulejos, bem como Avenida das Tílias e Casa de Chá.', 'Parque Dom Pedro Infante', 4.3)
+    addConceito('ponte_dos_lacos', 'admin@ua.pt', 40.64157707, -8.65003158, 1, 'A chamada Ponte dos Laços de Amizade é uma das travessias sobre a Ria de Aveiro de acesso ao centro comercial Fórum Aveiro. O significado da Ponte dos Laços de Amizade, criada em 2014 por dois estudantes da Universidade de Aveiro, é um hino às amizades que por cá nasceram ou passaram, bem como um símbolo do carinho que os habitantes nutrem pela cidade.', 'Ponte dos Laços de Amizade', 4.5)
+    addConceito('ponte_pedonal_parque_macaca_drinks', 'admin@ua.pt', 40.63653796, -8.65410014, 0.3, 'Esta ponte pedonal liga dois dos parques mais importantes da cidade de Aveiro, o Parque Dom Pedro Infante (mais conhecido como parque da macaca) e o Parque do Drinks. Numa avenida tão movimentada como a avenida Artur Ravara, as pessoas têm uma forma mais segura de atravessar entre os dois parques.', 'Ponte pedonal parque da macaca e do drinks',4.9)
+    addConceito('se_de_aveiro', 'admin@ua.pt', 40.63960346, -8.65026632, 0.5, 'A Sé de Aveiro situa-se no antigo convento dominicano, conhecido por ter sido a primeira comunidade religiosa a instalar-se na cidade. A igreja chama de imediato a atenção pela soberba fachada, com as suas imagens das Virtudes Humanas e a imponente torre sineira. No espaço interior domina o branco da pedra calcária, as várias capelas são decoradas por conjuntos de talha, pedra e azulejo de distintas épocas.', 'Sé de Aveiro', 4.3)
+    addConceito('torre_de_agua', 'admin@ua.pt', 40.62902601, -8.65545995, 0.5, 'Com a altura de cerca de 30 metros, a torre do depósito de água perfila-se bem acima do conjunto, em torno da Galeria, de que é signo recortado no céu, mas também marcação do seu final frente aos húmidos que envolvem o braço da ria que separa a zona de Santiago da zona da Agra do Castro. A caixa apresenta-se na evidência de um paralelepípedo, mas o suporte foi concebido diferentemente, pois é constituído por uma lâmina complanar com o lado menor do paralelepípedo e por um cilindro. A primeira relaciona directamente a torre com o conjunto da Galeria, pois alinha-se com o plano das fachadas dos edifícios do seu lado nordeste e o segundo é simultaneamente uma coluna e a expressão de uma conduta. Álvaro Siza tornou complexo algo que, à primeira vista, seria um mero equipamento de um sistema de abastecimento de águas, mas sem o complicar com inúteis especulações formais. Partiu conceptualmente do óbvio, filtrou-o criticamente e exercitou a sua sensibilidade.', 'Torre de água', 4.3)
+
+    addConceito('ria_de_aveiro', 'admin@ua.pt', None, None, 0.6, 'Aveiro é considerado a Veneza de PorTugal devido à ria. A ria de Aveiro, ou foz do Vouga, é como se chama o estuário do rio Vouga, o qual se estende pelo interior do território português, paralelamente ao mar, numa distância de 45 quilómetros e a uma largura máxima de 11 quilómetros, no sentido este–oeste de Ovar a Mira. Do seu entorno constam Aveiro, Ílhavo, Gafanha da Nazaré, Estarreja, Ovar, Murtosa, Vagos e Mira.', 'Ria de Aveiro', 4.3)
+       
 
 def addPercursosExemplo():
-    addPercurso('manel@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro')
+    addPercurso('joana@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro')
     addPercurso('joana@ua.pt', 'Aveiro 1', 'Publico', 'Conhece a cidade de Aveiro')
     addPercurso('joana@ua.pt', 'Aveiro 2', 'Privado', 'Conhece a cidade de Aveiro')
 
@@ -94,13 +96,13 @@ def addInstanciaPercursoExemplo():
 
 def addFotografiaExemplo():
     addFotografia(1, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
-    addFotografia(2, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
-    addFotografia(3, 'biblioteca', 'joana@ua.pt', 40.6310030, -8.65964259999998, '../../../../treino/biblioteca/1.jpg',
+    addFotografia(2, 'deti', 'joana@ua.pt',  40.633175, -8.659496, '../../../../treino/deti/20.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(3, 'dmat', 'joana@ua.pt', 40.630349, -8.658214, '../../../../treino/dmat/01.jpg',
                   1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
     addTiposExemplo()
-    addUtilizadoresExemplo()
+    #addUtilizadoresExemplo()
     addConceitosExemplo()
     addPercursosExemplo()
     addPontosExemplo()

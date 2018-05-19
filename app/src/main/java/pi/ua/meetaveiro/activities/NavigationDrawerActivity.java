@@ -45,6 +45,7 @@ import java.util.Map;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.EventListFragment;
@@ -60,6 +61,7 @@ import pi.ua.meetaveiro.others.Utils;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         AttractionAdapter.OnAttractionSelectedListener,
+        RouteInstanceAdapter.OnRouteItemSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener,

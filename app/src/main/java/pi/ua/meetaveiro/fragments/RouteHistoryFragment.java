@@ -59,8 +59,8 @@ import java.util.List;
 import java.util.Map;
 
 import pi.ua.meetaveiro.activities.RouteDetailsActivity;
-import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.models.Route;
@@ -78,7 +78,7 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
 
 /**
  * A fragment representing a list of routes
- * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
+ * Activities containing this fragment MUST implement the {@link RouteInstanceAdapter.OnRouteItemSelectedListener}
  * interface.
  */
 public class RouteHistoryFragment extends Fragment implements
@@ -87,12 +87,10 @@ public class RouteHistoryFragment extends Fragment implements
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
 
-
-
-    private RouteAdapter.OnRouteItemSelectedListener mListener;
+    private RouteInstanceAdapter.OnRouteItemSelectedListener mListener;
 
     private List<RouteInstance> routeList;
-    private RouteAdapter mAdapter;
+    private RouteInstanceAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -145,7 +143,7 @@ public class RouteHistoryFragment extends Fragment implements
         });
 
         routeList = new ArrayList<>();
-        mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+        mAdapter = new RouteInstanceAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -166,8 +164,8 @@ public class RouteHistoryFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof RouteAdapter.OnRouteItemSelectedListener) {
-            mListener = (RouteAdapter.OnRouteItemSelectedListener) context;
+        if (context instanceof RouteInstanceAdapter.OnRouteItemSelectedListener) {
+            mListener = (RouteInstanceAdapter.OnRouteItemSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInte ractionListener");

@@ -22,9 +22,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 
@@ -34,6 +36,7 @@ public class Utils {
 
     /**
      * Returns the route state from shared preferences.
+     *
      * @param context The {@link Context}.
      */
     public static Constants.ROUTE_STATE getRouteState(Context context) {
@@ -45,6 +48,7 @@ public class Utils {
 
     /**
      * Stores the route state in SharedPreferences.
+     *
      * @param route_state The route state.
      */
     public static void setRouteState(Context context, Constants.ROUTE_STATE route_state) {
@@ -56,7 +60,8 @@ public class Utils {
 
     /**
      * Returns the {@code location} object as a human readable string.
-     * @param location  The {@link Location}.
+     *
+     * @param location The {@link Location}.
      */
     public static String getLocationText(Location location) {
         return location == null ? "Unknown location" : "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
@@ -66,9 +71,9 @@ public class Utils {
      * @param bitmap {@link Bitmap}
      * @return {@link String} object of the {@code location}
      */
-    public static String BitMapToString(Bitmap bitmap){
-        ByteArrayOutputStream baos=new  ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG,100, baos);
+    public static String BitMapToString(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
     }
 
@@ -76,12 +81,12 @@ public class Utils {
      * @param encodedString
      * @return bitmap (from given string)
      */
-    public static Bitmap StringToBitMap(String encodedString){
+    public static Bitmap StringToBitMap(String encodedString) {
         try {
-            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
-            Bitmap bitmap= BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            byte[] encodeByte = Base64.decode(encodedString, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
             return bitmap;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.getMessage();
             return null;
         }
@@ -95,9 +100,8 @@ public class Utils {
      *
      * @param filename
      * @return String (json format) with all the information
-     *
      */
-    public static String getRouteFromFile(String filename,Context ctx) {
+    public static String getRouteFromFile(String filename, Context ctx) {
 
         StringBuffer datax = new StringBuffer("");
         try {
@@ -121,13 +125,53 @@ public class Utils {
 
 
 
+    public static Bitmap downloadImage(String url) {
+        Bitmap bitmap = null;
+        InputStream stream = null;
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inSampleSize = 1;
+
+        try {
+            stream = getHttpConnection(url);
+            bitmap = BitmapFactory.decodeStream(stream, null, bmOptions);
+            stream.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            System.out.println("downloadImage" + e1.toString());
+        }
+        return bitmap;
+    }
+
+    public static InputStream getHttpConnection(String urlString) throws IOException {
+
+        InputStream stream = null;
+        URL url = new URL(urlString);
+        URLConnection connection = url.openConnection();
+
+        try {
+            HttpURLConnection httpConnection = (HttpURLConnection) connection;
+            httpConnection.setRequestMethod("GET");
+            httpConnection.connect();
+
+            if (httpConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                stream = httpConnection.getInputStream();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.out.println("downloadImage" + ex.toString());
+        }
+        return stream;
+    }
+
+
+
 
 
     public static class NetworkCheckTask extends AsyncTask<String, Void, Boolean> {
         Context context;
         NetworkCheckResponse response;
 
-        public NetworkCheckTask(Context context, NetworkCheckResponse response){
+        public NetworkCheckTask(Context context, NetworkCheckResponse response) {
             this.context = context;
             this.response = response;
         }
@@ -135,8 +179,9 @@ public class Utils {
         protected Boolean doInBackground(String... params) {
             return hasActiveInternetConnection(this.context, params[0]);
         }
+
         protected void onPostExecute(Boolean hasActiveConnection) {
-            Log.d("hasActiveConnection","Success=" + hasActiveConnection);
+            Log.d("hasActiveConnection", "Success=" + hasActiveConnection);
             if (!hasActiveConnection)
                 Toast.makeText(context, "Can't reach Server! Check your internet connection or try again later.", Toast.LENGTH_SHORT).show();
             response.onProcessFinished(hasActiveConnection);
@@ -167,14 +212,7 @@ public class Utils {
 
 
 
-
-
-
-
     }
-
-
-
 
 
 }

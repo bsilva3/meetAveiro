@@ -560,7 +560,10 @@ def get_photo_history():
             foto['latitude'] = f.latitude
             foto['longitude'] = f.longitude
             foto['date'] = f.datafoto
-            foto['concept'] = f.nomeconc
+            if f.nomeconc == 'desconhecido':
+                foto['concept'] = ''
+            else:
+                foto['concept'] = f.nomeconc
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')

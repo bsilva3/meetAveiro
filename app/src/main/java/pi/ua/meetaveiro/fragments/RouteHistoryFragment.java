@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.fragments;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,35 +18,43 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.firebase.auth.FirebaseAuth;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.data.Route;
-import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.API_URL;
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTE_HISTORY;
+import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_USER;
 
 /**
  * A fragment representing a list of routes
- * Activities containing this fragment MUST implement the {@link RouteAdapter.OnRouteItemSelectedListener}
+ * Activities containing this fragment MUST implement the {@link RouteInstanceAdapter.OnRouteInstanceItemSelectedListener}
  * interface.
  */
 public class RouteHistoryFragment extends Fragment implements
@@ -54,10 +63,10 @@ public class RouteHistoryFragment extends Fragment implements
 
     private static final String TAG = RouteHistoryFragment.class.getSimpleName();
 
-    private RouteAdapter.OnRouteItemSelectedListener mListener;
+    private RouteInstanceAdapter.OnRouteInstanceItemSelectedListener mListener;
 
-    private List<Route> routeList;
-    private RouteAdapter mAdapter;
+    private List<RouteInstance> routeList;
+    private RouteInstanceAdapter mAdapter;
     private RecyclerView recyclerView;
     private SearchView searchView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -110,7 +119,7 @@ public class RouteHistoryFragment extends Fragment implements
         });
 
         routeList = new ArrayList<>();
-        mAdapter = new RouteAdapter(getContext(), routeList, mListener);
+        mAdapter = new RouteInstanceAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -131,8 +140,8 @@ public class RouteHistoryFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof RouteAdapter.OnRouteItemSelectedListener) {
-            mListener = (RouteAdapter.OnRouteItemSelectedListener) context;
+        if (context instanceof RouteInstanceAdapter.OnRouteInstanceItemSelectedListener) {
+            mListener = (RouteInstanceAdapter.OnRouteInstanceItemSelectedListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInte ractionListener");
@@ -147,51 +156,36 @@ public class RouteHistoryFragment extends Fragment implements
 
 
     /**
-     * fetches json by making http calls
+     * Fetches all the instances from the server
+     * Only for the current user
      */
-    private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
-                response -> {
-                    if (response == null) {
-                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
+    private void fetchAllInstances() {
 
-                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
-                    }.getType());
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail()+"");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
+        new uploadFileToServerTask().execute(jsonRequest.toString(), INSTANCE_BY_USER);
 
-                    // refreshing recycler view
-                    mAdapter.notifyDataSetChanged();
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }, error -> {
-                    // error in getting json
-                    // stop animating Shimmer and hide the layout
-                    fetchLocalRoutes();
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    Log.e(TAG, "Error: " + error.getMessage());
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-        );
+        // refreshing recycler view
+        mAdapter.notifyDataSetChanged();
+        // stop animating Shimmer and hide the layout
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
+        // stopping swipe refresh
+        swipeRefreshLayout.setRefreshing(false);
 
-        MyApplication.getInstance().addToRequestQueue(request);
     }
 
     /**
      * Gets all the route names saved in the phone.
      * The file name is route (name of route).json
      */
-    private void fetchLocalRoutes() {
-        List<Route> items = new ArrayList<>();
+    private void fetchAllLocal() {
+        List<RouteInstance> items = new ArrayList<>();
         try {
             File directory = getActivity().getFilesDir();
             File[] files = directory.listFiles();
@@ -201,7 +195,8 @@ public class RouteHistoryFragment extends Fragment implements
                 if (files[i].getName().startsWith("route")) {
                     String title = files[i].getName().replaceFirst("route", "").replaceFirst(".json","");
                     r = new Route(title);
-                    items.add(r);
+                    RouteInstance e = new RouteInstance(r);
+                    items.add(e);
                 }
             }
 
@@ -278,6 +273,9 @@ public class RouteHistoryFragment extends Fragment implements
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Stops all animations
+     */
     @Override
     public void onRefresh() {
         mShimmerViewContainer.setVisibility(View.VISIBLE);
@@ -287,28 +285,142 @@ public class RouteHistoryFragment extends Fragment implements
 
 
     /**
-     * Get the description from a json file without the need to go trough it all
-     * @param datax
-     * @return
+     * Having a network connection will trigger the fetchAllInstances
+     * Not having will trrigger the fetchAllLocal
+     * @param hasNetworkConnection
      */
-    private String getRouteDesc(String datax){
-        try {
-            JSONObject json = new JSONObject(datax.toString());
-            return json.get("Description").toString();
-        } catch (JSONException e) {
-            return null;
-        }
-
-    }
-
-
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
         if (hasNetworkConnection) {
-            fetchRoutes();
+            fetchAllInstances();
         }else {
-            fetchLocalRoutes();
+            fetchAllLocal();
         }
     }
+
+
+    /**
+     * Used to send a POST call
+     * Will recieve all the instances from the server.
+     * Needs to include the email
+     */
+    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+        String serverUrl;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String JsonResponse = null;
+            String JsonDATA = params[0];
+            serverUrl = params[1];
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            Log.d("response", "begin");
+            try {
+                //Create a URL object holding our url
+                URL url = new URL(serverUrl);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setDoOutput(true);
+                // is output buffer writter
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                //set headers and method
+                Writer writer = new BufferedWriter(new OutputStreamWriter
+                        (urlConnection.getOutputStream(), "UTF-8"));
+                writer.write(JsonDATA);
+                // json data
+                writer.close();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                //input stream
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String inputLine;
+                while ((inputLine = reader.readLine()) != null)
+                    buffer.append(inputLine + "\n");
+                if (buffer.length() == 0) {
+                    // Stream was empty. No point in parsing.
+                    return null;
+                }
+                JsonResponse = buffer.toString();
+                //send to post execute
+                return JsonResponse;
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+            super.onPostExecute(response);
+
+
+            try {
+                List<RouteInstance> items = new ArrayList<>();
+                JSONObject js = new JSONObject(response);
+                System.out.println(js.toString());
+                JSONArray arr = js.getJSONArray("instances");
+                Route r;
+                RouteInstance e;
+
+                if(arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject row = arr.getJSONObject(i);
+                        String title = row.getString("route");
+                        String idInstance = row.getString("id");
+                        String dateStart = row.getString("start");
+                        String dateEnd = row.getString("end");
+
+                        r = new Route(title);
+                        r.setType("Instance");
+                        e = new RouteInstance(r);
+                        e.setIdInstance(Integer.parseInt(idInstance));
+                        e.setStartDate(new Date(dateStart));
+                        e.setEndDate(new Date(dateEnd));
+                        items.add(e);
+                    }
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+
+
+
+
+
 
 }

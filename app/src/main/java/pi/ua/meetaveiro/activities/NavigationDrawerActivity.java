@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -46,7 +45,10 @@ import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.adapters.PhotoAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
 import pi.ua.meetaveiro.data.Photo;
+import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.fragments.AccountSettingsFragment;
 import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.EventListFragment;
@@ -56,12 +58,12 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Event;
-import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.fragments.SlideshowDialogFragment;
 import pi.ua.meetaveiro.others.Utils;
 
 public class NavigationDrawerActivity extends AppCompatActivity implements
         AttractionAdapter.OnAttractionSelectedListener,
+        RouteInstanceAdapter.OnRouteInstanceItemSelectedListener,
         RouteAdapter.OnRouteItemSelectedListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         HistoryFragment.OnBottomHistoryNavigationInteractionListener,
@@ -192,13 +194,13 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onAttractionSelected(Attraction item) {
         Intent intent = new Intent(NavigationDrawerActivity.this, POIDetails.class);
-        intent.putExtra("attraction", (Parcelable) item);
+        intent.putExtra("attraction", item.getName());
         startActivity(intent);
     }
 
     //Called when a item is clicked on the route list fragment
     @Override
-    public void onRouteSelected(Route item) {
+    public void onRouteInstanceSelected(RouteInstance item) {
 
     }
 
@@ -619,6 +621,11 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
 
     @Override
     public void onLongPhotoSelected(View view, int position) {
+
+    }
+
+    @Override
+    public void onRouteSelected(Route item) {
 
     }
 }

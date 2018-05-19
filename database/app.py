@@ -24,6 +24,7 @@ def addUsers():
     addUtilizador('joao@outlook.com',1)
     addUtilizador('youngf3@live.com.pt',1)
     addUtilizador('joaoserpa1997@outlook.com',1)
+    addUtilizador('admin@ua.pt',1)
 
 
 def addTiposExemplo():
@@ -44,7 +45,6 @@ def addUtilizadoresExemplo():
     addUtilizador('joao@ua.pt', 2)
     addUtilizador('carlos@ua.pt', 2)
     addUtilizador('andre@ua.pt',2)
-    addUtilizador('andreia',2)
 
     # Adição - tipo inválidp
     #addUtilizador('carlos@ua.pt', 1)            # sqlalchemy.exc.IntegrityError
@@ -52,10 +52,31 @@ def addUtilizadoresExemplo():
 
 def addConceitosExemplo():
     # Adição de conceitos
-    addConceito('Biblioteca, Universidade de Aveiro', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 4.5)
-    addConceito('DETI, Universidade de Aveiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 4.9)
-    addConceito('DMat, Universidade de Aveiro', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 4.3)
-    addConceito('Reitoria, Universidade de Aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 4.3)
+    addConceito('biblioteca', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('deti', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('dmat', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('reitoria', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('bugas', 'maria@ua.pt', 40.642599, -8.649559, 1, 'Loja das Bugas', 'Loja das Bugas', 4.5)
+    '''addConceito('cantina', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Cantina Santiago', 'Cantina Santiago',4.9)
+    addConceito('centro_cultural_dos_congressos', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('complexo_pedagogico', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('convento_museu_santa_joana', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('degeit', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('estacao_de_comboios', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('estatua_manuel_firmino', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('estatua_princesa_santa_joana', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('forum_aveiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('ieeta', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('jardim_galitos', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('mercado_manuel_firmino', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('moliceiro', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('parque_drinks', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('parque_da_macaca', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('ponte_dos_lacos', 'maria@ua.pt', 40.6310031, -8.659642599999984, 1, 'Bibs', 'Biblioteca', 4.5)
+    addConceito('ponte_pedonal_parque_macaca_drinks', 'maria@ua.pt', 40.633175, -8.659496, 0.3, 'Dep DETI', 'DETI',4.9)
+    addConceito('ria_de_aveiro', 'carol@ua.pt', 40.630349, -8.658214, 0.6, 'Dep DMat', 'Departamento de Matemática', 4.3)
+    addConceito('se_de_aveiro', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)
+    addConceito('torre_de_agua', 'manel@ua.pt', 40.63118, -8.657398, 0.5, 'Reitoria da UA', 'Reitoria', 4.3)'''
 
 def addPercursosExemplo():
     addPercurso('manel@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro')
@@ -72,9 +93,9 @@ def addInstanciaPercursoExemplo():
     addInstanciaPercurso('joana@ua.pt', 1, '2018-03-22 13:00:00', '2018-03-22 14:00:00', 4.4)
 
 def addFotografiaExemplo():
-    addFotografia(1, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path1.png', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
-    addFotografia(2, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt',  40.6310031, -8.659642599999984, 'path2.png', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
-    addFotografia(3, 'Biblioteca, Universidade de Aveiro', 'joana@ua.pt', 40.6310030, -8.65964259999998, 'path3.png',
+    addFotografia(1, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
+    addFotografia(2, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(3, 'biblioteca', 'joana@ua.pt', 40.6310030, -8.65964259999998, '../../../../treino/biblioteca/1.jpg',
                   1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
@@ -152,6 +173,7 @@ def queriesChico():
     print(searchTodosPercursoContemSubString('a'))
 
 
+
 @app.route('/')
 def index():
     addInfoExemplo()
@@ -174,4 +196,4 @@ def index():
                            totalfotos = nTotalFotos())
 
 if __name__ == '__main__':
-    app.run(port=5000, host='0.0.0.0')
+    app.run(port=8000, host='0.0.0.0')

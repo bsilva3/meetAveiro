@@ -18,8 +18,15 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.google.firebase.auth.FirebaseAuth;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,17 +52,19 @@ import pi.ua.meetaveiro.adapters.RouteExpandable;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.others.MyApplication;
 
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 
 //TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff
 public class POIDetails extends AppCompatActivity implements DataReceiver {
     private Attraction attraction;
+    private String attractionName;
     private TextView description;
     private static ViewPager mPager;
     FloatingActionButton map;
     private static int currentPage = 0;
-    private static final Integer[] images = {R.drawable.moliceiro, R.drawable.moliceiro};
+    private List<Integer> images;
     private List<Integer> imagesArray = new ArrayList<Integer>();
     private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
@@ -71,11 +80,13 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_poidetails);
+        images = new ArrayList<>();
+        //get the intent which tell us which concept this page contains
         if (getIntent().hasExtra("attraction")) {
-            attraction = (Attraction) getIntent().getParcelableExtra("attraction");
+            attractionName = getIntent().getExtras().getString("attraction");
             collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.attraction_collapsing_toolbar);
             collapsingToolbar.setTitleEnabled(true);
-            collapsingToolbar.setTitle(attraction.getName());
+            collapsingToolbar.setTitle(attractionName);
             //attraction photos, description.. from intent if any
         }
         toolbar = findViewById(R.id.attraction_toolbar);
@@ -161,17 +172,22 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     @Override
     protected void onStart() {
         super.onStart();
-        requestRoutes();
-        //REMOVE THIS after we can connect to server
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
+        //requestRoutes();
+        getRoutesThatHaveAttraction();
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Try to free up some memory!
+        images = new ArrayList<>();
+        System.gc();
     }
 
 
     private void initImageSlider() {
-        for(int i=0; i < images.length; i++)
-            imagesArray.add(images[i]);
+        for(int i=0; i < images.size(); i++)
+            imagesArray.add(images.get(i));
 
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(new AttractionImageSliderAdapter(POIDetails.this, imagesArray));
@@ -182,7 +198,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         final Handler handler = new Handler();
         final Runnable Update = new Runnable() {
             public void run() {
-                if (currentPage == images.length) {
+                if (currentPage == images.size()) {
                     currentPage = 0;
                 }
                 mPager.setCurrentItem(currentPage++, true);
@@ -194,7 +210,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             public void run() {
                 handler.post(Update);
             }
-        }, 2500, 2500);
+        }, 2500, 7500);
     }
 
     private void prepareListData() {
@@ -248,18 +264,73 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         params.height = height;
         listView.setLayoutParams(params);
         listView.requestLayout();
+    }
 
+    private void getRoutesThatHaveAttraction() {
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("concept", attractionName);
+            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
+        } catch (JSONException e) {
+            Log.e("Request Route Error", e.toString());
+        }
+        //start shimmer effect
+        mShimmerViewContainer.startShimmerAnimation();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                URL_ROUTES_ATTRACTION, jsonRequest, response -> {
+                    Log.d("ERROR", response.toString());
+
+                    try {
+                        // Parsing json object response
+                        Log.d("res", response.toString());
+                        JSONArray jsonArray = null;
+                        try {
+                            jsonArray = response.getJSONArray("routes");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        List<Route> attr = new ArrayList<>();
+                        if (jsonArray != null) {
+                            Route rt = new Route();
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                rt.setRouteTitle(jsonArray.getJSONObject(i).getString("title"));
+                                rt.setRouteDescription(jsonArray.getJSONObject(i).getString("description"));
+                                //INCOMPLETE! fazer o assign do id
+                                jsonArray.getJSONObject(i).getString("id");
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(getApplicationContext(),
+                                "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                }, error -> {
+                    VolleyLog.d("ERROR", "Error: " + error.getMessage());
+                    Toast.makeText(getApplicationContext(),
+                            error.getMessage(), Toast.LENGTH_SHORT).show();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                });
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
     }
 
     public void requestRoutes(){
         JSONObject jsonRequest = new JSONObject();
         try {
-            jsonRequest.put("conceptName", attraction.getName());
+            jsonRequest.put("concept", attractionName);
+            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
         } catch (JSONException e) {
             Log.e("Request Route Error", e.toString());
         }
 
-        new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString());
+        new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString(), URL_ROUTES_ATTRACTION);
     }
 
     private class getRoutesFromServerTask extends AsyncTask<String, Void, String> {
@@ -274,12 +345,13 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         protected String doInBackground(String... params) {
             String JsonResponse = null;
             String JsonDATA = params[0];
+            String serverUrl = params[1];
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             Log.d("response", "begin");
             try {
                 //Create a URL object holding our url
-                URL url = new URL(URL_ROUTES_ATTRACTION);
+                URL url = new URL(serverUrl);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
@@ -353,6 +425,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         mShimmerViewContainer.stopShimmerAnimation();
         mShimmerViewContainer.setVisibility(View.GONE);
         //.... recriar aqui objetos route e colocá-los numa lista
-        //List<LatLng> trajectory = json.get("trajectory");
+        JSONArray jsonArray = null;
+
     }
 }

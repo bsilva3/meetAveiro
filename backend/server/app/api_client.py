@@ -19,7 +19,8 @@ data = {
     "image" : img
     #"user" : "joana@ua.pt",
     #"lat" : 40.00,
-    #"long" : 40.01
+    #"long" : 40.01,
+    # "date"
 }
 
 #print(data)

@@ -24,8 +24,12 @@ public class Constants {
     public static final String URL_COMMUNITY_ROUTES = API_URL + "/blahblah";
     // url to fetch all created routes
     public static final String URL_CREATED_ROUTES = API_URL + "/blahblah";
-    // url to fetch routes history json
-    public static final String URL_ROUTE_HISTORY = API_URL + "/blahblah";
+    //url to send image feedback
+    public final static String URL_SEND_ROUTE = API_URL + "/resources/routes";
+    // url to fetch all routes
+    public static final String URL_ROUTES = API_URL + "/blahblah";
+    // Rota pelo email do utilizador
+    public static final String URL_ROUTE_HISTORY = API_URL + "/resources/routes/byuser";
     // url to fetch routes history json
     public static final String URL_ATTRACTIONS = API_URL + "/blahblah";
     // url to fetch routes history json
@@ -35,8 +39,15 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";
 
-    // Geofence related constants
+    //Rota por id (NO MARKERS)
+    public static final String ROUTE_BY_ID = API_URL + "/resources/routes/"; //+id
+    //Instancia por user
+    public static final String INSTANCE_BY_USER = API_URL + "/resources/routes/instances"; //+ user
+    //Instancia por id
+    public static final String INSTANCE_BY_ID= API_URL + "/resources/routes/instances/"; //+ id
 
+
+    // Geofence related constants
     public static final String GEOFENCES_ADDED_KEY = ACTIVITIES_PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
     /**
      * Used to set an expiration time for a geofence. After this amount of time Location Services

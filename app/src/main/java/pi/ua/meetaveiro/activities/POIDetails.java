@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -25,9 +26,17 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,19 +54,22 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import me.relex.circleindicator.CircleIndicator;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionImageSliderAdapter;
+import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.adapters.RouteExpandable;
+import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 
-import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_ATTRACTION;
 import static pi.ua.meetaveiro.activities.NavigationDrawerActivity.navItemIndex;
 import static pi.ua.meetaveiro.others.Constants.API_URL;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
@@ -348,8 +360,6 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         //start shimmer effect
         mShimmerViewContainer.startShimmerAnimation();
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                URL_ROUTES_ATTRACTION, jsonRequest, response -> {
-                    Log.d("ERROR", response.toString());
                 URL_ROUTES_IN_ATTRACTION, jsonRequest, new Response.Listener<JSONObject>() {
 
             @Override

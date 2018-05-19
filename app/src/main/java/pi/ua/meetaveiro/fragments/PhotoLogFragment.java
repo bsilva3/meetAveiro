@@ -4,6 +4,7 @@ package pi.ua.meetaveiro.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -14,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -23,6 +25,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.Base64;
 import android.util.Log;
@@ -69,6 +72,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -88,7 +92,9 @@ import java.util.Map;
 import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
+import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
@@ -960,49 +966,49 @@ public class PhotoLogFragment extends Fragment implements
         @SuppressWarnings("MissingPermission")
         final Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
         placeResult.addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+            if (task.isSuccessful() && task.getResult() != null) {
+                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
 
-                        // Set the count, handling cases where less than 5 entries are returned.
-                        int count;
-                        if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                            count = likelyPlaces.getCount();
-                        } else {
-                            count = M_MAX_ENTRIES;
-                        }
+                // Set the count, handling cases where less than 5 entries are returned.
+                int count;
+                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                    count = likelyPlaces.getCount();
+                } else {
+                    count = M_MAX_ENTRIES;
+                }
 
-                        int i = 0;
-                        mLikelyPlaceNames = new String[count];
-                        mLikelyPlaceAddresses = new String[count];
-                        mLikelyPlaceAttributions = new String[count];
-                        mLikelyPlaceLatLngs = new LatLng[count];
+                int i = 0;
+                mLikelyPlaceNames = new String[count];
+                mLikelyPlaceAddresses = new String[count];
+                mLikelyPlaceAttributions = new String[count];
+                mLikelyPlaceLatLngs = new LatLng[count];
 
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            // Build a list of likely places to show the user.
-                            mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                            mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                    .getAddress();
-                            mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                    .getAttributions();
-                            mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    // Build a list of likely places to show the user.
+                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                            .getAddress();
+                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                            .getAttributions();
+                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
 
-                            i++;
-                            if (i > (count - 1)) {
-                                break;
-                            }
-                        }
-
-                        // Release the place likelihood buffer, to avoid memory leaks.
-                        likelyPlaces.release();
-
-                        // Show a dialog offering the user the list of likely places, and add a
-                        // marker at the selected place.
-                        openPlacesDialog();
-
-                    } else {
-                        Log.e(TAG, "Exception: %s", task.getException());
+                    i++;
+                    if (i > (count - 1)) {
+                        break;
                     }
-                });
+                }
+
+                // Release the place likelihood buffer, to avoid memory leaks.
+                likelyPlaces.release();
+
+                // Show a dialog offering the user the list of likely places, and add a
+                // marker at the selected place.
+                openPlacesDialog();
+
+            } else {
+                Log.e(TAG, "Exception: %s", task.getException());
+            }
+        });
 
     }
 

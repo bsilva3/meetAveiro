@@ -63,12 +63,12 @@ public class HistoryFragment extends Fragment {
             switch (item.getItemId()) {
                 case R.id.option_routes:
                     toolbar.setTitle("Routes History");
-                    fragment = new RouteHistoryFragment();
+                    fragment = new AccountSettingsFragment();
                     loadFragment(fragment);
                     return true;
                 case R.id.option_attractions:
                     toolbar.setTitle("Attractions History");
-                    fragment = new PhotoHistoryFragment();
+                    fragment = new AccountSettingsFragment();
                     loadFragment(fragment);
                     return true;
             }

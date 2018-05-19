@@ -221,6 +221,8 @@ public class RouteActivity extends FragmentActivity implements
             LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
+            if(Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED))
+                onRouteStateChanged(true);
         }
 
         @Override
@@ -415,7 +417,7 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         updateValuesFromBundle(savedInstanceState);
-        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+
         updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -449,8 +451,7 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
-            onRouteStateChanged(true);
+
         updateRouteButtons(Utils.getRouteState(this));
         Log.i("state....",  Utils.getRouteState(this).toString());
         LocalBroadcastManager
@@ -1077,10 +1078,6 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
-        LocalBroadcastManager
-                .getInstance(this)
-                .unregisterReceiver(locationsReceiver);
-        super.onPause();
 
         //Iterate trough all saved markers.
         int i = 0;
@@ -1158,6 +1155,9 @@ public class RouteActivity extends FragmentActivity implements
 
     @Override
     public void onDestroy() {
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(locationsReceiver);
         // Don't forget to shutdown tts!
         if (tts != null) {
             tts.stop();

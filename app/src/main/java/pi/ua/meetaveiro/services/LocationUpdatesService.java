@@ -280,17 +280,17 @@ public class LocationUpdatesService extends Service {
         stackBuilder.addNextIntent(activityIntent);
         // Get the PendingIntent containing the entire back stack
         PendingIntent activityPendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         activityPhotoIntent.setAction("action1");
 
         // Create the TaskStackBuilder and add the intent, which inflates the back stack
         TaskStackBuilder photoStackBuilder = TaskStackBuilder.create(this);
-        photoStackBuilder.addParentStack(NavigationDrawerActivity.class);
         photoStackBuilder.addParentStack(RouteActivity.class);
         photoStackBuilder.addNextIntent(activityPhotoIntent);
         // Get the PendingIntent containing the entire back stack
         PendingIntent activityPhotoPendingIntent =
-                photoStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                photoStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT
+                );
         activityPhotoIntent.setAction("action2");
 
         // The PendingIntent that leads to a call to onStartCommand() in this service.

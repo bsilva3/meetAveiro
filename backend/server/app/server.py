@@ -260,7 +260,7 @@ def classify_image():
     print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
     img_name = classification[0]
-    img_name.replace(' ', '_')
+    img_name = img_name.replace(' ', '_')
     print('Conceito: ' + img_name)
     conceito = db.session.query(Conceito).get(img_name)
     score = classification[1]

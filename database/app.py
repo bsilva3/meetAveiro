@@ -97,8 +97,7 @@ def addInstanciaPercursoExemplo():
 def addFotografiaExemplo():
     addFotografia(1, 'biblioteca', 'joana@ua.pt',  40.6310031, -8.659642599999984, '../../../../treino/biblioteca/1.jpg', 1, '2018-03-22 13:30:00', 4.5, 'Aprovada', 0.98, 0.123)
     addFotografia(2, 'deti', 'joana@ua.pt',  40.633175, -8.659496, '../../../../treino/deti/20.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
-    addFotografia(3, 'dmat', 'joana@ua.pt', 40.630349, -8.658214, '../../../../treino/dmat/01.jpg',
-                  1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
+    addFotografia(3, 'dmat', 'joana@ua.pt', 40.630349, -8.658214, '../../../../treino/dmat/01.jpg', 1, '2018-03-22 13:30:30', 4.5, 'EmEspera', 0.79, 0.156)
 
 def addInfoExemplo():
     addTiposExemplo()

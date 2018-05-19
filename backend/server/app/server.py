@@ -488,8 +488,8 @@ def get_route_instance(id):
 
 @app.route('/resources/atractions/<string:id>', methods=['GET'])
 def get_atraction(id):
-    conceito = db.session.query(Conceito).get('biblioteca')
-    temp = db.session.query(Fotografia).filter(Fotografia.nomeconc=='biblioteca').all()
+    conceito = db.session.query(Conceito).get(id)
+    temp = db.session.query(Fotografia).filter(Fotografia.nomeconc==id).all()
     fotos = []
     fotos.append(random.choice(temp))
     fotos.append(random.choice(temp))
@@ -511,7 +511,7 @@ def get_atraction(id):
             print('Could not find: ' + f.path)
     res = {}
     #res['name'] = conceito.nome
-    res['name'] = 'Biblioteca, Universidade de Aveiro'
+    res['name'] = conceito.nome
     res['id'] = conceito.nomeconceito
     res['description'] = conceito.descricao
     res['latitude'] = conceito.latitude

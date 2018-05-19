@@ -1,6 +1,7 @@
 package pi.ua.meetaveiro.adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +15,11 @@ import pi.ua.meetaveiro.R;
 
 public class AttractionImageSliderAdapter extends PagerAdapter {
 
-    private List<Integer> images;
+    private List<Bitmap> images;
     private LayoutInflater inflater;
     private Context context;
 
-    public AttractionImageSliderAdapter(Context context, List<Integer> images) {
+    public AttractionImageSliderAdapter(Context context, List<Bitmap> images) {
         this.context = context;
         this.images=images;
         inflater = LayoutInflater.from(context);
@@ -39,7 +40,7 @@ public class AttractionImageSliderAdapter extends PagerAdapter {
         View myImageLayout = inflater.inflate(R.layout.attraction_slider_layout, view, false);
         ImageView myImage = (ImageView) myImageLayout
                 .findViewById(R.id.image);
-        myImage.setImageResource(images.get(position));
+        myImage.setImageBitmap(images.get(position));
         view.addView(myImageLayout, 0);
         return myImageLayout;
     }

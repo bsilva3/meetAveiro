@@ -80,28 +80,32 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         holder.mItem = routeListFiltered.get(position);
         holder.mTitleView.setText(routeListFiltered.get(position).getRoute().getRouteTitle());
 
+        //When it is clicked all these actions will follow
         holder.mView.setOnClickListener(v -> {
             if (null != listener) {
-                Log.d("clicked!", "route"+holder.mItem.getRoute().getRouteTitle() +".json" );
-
                 //context.startActivity(new Intent(context, RouteHistoryDetailsActivity.class));
                 Intent intent = new Intent(context, RouteDetailsActivity.class);
+
                 //Add arguments to the Activity
                 Bundle bun = new Bundle();
 
                 //Verify if it is local or from the server
-                //From the server an ID is attributed
+                //First we will check if it has an id
+                //If not then it is local and it will trigger local read in the RouteDetailsActivity
+                if(holder.mItem.getIdInstance() != 0) {
+                    bun.putString("RouteInstanceID", holder.mItem.getIdInstance() + "");
+                }
+                else {
+                    bun.putString("RouteInstanceID", "noNumber");
+                    //All the names stored locally are in the format route + routeTitle + .json
+                    bun.putString("fileName", "route"+holder.mItem.getRoute().getRouteTitle()+".json");
+                }
 
-                if(holder.mItem.getRoute().getId() != 0)
-                    bun.putString("RouteID",holder.mItem.getRoute().getId()+"");
-                else
-                    bun.putString("RouteID","null");
-
-
-                //All the names stored locally are in the format route + routeTitle + .json
-                bun.putString("fileName", "route"+holder.mItem.getRoute().getRouteTitle()+".json");
                 //Send the route Title
                 bun.putString("routeTitle",holder.mItem.getRoute().getRouteTitle()+"");
+                //The type will determine if it is a UserRoute (that he made and its in the history)
+                //OR if it is a Route that needs NO MARKERS ONLY DESCRIPTION TITLE AND THE POINTS
+                bun.putString("Type",holder.mItem.getRoute().getType());
 
 
                 intent.putExtras(bun);
@@ -113,6 +117,10 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         });
     }
 
+    /**
+     * Filters the results
+     * @return
+     */
     @Override
     public Filter getFilter() {
         return new Filter() {
@@ -148,6 +156,10 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
         };
     }
 
+    /**
+     * Get's the item count in the filtered list
+     * @return
+     */
     @Override
     public int getItemCount() {
         return routeListFiltered.size();

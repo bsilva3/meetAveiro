@@ -17,7 +17,7 @@ from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
 
 from webscrape import search_turismo, process_search, urls
 from search import search_wiki
-from img_utils import writeImage
+from img_utils import writeImage, readImage
 from prediction import predict_image
 
 import os
@@ -376,6 +376,10 @@ def get_routes():
     req = request.get_json(force=True)
     email = req['user']
     routes = db.session.query(Percurso).filter(Percurso.emailc == email).all()
+    if len(routes) == 0:
+        return jsonify({
+            "routes": []
+        })
     res = []
     for r in routes:
         temp = {}
@@ -391,8 +395,11 @@ def get_routes():
 @app.route('/resources/routes/<int:id>', methods=['GET'])
 def get_specific_route(id):
     percurso = db.session.query(Percurso).get(id)
+    if percurso is None:
+        return jsonify({})
     pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
     res = {}
+    
     res['title'] = percurso.titulo
     res['description'] = percurso.titulo
     pnts = []
@@ -404,13 +411,69 @@ def get_specific_route(id):
     res['trajectory'] = pnts
     return jsonify(res)
 
-@app.route('/resources/routes/instances')
+@app.route('/resources/routes/instances', methods=['POST'])
 def get_route_instances():
-    pass
+    req = request.get_json(force=True)
+    email = req['user']
+    instances = db.session.query(InstanciaPercurso).filter(InstanciaPercurso.emailc == email).all()
+    if len(instances) == 0:
+        return jsonify({
+            'instances': []
+        })
+    res = []
+    for i in instances:
+        temp = {}
+        route = db.session.query(Percurso).get(i.idperc)
+        temp['route'] = route.titulo
+        temp['start'] = i.datainicio
+        temp['end'] = i.datafim
+        temp['rating'] = i.classificacao
+        temp['id'] = i.id
+        res.append(temp)
+
+    return jsonify({
+        'instances': res
+    })
 
 @app.route('/resources/routes/instances/<int:id>', methods=['GET'])
 def get_route_instance(id):
-    pass
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return jsonify({})
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    res = {}
+    res['title'] = route.titulo
+    res['description'] = route.descricao
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    res['markers'] = fotografias
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    res['trajectory'] = pnts    
+
+    return jsonify(res)
 
 @app.route('/resources/atractions/<string:name>', methods=['GET'])
 def get_atraction(name):
@@ -433,6 +496,35 @@ def get_atractions():
         'atractions': res
     })
 
+@app.route('/resources/photos/byuser', methods=['POST'])
+def get_photo_history():
+    req = request.get_json(force=True)
+    user = req['user']
+    fotos = db.session.query(Fotografia).filter(Fotografia.emailinst == user).order_by(Fotografia.datafoto).all()
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['date'] = f.datafoto
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+    return jsonify({
+        'photos': fotografias
+    })
+
+
 @app.route('/resources/routes/search', methods=['POST'])
 def search_routes():
     req = request.get_json(force=True)
@@ -452,6 +544,54 @@ def search_routes():
     return jsonify({
         'routes': res
     })
+
+
+@app.route('/resources/routes/instances/<int:id>/share', methods=['GET'])
+def share_map(id):
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return '<h1>Not Found</h1>'
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    res = {}
+    res['title'] = route.titulo
+    res['description'] = route.descricao
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc==id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['path'] = '/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['path'] = '/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    res['markers'] = fotografias
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    res['trajectory'] = pnts
+    return render_template('instance.html', points=pnts, fotos=fotografias)
 
 # Background tasks
 scheduler = BackgroundScheduler()

@@ -13,8 +13,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -118,10 +123,6 @@ public class Utils {
 
 
 
-
-
-
-
     public static class NetworkCheckTask extends AsyncTask<String, Void, Boolean> {
         Context context;
         NetworkCheckResponse response;
@@ -171,4 +172,9 @@ public class Utils {
 
 
     }
+
+
+
+
+
 }

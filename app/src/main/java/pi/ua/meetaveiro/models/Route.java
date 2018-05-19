@@ -20,6 +20,7 @@ public class Route implements Parcelable {
     private List<LatLng> routePathPoints; //when we cant use polyline just for the parcelable
     private String routeTitle = "Unnamed"; //default
     private String routeDescription = ""; //default
+    private String Type  ="";  //To be used to split into ROUTE or ROUTE INSTANCE (To see the ROUTES WITHOUT MARKERS)
 
     public Route(String routeTitle, Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
         this.routeTitle = routeTitle;
@@ -115,5 +116,13 @@ public class Route implements Parcelable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getType() {
+        return Type;
+    }
+
+    public void setType(String type) {
+        Type = type;
     }
 }

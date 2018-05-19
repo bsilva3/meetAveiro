@@ -299,102 +299,8 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        //leaving fragment, store the routes so that we can display them again later
-        Log.d("route", routes.size()+" saving");
-        myApp.setRoutes(routes);
     }
 
-    public void placeRoutesOnMap(List<Route> routes){
-        mMap.clear();
-        Boolean firstRoute = true;
-        for (Route r : routes) {
-            Log.d("redraw", "redrawing");
-            //place the lines..
-            if (firstRoute) {
-                redrawLine(r.getRoutePoints(), false);//dont switch line color yet
-                firstRoute = false;
-            }
-            else
-                redrawLine(r.getRoutePoints(), true);
-            //place the markers with the photos
-            //for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
-             //   mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
-               //         .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
-                 //       .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
-            //}
-        }
-        //when a path is clicked, a menu will appear
-        /*mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
-            @Override
-            public void onPolylineClick(Polyline polyline) {
-                Log.d("clicked", "line clicked");
-                    Route route = checkWhatTourPolyBelongs(polyline);
-                    if (route != null) {
-                        if (mBottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
-                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                            tourTitleText.setText(route.getRouteTitle());
-                            tourDescriptionText.setText(route.getRouteDescription());
-                            tourOptionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                @Override
-                                public void onItemClick(AdapterView<?> parent, View view,
-                                                        int position, long id) {
-                                    String selecteditem = optionsText[+position];
-                                    //remove this route from the map
-                                    if (selecteditem.equals(getContext().getString(R.string.remove_tour_from_map_btn))) {
-                                        routes.remove(route);
-                                        placeRoutesOnMap(routes);
-                                    } //edit tour
-                                    else if (selecteditem.equals(getContext().getString(R.string.edit_tour_name))) {
-                                        LayoutInflater li = LayoutInflater.from(getContext());
-                                        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
-                                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-                                        alertDialogBuilder.setView(promptsView);
-                                        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
-                                        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
-                                        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
-                                        dialogTitle.setText(getString(R.string.edit_tour_dialog_title));
-                                        routeTitleBox.setText(route.getRouteTitle());
-                                        routeDescriptionBox.setText(route.getRouteDescription());
-
-                                        alertDialogBuilder
-                                                .setCancelable(false)
-                                                .setPositiveButton("OK",
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                //update route in the array that has all routes on the map
-                                                                //and update info in bottom sheet
-                                                                routes.remove(route);
-                                                                route.setRouteTitle(routeTitleBox.getText().toString());
-                                                                route.setRouteDescription(routeDescriptionBox.getText().toString());
-                                                                routes.add(route);
-                                                                saveRouteToFile(route);
-                                                                tourTitleText.setText(route.getRouteTitle());
-                                                                tourDescriptionText.setText(route.getRouteDescription());
-                                                            }
-                                                        })
-                                                .setNegativeButton(getString(R.string.cancel),
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                dialog.cancel();
-                                                            }
-                                                        });
-                                         // create alert dialog
-                                        AlertDialog alertDialog = alertDialogBuilder.create();
-                                        // show it
-                                        alertDialog.show();
-                                    }
-                                    //Toast.makeText(getContext(), selecteditem, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    } else {
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        //mButton1.setText(R.string.button1);
-                    }
-
-             }
-        });*/
-    }
 
     /**
      * Manipulates the map once available.
@@ -697,6 +603,10 @@ public class PhotoLogFragment extends Fragment implements
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
             Toast.makeText(getContext(), "Connection error. Please try again later", Toast.LENGTH_LONG).show();
+            return;
+        } catch (NullPointerException e){
+            Log.e(TAG, e.getMessage());
+            Toast.makeText(getContext(), "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -1137,23 +1047,6 @@ public class PhotoLogFragment extends Fragment implements
                 .setItems(mLikelyPlaceNames, listener)
                 .show();
     }
-
-    private Polyline redrawLine(List<LatLng> points, boolean nextColor){
-        if (currentDrawingLine!=null) {
-            if (currentDrawingLine.getPoints().equals(points))
-                currentDrawingLine.remove();
-        }
-
-        PolylineOptions options = new PolylineOptions().width(10)
-                .color(getNextColor(nextColor)).geodesic(true);
-        for (int i = 0; i < points.size(); i++) {
-            LatLng point = points.get(i);
-            options.add(point);
-        }
-        currentDrawingLine = mMap.addPolyline(options); //add Polyline
-        currentDrawingLine.setClickable(true);
-        return currentDrawingLine;
-    }
     //simple method to change the color of a polyline. if false, returns the color of the
     // current index (usefull when on route and we want to maintain the same color)
     //if true, increments the index and returns the next color (usefull when placing all routes
@@ -1166,17 +1059,6 @@ public class PhotoLogFragment extends Fragment implements
         }
         return lineColors[colorIndex];
 
-    }
-
-    //used to check to which route these points belong to
-    //returns null if these points are not in any current path show on map
-    private Route checkWhatTourPolyBelongs(Polyline polyline){
-        for (Route rout : routes){
-            Log.d("route", rout.getRoutePath()+""+polyline);
-            if (rout.getRoutePoints().equals(polyline.getPoints()))
-                return rout;
-        }
-        return null;
     }
 
     /**

@@ -1,7 +1,9 @@
 <resources>
     <string name="unknown_string"> Unknown </string>
     <string name="close_string"> Close </string>
-    <string name="scanning_image_string">"Scanning image… "</string>
+    <string name="scanning_image_string">Scanning image… </string>
+    <string name="upload_route">Uploading Route to server… </string>
+    <string name="upload_general">Uploading, please wait</string>
     <string name="app_name">meetAveiro</string>
     <string name="title_activity_photo_log_map">Photo Log</string>
     <string name="action_sign_in_short">Register</string>
@@ -118,6 +120,7 @@
 
     <!-- dialog box tour save -->
     <string name="tour_save">Would you like to save and/or share this Tour?</string>
+    <string name="fill_out">Please fill this out!</string>
     <!--point info dialog-->
     <string name="see_more_info">See more info</string>
     <!-- dialog box for feedback-->

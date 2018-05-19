@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -84,8 +85,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     private static ViewPager mPager;
     FloatingActionButton map;
     private static int currentPage = 0;
-    private List<Integer> images;
-    private List<Integer> imagesArray = new ArrayList<Integer>();
+    private List<Bitmap> imagesArray;
     private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
     private ShimmerFrameLayout mShimmerViewContainer;
@@ -100,7 +100,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_poidetails);
-        images = new ArrayList<>();
+        imagesArray = new ArrayList<>();
         //get the intent which tell us which concept this page contains
         if (getIntent().hasExtra("attraction")) {
             attractionName = getIntent().getExtras().getString("attraction");
@@ -126,19 +126,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         //toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
         map = (FloatingActionButton) findViewById(R.id.show_on_map);
         description = (TextView) findViewById(R.id.attraction_description);
-        initImageSlider();
 
-        map.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                //this intent simply opens the google maps app on the sent coordinates
-                //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:40.6442700,-8.6455400?q=<lat>,<long>(Label+Name)"));
-                //startActivity(intent);
-                Intent intent = new Intent(v.getContext(), AttractionMapActivity.class);
-                //intent.putExtra("lat", attraction.getLocation().latitude);
-                //intent.putExtra("long", attraction.getLocation().longitude);
-                startActivity(intent);
-            }
-        });
 
         // get the listview
         expListView = (ExpandableListView) findViewById(R.id.routes_with_attraction);
@@ -201,14 +189,12 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     protected void onDestroy() {
         super.onDestroy();
         //Try to free up some memory!
-        images = new ArrayList<>();
+        imagesArray = new ArrayList<>();
         System.gc();
     }
 
 
     private void initImageSlider() {
-        for(int i=0; i < images.size(); i++)
-            imagesArray.add(images.get(i));
 
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(new AttractionImageSliderAdapter(POIDetails.this, imagesArray));
@@ -219,7 +205,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         final Handler handler = new Handler();
         final Runnable Update = new Runnable() {
             public void run() {
-                if (currentPage == images.size()) {
+                if (currentPage == imagesArray.size()) {
                     currentPage = 0;
                 }
                 mPager.setCurrentItem(currentPage++, true);
@@ -288,25 +274,50 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
     }
 
     private void getAttractionInfo() {
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("concept", attractionName);
-        } catch (JSONException e) {
-            Log.e("Request Route Error", e.toString());
-        }
         //start shimmer effect
         mShimmerViewContainer.startShimmerAnimation();
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                URL_ATTRACTION_INFO, jsonRequest, new Response.Listener<JSONObject>() {
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,
+                URL_ATTRACTION_INFO+attractionName, null, new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
                 Log.d("ERROR", response.toString());
                 description = findViewById(R.id.attraction_description);
+                String lat;
+                String longt;
+                JSONArray photosArray;
+                try {
+                    photosArray = response.getJSONArray("photos");
+                    //download the photos from url (usually, its just 2
+                    for (int i = 0; i < photosArray.length(); i++){
+                        imagesArray.add(downloadImageFromUrl(photosArray.get(i).toString()));
+                    }
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    response.get("name");
+                    description.setText(response.get("description").toString());
+                    lat = response.getString("latitude");
+                    longt = response.getString("longitude");
+                    if (lat != null && longt != null) {
+                        //set a click listener to show the attraction on a map
+                        map.setOnClickListener(new View.OnClickListener() {
+                            public void onClick(View v) {
+                                //this intent simply opens the google maps app on the sent coordinates
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:" + lat + "," + longt + "?q=<lat>,<long>(Label+Name)"));
+                                startActivity(intent);
+                            }
+                        });
+                    }
+                    else{
+                        //if there are no coordinates we dont show the button
+                        map.setVisibility(View.GONE);
+                    }
+                    initImageSlider();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 //images.add();
                 // stop animating Shimmer and hide the layout
-                mShimmerViewContainer.stopShimmerAnimation();
-                mShimmerViewContainer.setVisibility(View.GONE);
                 //initImageSlider();
             }
         }, new Response.ErrorListener() {
@@ -324,6 +335,18 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
         // Adding request to request queue
         MyApplication.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
+    private Bitmap downloadImageFromUrl(String url){
+        Bitmap image = null;
+        try {
+            InputStream in = new java.net.URL(url).openStream();
+            image = BitmapFactory.decodeStream(in);
+        } catch (Exception e) {
+            Log.e("Error", e.getMessage());
+            e.printStackTrace();
+        }
+        return image;
     }
 
     private void getRoutesThatHaveAttraction() {

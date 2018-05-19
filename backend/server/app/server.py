@@ -35,6 +35,7 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 app.config.from_object('_config')
+app.config['JSON_AS_ASCII'] = False
 db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)

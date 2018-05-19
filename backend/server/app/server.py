@@ -261,6 +261,10 @@ def classify_image():
     img_name = classification[0]
     conceito = db.session.query(Conceito).get(img_name)
     score = classification[1]
+
+    if float(score) < 0.8:
+        img_name = 'desconhecido'
+    
     print(img_name, score)
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):
@@ -271,7 +275,7 @@ def classify_image():
     filename = os.path.join(folder, file_id)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
-    
+
     while(True):
         print("Looping...")
         foto = addFotografia(None, img_name, user_email, lat, lon, filename,
@@ -289,7 +293,7 @@ def classify_image():
             'id' : foto.id
         })
     return jsonify({
-        'concept_id': 'Desconhecido',
+        'concept_id': 'desconhecido',
         'name': 'Desconhecido',
         'description': '',
         'id': foto.id

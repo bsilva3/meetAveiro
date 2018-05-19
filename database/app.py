@@ -78,7 +78,8 @@ def addConceitosExemplo():
     addConceito('torre_de_agua', 'admin@ua.pt', 40.62902601, -8.65545995, 0.5, 'Com a altura de cerca de 30 metros, a torre do depósito de água perfila-se bem acima do conjunto, em torno da Galeria, de que é signo recortado no céu, mas também marcação do seu final frente aos húmidos que envolvem o braço da ria que separa a zona de Santiago da zona da Agra do Castro. A caixa apresenta-se na evidência de um paralelepípedo, mas o suporte foi concebido diferentemente, pois é constituído por uma lâmina complanar com o lado menor do paralelepípedo e por um cilindro. A primeira relaciona directamente a torre com o conjunto da Galeria, pois alinha-se com o plano das fachadas dos edifícios do seu lado nordeste e o segundo é simultaneamente uma coluna e a expressão de uma conduta. Álvaro Siza tornou complexo algo que, à primeira vista, seria um mero equipamento de um sistema de abastecimento de águas, mas sem o complicar com inúteis especulações formais. Partiu conceptualmente do óbvio, filtrou-o criticamente e exercitou a sua sensibilidade.', 'Torre de água', 4.3)
 
     addConceito('ria_de_aveiro', 'admin@ua.pt', None, None, 0.6, 'Aveiro é considerado a Veneza de PorTugal devido à ria. A ria de Aveiro, ou foz do Vouga, é como se chama o estuário do rio Vouga, o qual se estende pelo interior do território português, paralelamente ao mar, numa distância de 45 quilómetros e a uma largura máxima de 11 quilómetros, no sentido este–oeste de Ovar a Mira. Do seu entorno constam Aveiro, Ílhavo, Gafanha da Nazaré, Estarreja, Ovar, Murtosa, Vagos e Mira.', 'Ria de Aveiro', 4.3)
-       
+    addConceito('desconhecido', 'admin@ua.pt', None, None, 0.0, '', 'Desconhecido', 0.0)
+
 
 def addPercursosExemplo():
     addPercurso('joana@ua.pt', 'Conhece a UA', 'Validado','Conhece a Universidade de Aveiro')

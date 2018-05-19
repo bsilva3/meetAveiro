@@ -6,6 +6,7 @@ o que elas representam (ex: monumentos)
 import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
+from math import sqrt
 
 import random
 import datetime
@@ -264,6 +265,14 @@ def classify_image():
 
     if float(score) < 0.8:
         img_name = 'desconhecido'
+
+    conc_lat = conceito.latitude
+    conc_long = conceito.longitude
+    raio = conceito.raio
+
+    if sqrt((lat-conc_lat)**2 + (lon-conc_long)**2) > raio:
+        img_name = 'desconhecido'
+
     
     print(img_name, score)
     folder = os.path.join('./static/img', img_name)

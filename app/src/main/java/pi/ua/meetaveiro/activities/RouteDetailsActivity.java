@@ -11,12 +11,14 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.support.annotation.RequiresApi;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -64,8 +66,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     ViewPager viewPager;
     RouteHistoryDetailAdapter adapter;
     ArrayList<Bitmap> images = new ArrayList<>();
-    private Toolbar mTopToolbar;
-    private String routeTitle = "", routeDesc = "", value = "";
+    private String routeTitle = "";
+    private String value = "";
     private TextView routeDescription, routeDate;
     //Map
     private GoogleMap mMap;
@@ -91,14 +93,14 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
      * routeTitle: The title of the route (MANDATORY)
      * fileName: The name of the file if it is local
      *
-     * @param savedInstanceState
+     * @param savedInstanceState Instance
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route_details);
 
-        mTopToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar mTopToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mTopToolbar);
 
         //Get the title
@@ -117,14 +119,14 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
         //Verify if it comes from the server or it is local
-        if (Objects.equals(b.getString("RouteInstanceID").toString(), "noNumber")) {
+        if (Objects.equals(b.getString("RouteInstanceID"), "noNumber")) {
             isFromServer = false;
         } else {
             isFromServer = true;
-            if(b.getString("Type").equals("Route"))
-                this.routeID = b.getString("RouteInstanceID").toString();
+            if(Objects.equals(b.getString("Type"), "Route"))
+                this.routeID = b.getString("RouteInstanceID");
             else
-                this.routeInstanceID = b.getString("RouteInstanceID").toString();
+                this.routeInstanceID = b.getString("RouteInstanceID");
         }
 
     }
@@ -142,16 +144,23 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             //Get the fileName in case of local
             Bundle b = getIntent().getExtras();
-            if (b.getString("fileName") != null)
+            if (b != null && b.getString("fileName") != null)
                 value = b.getString("fileName");
 
             //Get all info
-            if (isFromServer == false) {
+            if (!isFromServer) {
                 reconstructRoute(Utils.getRouteFromFile(value, this.getApplicationContext()));
             } else {
                 //TODO: METHOD GET
                 if (b.getString("Type").equals("Route")) {
                     //Do as it is a Route
+                    viewPager.setVisibility(View.GONE);
+
+                    ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
+                    params.height = 1000;
+                    routeDescription.setLayoutParams(params);
+
+
                     new fetchDataAsRoute().execute();
                 } else {
                     //Do as it is a Instance that has all the information
@@ -204,7 +213,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             routeTitle = json.get("Title").toString();
             //Get Route Description
             r.setRouteDescription(json.get("Description").toString());
-            routeDesc = json.get("Description").toString();
+            String routeDesc = json.get("Description").toString();
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
             Date endDate = new Date(json.get("EndDate").toString());
@@ -301,26 +310,33 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
     private void rearrangeJSONDataRoute(String inFo){
-        /*
-        {
-  "description": "Conhece a UA",
-  "title": "Conhece a UA",
-  "trajectory": [
-    {
-      "latitude": 40.6310031,
-      "longitude": -8.65964259999998
-    },
-    {
-      "latitude": 40.633175,
-      "longitude": -8.659496
-    },
-    {
-      "latitude": 40.630349,
-      "longitude": -8.658214
-    }
-  ]
-}
-         */
+
+        try {
+            JSONObject json = new JSONObject(inFo);
+            routeTitle = json.getString("title");
+            Bundle b = getIntent().getExtras();
+
+            String description = b.getString("routeDescription");
+
+            routeDescription.setText(description);
+            getSupportActionBar().setTitle(routeTitle);
+
+            JSONArray jarrTrajectory = json.getJSONArray("trajectory");
+            PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
+
+            for (int i = 0;i<jarrTrajectory.length();i++){
+                JSONObject obj = jarrTrajectory.getJSONObject(i);
+                String lat = obj.get("latitude").toString();
+                String longi = obj.get("longitude").toString();
+                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                options.add(l);
+            }
+
+            mMap.addPolyline(options);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -404,6 +420,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             dateT = params[1];
             larr = new LatLng(Double.parseDouble(params[2]),Double.parseDouble(params[3]));
             bitmap = Utils.downloadImage(params[0]);
+
+            if(bitmap == null){
+                finish();
+                startActivity(getIntent());}
+
+
             mapBit.put(larr,bitmap);
             mapBitDate.put(bitmap,dateT);
             return bitmap;
@@ -413,6 +435,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         protected void onPostExecute(Bitmap bitmap) {
             populateImagesMarker();
         }
+
     }
 
 

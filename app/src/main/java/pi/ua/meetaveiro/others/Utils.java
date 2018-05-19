@@ -22,6 +22,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Calendar;
+import java.util.Date;
 
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 
@@ -196,6 +198,16 @@ public class Utils {
             return activeNetworkInfo != null;
         }
 
+    }
+
+    public static String convertTimeInMilisAndFormat(long timeInMilis){
+        Date d = new Date(timeInMilis);
+        Calendar cl = Calendar.getInstance();
+        cl.setTime(d);
+        String photoDate = cl.get(Calendar.YEAR)+"-"+
+                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
+                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
+        return photoDate;
     }
 
 }

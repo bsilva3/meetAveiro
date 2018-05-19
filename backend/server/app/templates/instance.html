@@ -1,3 +1,4 @@
+
 {% block styles %}
 <style>
     /* Always set the map height explicitly to define the size of the div   
@@ -20,6 +21,9 @@
 
 
 {% block content %}
+    <h1>{{ title }}</h1>
+    
+    <h3>{{ desc }}</h3>
     <div id="map"></div><br/>
 
 {% endblock %}
@@ -46,13 +50,16 @@
             urls.push("{{f['path']}}");
         {% endfor %}
 
-        // var urls = ['https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
-        //                  'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
-        //                'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png']
-            
+        var fotos_coords = []
+
+        {% for f in fotos %}
+            fotos_coords.push({lat: {{f['latitude']}}, lng: {{f['longitude']}}});
+        {% endfor %}
+
+        
             var map = new google.maps.Map(document.getElementById('map'), {
               zoom: 12,
-              center: coord[0]
+              center: { lat: {{ center['latitude']}}, lng: {{ center['longitude'] }} }
             });
             
             for (i = 0; i < urls.length; i++) {
@@ -69,7 +76,7 @@
                     };
             
               var beachMarker = new google.maps.Marker({
-                position: coord[i],
+                position: fotos_coords[i],
                 map: map,
                 icon: image
               });

@@ -4,6 +4,7 @@ package pi.ua.meetaveiro.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -14,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -23,6 +25,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.Base64;
 import android.util.Log;
@@ -69,6 +72,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -88,7 +92,9 @@ import java.util.Map;
 import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
+import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
@@ -287,112 +293,14 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-
-        routes = myApp.getRoutes();
-        if (routes == null)
-            routes = new ArrayList<>();
-        Log.d("route", routes.size()+"");
+        getMarkersFromStorage();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        //leaving fragment, store the routes so that we can display them again later
-        Log.d("route", routes.size()+" saving");
-        myApp.setRoutes(routes);
     }
 
-    public void placeRoutesOnMap(List<Route> routes){
-        mMap.clear();
-        Boolean firstRoute = true;
-        for (Route r : routes) {
-            Log.d("redraw", "redrawing");
-            //place the lines..
-            if (firstRoute) {
-                redrawLine(r.getRoutePoints(), false);//dont switch line color yet
-                firstRoute = false;
-            }
-            else
-                redrawLine(r.getRoutePoints(), true);
-            //place the markers with the photos
-            //for (Map.Entry<Marker, Bitmap> entry : r.getRouteMarkers().entrySet()) {
-             //   mMap.addMarker(new MarkerOptions().position(entry.getKey().getPosition())
-               //         .title(entry.getKey().getTitle()).snippet(entry.getKey().getSnippet())
-                 //       .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())));
-            //}
-        }
-        //when a path is clicked, a menu will appear
-        /*mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
-            @Override
-            public void onPolylineClick(Polyline polyline) {
-                Log.d("clicked", "line clicked");
-                    Route route = checkWhatTourPolyBelongs(polyline);
-                    if (route != null) {
-                        if (mBottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
-                            mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                            tourTitleText.setText(route.getRouteTitle());
-                            tourDescriptionText.setText(route.getRouteDescription());
-                            tourOptionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                @Override
-                                public void onItemClick(AdapterView<?> parent, View view,
-                                                        int position, long id) {
-                                    String selecteditem = optionsText[+position];
-                                    //remove this route from the map
-                                    if (selecteditem.equals(getContext().getString(R.string.remove_tour_from_map_btn))) {
-                                        routes.remove(route);
-                                        placeRoutesOnMap(routes);
-                                    } //edit tour
-                                    else if (selecteditem.equals(getContext().getString(R.string.edit_tour_name))) {
-                                        LayoutInflater li = LayoutInflater.from(getContext());
-                                        View promptsView = li.inflate(R.layout.save_tour_dialog_box, null);
-                                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-                                        alertDialogBuilder.setView(promptsView);
-                                        final EditText routeTitleBox = (EditText) promptsView.findViewById(R.id.tour_title_box);
-                                        final EditText routeDescriptionBox = (EditText) promptsView.findViewById(R.id.tour_description_box);
-                                        TextView dialogTitle = (TextView) promptsView.findViewById(R.id.dialog_description);
-                                        dialogTitle.setText(getString(R.string.edit_tour_dialog_title));
-                                        routeTitleBox.setText(route.getRouteTitle());
-                                        routeDescriptionBox.setText(route.getRouteDescription());
-
-                                        alertDialogBuilder
-                                                .setCancelable(false)
-                                                .setPositiveButton("OK",
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                //update route in the array that has all routes on the map
-                                                                //and update info in bottom sheet
-                                                                routes.remove(route);
-                                                                route.setRouteTitle(routeTitleBox.getText().toString());
-                                                                route.setRouteDescription(routeDescriptionBox.getText().toString());
-                                                                routes.add(route);
-                                                                saveRouteToFile(route);
-                                                                tourTitleText.setText(route.getRouteTitle());
-                                                                tourDescriptionText.setText(route.getRouteDescription());
-                                                            }
-                                                        })
-                                                .setNegativeButton(getString(R.string.cancel),
-                                                        new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int id) {
-                                                                dialog.cancel();
-                                                            }
-                                                        });
-                                         // create alert dialog
-                                        AlertDialog alertDialog = alertDialogBuilder.create();
-                                        // show it
-                                        alertDialog.show();
-                                    }
-                                    //Toast.makeText(getContext(), selecteditem, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    } else {
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        //mButton1.setText(R.string.button1);
-                    }
-
-             }
-        });*/
-    }
 
     /**
      * Manipulates the map once available.
@@ -412,52 +320,67 @@ public class PhotoLogFragment extends Fragment implements
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        //Initialize Preferences*
-        prefs = getActivity().getSharedPreferences("LatLng",MODE_PRIVATE);
-        /*While we have markers stored iterate trough.
-        * For each marker add to the map with all information related to it*/
-        boolean stop = false;
-        int tmp = 0;
-        while (!stop){
-            if (prefs.contains("Lat" + tmp)) {
-                String lat = prefs.getString("Lat" + tmp, "");
-                String lng = prefs.getString("Lng" + tmp, "");
-                String btm = prefs.getString("bmp" + tmp, "");
-                int id = prefs.getInt("ID"+tmp, 0);
-                long date = prefs.getLong("dateTime"+tmp, 0);
-                String snip = prefs.getString("Snip" + tmp, "");
-                String titl = prefs.getString("Titl" + tmp,"");
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-                Bitmap img = Utils.StringToBitMap(btm);
-                try {
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .icon(BitmapDescriptorFactory.fromBitmap(img))
-                            .title(titl)
-                            .snippet(snip));
-                    imageMarkers.put(m,img);
-                    markers.put(m,true);
-                    markerID.put(m, id);
-                    markerDate.put(m, date);
-                    //setClickListenersOnMap(id);
-
-                }catch (Exception e){
-                    Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                            .title(titl)
-                            .snippet(snip));
-                    markers.put(m,true);
-                    markerID.put(m, id);
-                    markerDate.put(m, date);
-                }
-                tmp++;
-            }else{
-                stop = true;
-            }
-            //add marker click listener
-            addMarkerListener();
-        }
+        getMarkersFromStorage();
         //JSONObject j = placeRoutesOnJson();
         //Log.d("sendRoute", j.toString());
         //new uploadFileToServerTask().execute(j.toString(), URL_SEND_ROUTE);
+    }
+
+    public void getMarkersFromStorage(){
+        //Initialize Preferences*
+        if (mMap != null) {
+            prefs = getActivity().getSharedPreferences("LatLng", MODE_PRIVATE);
+        /*While we have markers stored iterate trough.
+        * For each marker add to the map with all information related to it*/
+            boolean stop = false;
+            int tmp = 0;
+            while (!stop) {
+                if (prefs.contains("Lat" + tmp)) {
+                    String lat = prefs.getString("Lat" + tmp, "");
+                    String lng = prefs.getString("Lng" + tmp, "");
+                    String btm = prefs.getString("bmp" + tmp, "");
+                    int id = prefs.getInt("ID" + tmp, 0);
+                    long date = prefs.getLong("dateTime" + tmp, 0);
+                    String snip = prefs.getString("Snip" + tmp, "");
+                    String titl = prefs.getString("Titl" + tmp, "");
+                    LatLng l = null;
+                    try {
+                        l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+                    } catch(NumberFormatException e ) {
+                        //there were no double parselable coordinates found, marker will not be placed
+                        Log.e("ERROR", e.toString());
+                        tmp++;
+                        continue;
+                    }
+                    Bitmap img = Utils.StringToBitMap(btm);
+                    try {
+                        Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                                .icon(BitmapDescriptorFactory.fromBitmap(img))
+                                .title(titl)
+                                .snippet(snip));
+                        imageMarkers.put(m, img);
+                        markers.put(m, true);
+                        markerID.put(m, id);
+                        markerDate.put(m, date);
+                        Log.d("marker", "ids load: " + markerID);
+                        //setClickListenersOnMap(id);
+
+                    } catch (Exception e) {
+                        Marker m = mMap.addMarker(new MarkerOptions().position(l)
+                                .title(titl)
+                                .snippet(snip));
+                        markers.put(m, true);
+                        markerID.put(m, id);
+                        markerDate.put(m, date);
+                    }
+                    tmp++;
+                } else {
+                    stop = true;
+                }
+                //add marker click listener
+                addMarkerListener();
+            }
+        }
     }
 
     private void addMarkerListener(){
@@ -507,8 +430,8 @@ public class PhotoLogFragment extends Fragment implements
         try {
             j.put("title", "ola chico");
             j.put("description", "ta td??");
-            j.put("start", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
-            j.put("end", convertTimeInMilisAndFormatToServerType(Calendar.getInstance().getTimeInMillis()));
+            j.put("start", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
+            j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
             j.put("trajectory", routePoints);
@@ -610,14 +533,14 @@ public class PhotoLogFragment extends Fragment implements
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
 
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    //ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
 
 
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
-                    String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+                    String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
@@ -641,7 +564,6 @@ public class PhotoLogFragment extends Fragment implements
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
-                        imageMarkers.put(m, photo);
                         markerDate.put(m, date);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
@@ -681,6 +603,22 @@ public class PhotoLogFragment extends Fragment implements
             Log.e(TAG, e.getMessage());
             Toast.makeText(getContext(), "Connection error. Please try again later", Toast.LENGTH_LONG).show();
             return;
+        } catch (NullPointerException e){
+            Log.e(TAG, e.getMessage());
+            Toast.makeText(getContext(), "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
+            Marker markerToUpdate = null;
+            for(Map.Entry entry : markers.entrySet()){
+                if(entry.getValue().equals(false)){
+                    //remove this image and marker
+                    markerToUpdate = (Marker) entry.getKey();
+                    imageMarkers.remove(markerToUpdate);
+                    markerDate.remove(markerToUpdate);
+                    markers.remove(markerToUpdate);
+                    markerToUpdate.remove();
+                    break;
+                }
+            }
+            return;
         }
 
         Marker markerToUpdate = null;
@@ -690,10 +628,6 @@ public class PhotoLogFragment extends Fragment implements
                 markerToUpdate = (Marker) entry.getKey();
                 break;
             }
-        }
-        if (json == null){
-            Toast.makeText(getContext(), "Server is currently unavailable. Please, try again later", Toast.LENGTH_SHORT);
-            return;
         }
         Marker oldMarker = markerToUpdate;
         String title = "";
@@ -711,11 +645,10 @@ public class PhotoLogFragment extends Fragment implements
         }
         markerToUpdate.setTitle(title);
         markerToUpdate.setSnippet(getContext().getString(R.string.unknown_photo_dialog_description)+
-                convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
+                Utils.convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
-
-        final int idFinal = id;
+        Log.d("marker", "ids: "+markerID);
         updateMarkerOnMap(oldMarker, markerToUpdate);
         //setClickListenersOnMap(id);
         // show a prompt for user feedback on the first dialog is closed
@@ -859,10 +792,6 @@ public class PhotoLogFragment extends Fragment implements
         super.onPause();  // Always call the superclass method first
         //Iterate trough all saved markers.
         saveMarkersOnStorage();
-        imageMarkers = new HashMap<>();
-        markers = new HashMap<>();
-        markerDate = new HashMap<>();
-        markerID = new HashMap<>();
     }
 
     //save markers on storage
@@ -873,7 +802,6 @@ public class PhotoLogFragment extends Fragment implements
             Map.Entry<Marker, Bitmap> pair = it.next();
             Bitmap img = pair.getValue();
             Marker m = pair.getKey();
-
             //Add to the preferences the information of the markers
 
             prefs.edit().putString("Lat"+i,String.valueOf(m.getPosition().latitude)).commit();
@@ -938,6 +866,10 @@ public class PhotoLogFragment extends Fragment implements
             tts.stop();
             tts.shutdown();
         }
+        imageMarkers = new HashMap<>();
+        markers = new HashMap<>();
+        markerDate = new HashMap<>();
+        markerID = new HashMap<>();
 
     }
 
@@ -970,6 +902,7 @@ public class PhotoLogFragment extends Fragment implements
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
                 urlConnection.setRequestMethod("POST");
+                urlConnection.setConnectTimeout(15000);//stop after 15 secs
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept", "application/json");
                 //set headers and method
@@ -1041,49 +974,49 @@ public class PhotoLogFragment extends Fragment implements
         @SuppressWarnings("MissingPermission")
         final Task<PlaceLikelihoodBufferResponse> placeResult = mPlaceDetectionClient.getCurrentPlace(null);
         placeResult.addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+            if (task.isSuccessful() && task.getResult() != null) {
+                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
 
-                        // Set the count, handling cases where less than 5 entries are returned.
-                        int count;
-                        if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                            count = likelyPlaces.getCount();
-                        } else {
-                            count = M_MAX_ENTRIES;
-                        }
+                // Set the count, handling cases where less than 5 entries are returned.
+                int count;
+                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                    count = likelyPlaces.getCount();
+                } else {
+                    count = M_MAX_ENTRIES;
+                }
 
-                        int i = 0;
-                        mLikelyPlaceNames = new String[count];
-                        mLikelyPlaceAddresses = new String[count];
-                        mLikelyPlaceAttributions = new String[count];
-                        mLikelyPlaceLatLngs = new LatLng[count];
+                int i = 0;
+                mLikelyPlaceNames = new String[count];
+                mLikelyPlaceAddresses = new String[count];
+                mLikelyPlaceAttributions = new String[count];
+                mLikelyPlaceLatLngs = new LatLng[count];
 
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            // Build a list of likely places to show the user.
-                            mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                            mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                    .getAddress();
-                            mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                    .getAttributions();
-                            mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    // Build a list of likely places to show the user.
+                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                            .getAddress();
+                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                            .getAttributions();
+                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
 
-                            i++;
-                            if (i > (count - 1)) {
-                                break;
-                            }
-                        }
-
-                        // Release the place likelihood buffer, to avoid memory leaks.
-                        likelyPlaces.release();
-
-                        // Show a dialog offering the user the list of likely places, and add a
-                        // marker at the selected place.
-                        openPlacesDialog();
-
-                    } else {
-                        Log.e(TAG, "Exception: %s", task.getException());
+                    i++;
+                    if (i > (count - 1)) {
+                        break;
                     }
-                });
+                }
+
+                // Release the place likelihood buffer, to avoid memory leaks.
+                likelyPlaces.release();
+
+                // Show a dialog offering the user the list of likely places, and add a
+                // marker at the selected place.
+                openPlacesDialog();
+
+            } else {
+                Log.e(TAG, "Exception: %s", task.getException());
+            }
+        });
 
     }
 
@@ -1122,23 +1055,6 @@ public class PhotoLogFragment extends Fragment implements
                 .setItems(mLikelyPlaceNames, listener)
                 .show();
     }
-
-    private Polyline redrawLine(List<LatLng> points, boolean nextColor){
-        if (currentDrawingLine!=null) {
-            if (currentDrawingLine.getPoints().equals(points))
-                currentDrawingLine.remove();
-        }
-
-        PolylineOptions options = new PolylineOptions().width(10)
-                .color(getNextColor(nextColor)).geodesic(true);
-        for (int i = 0; i < points.size(); i++) {
-            LatLng point = points.get(i);
-            options.add(point);
-        }
-        currentDrawingLine = mMap.addPolyline(options); //add Polyline
-        currentDrawingLine.setClickable(true);
-        return currentDrawingLine;
-    }
     //simple method to change the color of a polyline. if false, returns the color of the
     // current index (usefull when on route and we want to maintain the same color)
     //if true, increments the index and returns the next color (usefull when placing all routes
@@ -1153,37 +1069,94 @@ public class PhotoLogFragment extends Fragment implements
 
     }
 
-    //used to check to which route these points belong to
-    //returns null if these points are not in any current path show on map
-    private Route checkWhatTourPolyBelongs(Polyline polyline){
-        for (Route rout : routes){
-            Log.d("route", rout.getRoutePath()+""+polyline);
-            if (rout.getRoutePoints().equals(polyline.getPoints()))
-                return rout;
+    /**
+     * Saving in JSON format:
+     * { Title : "",
+     *   Description : "",
+     *   Markers :[
+     *
+     *      {
+     *      Titl : "" ,
+     *      Snippet  : "",
+     *      Latitude : "",
+     *      Longitude : " " ,
+     *      dateTime : "",
+     *      ID: "",
+     *      Icon : "bitmaptostring replaced / with // "
+     *      }
+     *
+     *      ]
+     * }
+     * //@param route Route to save
+     */
+    /*private void saveRouteToFile(Route route){
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n");
+        //Title and description
+        sb.append("\"Title\" : " + "\"" + route.getRouteTitle() +"\",\n");
+        sb.append("\"Description\" : " + "\"" + route.getRouteDescription() +"\",\n");
+        sb.append("\"Markers\" : [\n");
+        //Markers
+        Map<Marker,Bitmap> temp = route.getRouteMarkers();
+        int tmp = 0;
+        List<LatLng> polyPoints  = route.getRoutePath().getPoints();
+
+        for (Map.Entry<Marker, Bitmap> entry : temp.entrySet())
+        {
+            if (polyPoints.contains(entry.getKey().getPosition())){
+                //Marker number
+                if (tmp > 0)
+                    sb.append(",\n");
+                sb.append("{");
+                //Marker information
+                sb.append("\"Titl\" : " + "\"" + entry.getKey().getTitle() + "\",\n");
+                sb.append("\"Snippet\" : " + "\"" + entry.getKey().getSnippet() + "\",\n");
+                sb.append("\"Latitude\" : " + "\"" + entry.getKey().getPosition().latitude + "\",\n");
+                sb.append("\"Longitude\" : " + "\"" + entry.getKey().getPosition().longitude + "\",\n");
+                sb.append("\"dateTime\" : " + "\"" + markerDate.get(entry.getKey()) + "\",\n");
+                String tmpo = bitMapToBase64(entry.getValue());
+                String imageFix = tmpo.replaceAll("/","//");
+                Log.d("num", "getID: "+markerID.get(entry.getKey())+"");
+                Log.d("num", "getDate: "+markerDate.get(entry.getKey())+"");
+                sb.append("\"ID\" : " + "\"" +markerID.get(entry.getKey())+ "\",\n");
+                sb.append("\"Icon\" : " + "\"" + imageFix + "\"");
+                //End marker
+                sb.append("}");
+                tmp++;
+            }
         }
-        return null;
-    }
+        sb.append("],\n");
+        sb.append("\"Poly\" : [\n");
+
+        //Poly points
+        Iterator<LatLng> it = polyPoints.iterator();
+        tmp = 0;
+        while (it.hasNext()){
+            if (tmp>0){
+                sb.append(",\n");
+            }
+            sb.append("{");
+            LatLng l = it.next();
+            sb.append("\"Longitude\" : " + "\"" +l.longitude + "\", ");
+            sb.append("\"Latitude\" : " + "\"" +l.latitude + "\"");
+            sb.append("}");
+            tmp++;
+        }
+        sb.append("]\n");
+        sb.append("\n}");
+
+        String filename = "route"+ route.getRouteTitle() +".json";
+        FileOutputStream outputStream;
+        try {
+            outputStream = getContext().openFileOutput(filename, Context.MODE_PRIVATE);
+            outputStream.write(sb.toString().getBytes());
+            outputStream.close();
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }*/
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormat(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.DAY_OF_MONTH)+"/"+
-                cl.get(Calendar.MONTH)+"/"+cl.get(Calendar.YEAR)+", " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE);
-        return photoDate;
-    }
 
     //converts date time from miliseconds to date in the format DD/MM/YY, HH:MM as a string
-    public String convertTimeInMilisAndFormatToServerType(long timeInMilis){
-        Date d = new Date(timeInMilis);
-        Calendar cl = Calendar.getInstance();
-        cl.setTime(d);
-        String photoDate = cl.get(Calendar.YEAR)+"-"+
-                cl.get(Calendar.MONTH)+"-"+cl.get(Calendar.DAY_OF_MONTH)+" " +cl.get(Calendar.HOUR_OF_DAY)+
-                ":"+cl.get(Calendar.MINUTE)+":"+cl.get(Calendar.SECOND);
-        return photoDate;
-    }
 
 }

@@ -19,7 +19,7 @@ public class Constants {
     // url to fetch all community routes
     public static final String URL_COMMUNITY_ROUTES = API_URL + "/blahblah";
     // url to fetch all created routes
-    public static final String URL_CREATED_ROUTES = API_URL + "/blahblah";
+    public static final String URL_CREATED_ROUTES = API_URL + "/resources/routes/byuser";
     //url to send image feedback
     public final static String URL_SEND_ROUTE = API_URL + "/resources/routes";
     // url to fetch all routes
@@ -31,6 +31,10 @@ public class Constants {
     // url to fetch routes history json
     public static final String URL_PHOTO_HISTORY = API_URL + "/resources/photos/byuser";
     // url to fetch routes that have a certain attraction
+    public static final String URL_ROUTES_IN_ATTRACTION = API_URL + "/resources/routes/search";
+    // url to fetch information of an attraction (aka concept)
+    public static final String URL_ATTRACTION_INFO = API_URL + "/resources/atractions/";
+    // url to fetch information of an attraction (aka concept)
     public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";

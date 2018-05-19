@@ -271,12 +271,7 @@ def classify_image():
     filename = os.path.join(folder, file_id)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
-    desc = ''
-
-    try:
-        desc = infos[img_name.lower()]
-    except KeyError:
-        desc = img_name
+    
     while(True):
         print("Looping...")
         foto = addFotografia(None, img_name, user_email, lat, lon, filename,
@@ -290,7 +285,7 @@ def classify_image():
         return jsonify({
             'concept_id' : img_name,
             'name': conceito.nome,
-            'description' : desc,
+            'description' : conceito.descricao,
             'id' : foto.id
         })
     return jsonify({

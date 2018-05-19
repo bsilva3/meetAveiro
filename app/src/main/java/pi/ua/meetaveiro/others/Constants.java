@@ -23,7 +23,7 @@ public class Constants {
     // url to fetch all community routes
     public static final String URL_COMMUNITY_ROUTES = API_URL + "/blahblah";
     // url to fetch all created routes
-    public static final String URL_CREATED_ROUTES = API_URL + "/blahblah";
+    public static final String URL_CREATED_ROUTES = API_URL + "/resources/routes/byuser";
     //url to send image feedback
     public final static String URL_SEND_ROUTE = API_URL + "/resources/routes";
     // url to fetch all routes

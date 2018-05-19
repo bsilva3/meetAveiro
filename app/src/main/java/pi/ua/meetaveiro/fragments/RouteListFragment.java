@@ -1,6 +1,7 @@
 package pi.ua.meetaveiro.fragments;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,19 +18,32 @@ import android.widget.Toast;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
+import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -45,7 +59,7 @@ import static pi.ua.meetaveiro.others.Constants.*;
  */
 public class RouteListFragment extends Fragment implements
         SwipeRefreshLayout.OnRefreshListener,
-        NetworkCheckResponse{
+        NetworkCheckResponse {
 
     private static final String TAG = RouteListFragment.class.getSimpleName();
 
@@ -161,56 +175,31 @@ public class RouteListFragment extends Fragment implements
      * fetches json by making http calls
      */
     private void fetchRoutes() {
-        JsonArrayRequest request = new JsonArrayRequest(url,
-                response -> {
-                    if (response == null) {
-                        Toast.makeText(getActivity(), "Couldn't fetch the routes! Pleas try again.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail() + "");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-                    String str = new Gson().toJson(new Object());
-                    List<Route> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
-                    }.getType());
+        //routeList.add(new Route("route 1", "desc"));
+        new uploadFileToServerTask().execute(jsonRequest.toString(), url);
 
-                    // adding contacts to contacts list
-                    routeList.clear();
-                    routeList.addAll(items);
-
-                    // refreshing recycler view
-                    mAdapter.notifyDataSetChanged();
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
-                }, error -> {
-                    // error in getting json
-                    // stop animating Shimmer and hide the layout
-                    mShimmerViewContainer.stopShimmerAnimation();
-                    mShimmerViewContainer.setVisibility(View.GONE);
-                    // stopping swipe refresh
-                    swipeRefreshLayout.setRefreshing(false);
+        // refreshing recycler view
+        mShimmerViewContainer.stopShimmerAnimation();
+        mShimmerViewContainer.setVisibility(View.GONE);
+        // stopping swipe refresh
+        swipeRefreshLayout.setRefreshing(false);
 
 
-            // adding contacts to contacts list
-            routeList.clear();
-            routeList.add(new Route("route 1", "desc"));
-
-            // refreshing recycler view
-            mAdapter.notifyDataSetChanged();
-                }
-        );
-
-        MyApplication.getInstance().addToRequestQueue(request);
     }
 
 
     /**
      * Gets all the route names saved in the phone.
      * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
-     *
      */
-    private void fetchLocalRoutes(){
+    private void fetchLocalRoutes() {
 
         List<Route> items = new ArrayList<>();
         try {
@@ -218,8 +207,8 @@ public class RouteListFragment extends Fragment implements
             File[] files = directory.listFiles();
             Route r;
             for (int i = 0; i < files.length; i++) {
-                if(files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route","");
+                if (files[i].getName().startsWith("route")) {
+                    String title = files[i].getName().replaceFirst("route", "");
                     getRouteFromFile(title);
                     r = new Route(title);
                     items.add(r);
@@ -237,7 +226,7 @@ public class RouteListFragment extends Fragment implements
 
             // refreshing recycler view
             mAdapter.notifyDataSetChanged();
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
 
@@ -254,26 +243,27 @@ public class RouteListFragment extends Fragment implements
      * Opens the file with the route and reconctructs it
      * File name format: route+++.json
      * +++ = route name
+     *
      * @param filename
      * @return String (json format) with all the information
-     *
+     * <p>
      * Must be sent to RouteDetais as an argument
      */
-    private String getRouteFromFile(String filename){
+    private String getRouteFromFile(String filename) {
 
         StringBuffer datax = new StringBuffer("");
         try {
-            FileInputStream fIn = getContext().openFileInput ( filename ) ;
-            InputStreamReader isr = new InputStreamReader ( fIn ) ;
-            BufferedReader buffreader = new BufferedReader ( isr ) ;
-            String readString = buffreader.readLine ( ) ;
-            while ( readString != null ) {
+            FileInputStream fIn = getContext().openFileInput(filename);
+            InputStreamReader isr = new InputStreamReader(fIn);
+            BufferedReader buffreader = new BufferedReader(isr);
+            String readString = buffreader.readLine();
+            while (readString != null) {
                 datax.append(readString);
-                readString = buffreader.readLine ( ) ;
+                readString = buffreader.readLine();
             }
-            isr.close ( ) ;
+            isr.close();
 
-        } catch (IOException e ) {
+        } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
 
@@ -289,4 +279,116 @@ public class RouteListFragment extends Fragment implements
             fetchLocalRoutes();
         }
     }
+
+    /**
+     * Used to send a POST call
+     * Will recieve all the instances from the server.
+     * Needs to include the email
+     */
+    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+        String serverUrl;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String JsonResponse = null;
+            String JsonDATA = params[0];
+            serverUrl = params[1];
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            Log.d("response", "begin");
+            try {
+                //Create a URL object holding our url
+                URL url = new URL(serverUrl);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setDoOutput(true);
+                // is output buffer writter
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                //set headers and method
+                Writer writer = new BufferedWriter(new OutputStreamWriter
+                        (urlConnection.getOutputStream(), "UTF-8"));
+                writer.write(JsonDATA);
+                // json data
+                writer.close();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                //input stream
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String inputLine;
+                while ((inputLine = reader.readLine()) != null)
+                    buffer.append(inputLine + "\n");
+                if (buffer.length() == 0) {
+                    // Stream was empty. No point in parsing.
+                    return null;
+                }
+                JsonResponse = buffer.toString();
+                //send to post execute
+                return JsonResponse;
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+            super.onPostExecute(response);
+            System.out.println(response);
+            try {
+                List<Route> items = new ArrayList<>();
+                JSONObject js = new JSONObject(response);
+                JSONArray arr = js.getJSONArray("routes");
+                Route r;
+                if (arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject row = arr.getJSONObject(i);
+                        String idRoute = row.getString("id");
+                        String title = row.getString("title");
+                        String desc = row.getString("description");
+                        r = new Route(title,desc);
+                        r.setType("Route");
+                        r.setId(Integer.parseInt(idRoute));
+                        items.add(r);
+                    }
+                    // adding contacts to contacts list
+                    routeList.clear();
+                    routeList.addAll(items);
+                    mAdapter.notifyDataSetChanged();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+    }
+
+
 }

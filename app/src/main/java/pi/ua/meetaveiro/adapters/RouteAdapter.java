@@ -96,7 +96,11 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder
                 //All the names stored locally are in the format route + routeTitle + .json
                 bun.putString("fileName", "route"+holder.mItem+".json");
                 //Send the route Title
-                bun.putString("routeTitle",holder.mItem+"");
+                bun.putString("routeTitle",holder.mItem.getRouteTitle()+"");
+                bun.putString("routeDescription",holder.mItem.getRouteDescription());
+
+                bun.putString("Type","Route");
+                bun.putString("RouteInstanceID",holder.mItem.getId()+"");
                 intent.putExtras(bun);
                 context.startActivity(intent);
 

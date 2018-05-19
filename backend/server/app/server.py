@@ -294,7 +294,7 @@ def classify_image():
         else:
             break
     print("Enviando resposta...")
-    if float(score) >= 0.8:
+    if img_name != 'desconhecido':
         return jsonify({
             'concept_id' : img_name,
             'name': conceito.nome,

@@ -102,6 +102,7 @@ def addFotografiaExemplo():
 
 def addInfoExemplo():
     addTiposExemplo()
+    addUsers()
     #addUtilizadoresExemplo()
     addConceitosExemplo()
     addPercursosExemplo()
@@ -179,7 +180,7 @@ def queriesChico():
 @app.route('/')
 def index():
     addInfoExemplo()
-    addUsers()
+    
    
     # queriesExemplo()
     #queriesChico()

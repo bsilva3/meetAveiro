@@ -104,6 +104,7 @@ import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
  * Photo logging  {@link Fragment} subclass.
+ * Photo logging  {@link Fragment} subclass.
  * A user takes a photo, and sends the photo to the server. He also sends the current Date
  * When the server respondes, we see if the image was recognized or not.
  * If it was, we show a dialog with the concept and its description

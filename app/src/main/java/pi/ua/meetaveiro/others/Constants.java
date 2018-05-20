@@ -65,6 +65,7 @@ public class Constants {
     public static final String EXTRA_TAKE_PHOTO = SERVICES_PACKAGE_NAME + ".take_photo";
     public static final String ACTION_BROADCAST = SERVICES_PACKAGE_NAME + ".broadcast";
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
+    public static final String NEW_ROUTE_EXTRA = SERVICES_PACKAGE_NAME + ".new_route";
 
     public enum ROUTE_STATE{
         STARTED, PAUSED, STOPPED;

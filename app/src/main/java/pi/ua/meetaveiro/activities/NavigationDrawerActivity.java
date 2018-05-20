@@ -602,7 +602,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onNewRoute() {
         Intent myIntent = new Intent(NavigationDrawerActivity.this, RouteActivity.class);
-        NavigationDrawerActivity.this.startActivity(myIntent);
+        startActivity(myIntent);
     }
 
     @Override

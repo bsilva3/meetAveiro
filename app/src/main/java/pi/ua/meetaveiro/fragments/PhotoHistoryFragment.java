@@ -97,13 +97,16 @@ public class PhotoHistoryFragment extends Fragment  {
                 )
         );
 
-        fetchImages();
-
         //(new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
 
         return view;
     }
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        fetchImages();
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -131,7 +134,7 @@ public class PhotoHistoryFragment extends Fragment  {
         JSONObject json = new JSONObject();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         try {
-            json.put("user", "joana@ua.pt");
+            json.put("user", user.getEmail());
         } catch (JSONException e) {}
 
         CustomRequest req = new CustomRequest(

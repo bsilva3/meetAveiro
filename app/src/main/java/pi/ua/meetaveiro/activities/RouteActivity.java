@@ -99,8 +99,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.fragments.PhotoLogFragment;
-import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
@@ -212,6 +210,11 @@ public class RouteActivity extends FragmentActivity implements
      */
     private long begginingDate;
 
+    /**
+     * True if it's a new route
+     */
+    private boolean newRoute;
+
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -221,6 +224,8 @@ public class RouteActivity extends FragmentActivity implements
             LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
+            if(Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED))
+                onRouteStateChanged(true);
         }
 
         @Override
@@ -266,9 +271,11 @@ public class RouteActivity extends FragmentActivity implements
         routePoints = new ArrayList<>(); //stores all routePoints during the tour so that a trajectory line can be drawn using those routePoints
         //check if a route was passed
         isFollowingTour = false;
+        newRoute = true;
         if (getIntent().hasExtra("route")){
             isFollowingTour = true;
             routeToFollow = (Route) getIntent().getExtras().getParcelable("route");
+            newRoute = false;
         }
         // Inflate the layout for this fragment
         buttonAddPhoto = findViewById(R.id.take_photo);
@@ -416,7 +423,7 @@ public class RouteActivity extends FragmentActivity implements
         });
 
         updateValuesFromBundle(savedInstanceState);
-        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+
         updateRouteButtons(Utils.getRouteState(this));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -444,14 +451,13 @@ public class RouteActivity extends FragmentActivity implements
 
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
-        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, LocationUpdatesService.class).putExtra(NEW_ROUTE_EXTRA, newRoute), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
-            onRouteStateChanged(true);
+
         updateRouteButtons(Utils.getRouteState(this));
         Log.i("state....",  Utils.getRouteState(this).toString());
         LocalBroadcastManager
@@ -497,7 +503,7 @@ public class RouteActivity extends FragmentActivity implements
     //Called when Start/Stop route button is pressed
     public void onRouteStateChanged(boolean started){
         if(started)
-            mService.requestLocationUpdates();
+            mService.requestLocationUpdates(newRoute);
         else{
             mService.removeLocationUpdates();
             begginingDate = Calendar.getInstance().getTimeInMillis();
@@ -1102,11 +1108,8 @@ public class RouteActivity extends FragmentActivity implements
     */
     @Override
     public void onPause() {
-        super.onPause();  // Always call the superclass method first
-        LocalBroadcastManager
-                .getInstance(this)
-                .unregisterReceiver(locationsReceiver);
         super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationsReceiver);
 
         //Iterate trough all saved markers.
         int i = 0;
@@ -1132,7 +1135,6 @@ public class RouteActivity extends FragmentActivity implements
     @Override
     protected void onStop() {
         if (mBound) {
-            Log.i("unbind", "unbinddddddddddd");
             // Unbind from the service. This signals to the service that this activity is no longer
             // in the foreground, and the service can respond by promoting itself to a foreground
             // service.
@@ -1184,6 +1186,9 @@ public class RouteActivity extends FragmentActivity implements
 
     @Override
     public void onDestroy() {
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(locationsReceiver);
         // Don't forget to shutdown tts!
         if (tts != null) {
             tts.stop();

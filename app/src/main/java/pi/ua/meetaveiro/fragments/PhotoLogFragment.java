@@ -342,6 +342,7 @@ public class PhotoLogFragment extends Fragment implements
                     String btm = prefs.getString("bmp" + tmp, "");
                     int id = prefs.getInt("ID" + tmp, 0);
                     long date = prefs.getLong("dateTime" + tmp, 0);
+                    String conceptID = prefs.getString("conceptID"+tmp, "");
                     String snip = prefs.getString("Snip" + tmp, "");
                     String titl = prefs.getString("Titl" + tmp, "");
                     LatLng l = null;
@@ -359,6 +360,7 @@ public class PhotoLogFragment extends Fragment implements
                                 .icon(BitmapDescriptorFactory.fromBitmap(img))
                                 .title(titl)
                                 .snippet(snip));
+                        m.setTag(conceptID);
                         imageMarkers.put(m, img);
                         markers.put(m, true);
                         markerID.put(m, id);
@@ -373,6 +375,7 @@ public class PhotoLogFragment extends Fragment implements
                         markers.put(m, true);
                         markerID.put(m, id);
                         markerDate.put(m, date);
+                        m.setTag(conceptID);
                     }
                     tmp++;
                 } else {
@@ -514,6 +517,7 @@ public class PhotoLogFragment extends Fragment implements
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("cal", "called in photolog");
         switch (requestCode) {
             // Check for the integer request code originally supplied to startResolutionForResult().
             case REQUEST_CHECK_SETTINGS:
@@ -574,6 +578,7 @@ public class PhotoLogFragment extends Fragment implements
                         Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
                     }
                 }
+                Utils.uncompletedCameraRequest = false;
                 break;
         }
     }
@@ -654,10 +659,10 @@ public class PhotoLogFragment extends Fragment implements
         markerID.put(markerToUpdate, id);
         Log.d("marker", "ids: "+markerID);
         updateMarkerOnMap(oldMarker, markerToUpdate);
-        //setClickListenersOnMap(id);
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
         createAndShowInfoDialog(markerToUpdate, id, true);
+        addMarkerListener();
         saveMarkersOnStorage();
     }
 
@@ -685,14 +690,17 @@ public class PhotoLogFragment extends Fragment implements
 
     private void createAndShowInfoDialog(Marker m, int id, boolean showFeedback){
         String name = m.getTitle();
+        String conceptID = m.getTag().toString();
         String description = m.getSnippet();
+        Log.d("tag", conceptID);
         //String date = convertTimeInMilisAndFormat(markerDate.get(m));
         Drawable d = new BitmapDrawable(getResources(), imageMarkers.get(m));
         //image was recognized
-        if (!name.toLowerCase().equals("desconhecido")) {
+        if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown")) {
             //when the dialog with the description is closed, we show a feedback box;
             //the user says if the app was able to identify the image succesfully, or close the dialog
             //without providing an answer
+            Log.d("concept_id", conceptID+", -"+name);
             final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
                     .setHeaderDrawable(d)
                     .setIcon(R.drawable.ic_check_green_24dp)
@@ -709,7 +717,7 @@ public class PhotoLogFragment extends Fragment implements
                             }
                     )
                     .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
-                            .putExtra("attraction", name)))
+                            .putExtra("attraction", conceptID)))
                     .setNeutralText(getContext().getString(R.string.see_more_info));
             dialog.setScrollable(true, 5);
             dialog.show();
@@ -788,6 +796,7 @@ public class PhotoLogFragment extends Fragment implements
     * - Longitude   Lng
     * - Icon        bmp
     * - ID          ID
+    * - conceptID   conceptID
     * - dateTime    dateTime
     * - Title       Titl
     * - Snippet     Snip
@@ -814,8 +823,8 @@ public class PhotoLogFragment extends Fragment implements
             prefs.edit().putString("Titl"+i,String.valueOf(m.getTitle())).apply();
             prefs.edit().putString("Snip"+i,String.valueOf(m.getSnippet())).apply();
             prefs.edit().putLong("dateTime"+i,Long.valueOf(markerDate.get(m))).apply();
+            prefs.edit().putString("conceptID"+i,String.valueOf(m.getTag())).apply();
             Log.d("num", "saveID: "+markerID.get(m)+"");
-            Log.d("num", "saveDate: "+markerDate.get(m)+"");
             prefs.edit().putInt("ID"+i,Integer.valueOf(markerID.get(m))).apply();
             prefs.edit().putString("bmp"+i,BitMapToString(img)).apply();
             i++;
@@ -879,6 +888,8 @@ public class PhotoLogFragment extends Fragment implements
         markers = new HashMap<>();
         markerDate = new HashMap<>();
         markerID = new HashMap<>();
+        if (mMap != null)
+            mMap.clear();
     }
 
     private class uploadFileToServerTask extends AsyncTask<String, Void, String> {

@@ -232,14 +232,16 @@ public class AttractionListFragment extends Fragment implements
                 }
         );
         Attraction attraction = new Attraction();
-        attraction.setName("Moliceiro");
+        attraction.setName("Biblioteca");
         attraction.setCity("Aveiro");
+        attraction.setId("biblioteca");
         attraction.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
         //attraction.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
         attraction.setLocation(new LatLng(40.6442700, -8.6455400));
         Attraction attraction2 = new Attraction();
-        attraction2.setName("Moliceiro");
+        attraction2.setName("Biblioteca");
         attraction2.setCity("Porto");
+        attraction.setId("biblioteca");
         attraction2.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
         //attraction2.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
         attraction2.setLocation(new LatLng(40.6442700, -8.6455400));

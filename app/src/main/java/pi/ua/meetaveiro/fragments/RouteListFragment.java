@@ -358,7 +358,7 @@ public class RouteListFragment extends Fragment implements
         @Override
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
-            System.out.println(response);
+            Log.d("resComm", response+"");
             try {
                 List<Route> items = new ArrayList<>();
                 JSONObject js = new JSONObject(response);

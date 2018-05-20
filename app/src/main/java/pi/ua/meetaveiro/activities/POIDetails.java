@@ -262,20 +262,22 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
             @Override
             public void onResponse(JSONObject response) {
-                Log.d("ERROR", response.toString());
+                Log.d("res", response.toString());
                 description = findViewById(R.id.attraction_description);
+                String name;
                 String lat;
                 String longt;
                 JSONArray photosArray;
                 try {
                     photosArray = response.getJSONArray("photos");
                     //download the photos from url (usually, its just 2
-                    for (int i = 0; i < photosArray.length(); i++){
+                    /*for (int i = 0; i < photosArray.length(); i++){
                         imagesArray.add(Utils.downloadImage(photosArray.get(i).toString()));
-                    }
+                    }*/
                     mShimmerViewContainer.stopShimmerAnimation();
                     mShimmerViewContainer.setVisibility(View.GONE);
-                    response.get("name");
+                    name = response.getString("name");
+                    collapsingToolbar.setTitle(name);
                     description.setText(response.get("description").toString());
                     lat = response.getString("latitude");
                     longt = response.getString("longitude");
@@ -284,7 +286,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                         map.setOnClickListener(new View.OnClickListener() {
                             public void onClick(View v) {
                                 //this intent simply opens the google maps app on the sent coordinates
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:" + lat + "," + longt + "?q=<lat>,<long>(Label+Name)"));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:" + lat + "," + longt + "?q=<"+lat+">,<"+longt+">("+name+")"));
                                 startActivity(intent);
                             }
                         });

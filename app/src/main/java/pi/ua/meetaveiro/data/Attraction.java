@@ -19,6 +19,7 @@ public class Attraction implements Parcelable {
     private Uri secondaryImageUrl;
     private LatLng location;
     private String city;
+    private String id;
 
     private Bitmap image;
     private Bitmap secondaryImage;
@@ -87,6 +88,14 @@ public class Attraction implements Parcelable {
         this.image = image;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public Bitmap getSecondaryImage() {
         return secondaryImage;
     }
@@ -103,6 +112,7 @@ public class Attraction implements Parcelable {
         try {
             name = in.readString();
             description = in.readString();
+            id = in.readString();
             longDescription = in.readString();
             imageUrl = in.readParcelable(getClass().getClassLoader());
             secondaryImage = in.readParcelable(getClass().getClassLoader());
@@ -113,10 +123,11 @@ public class Attraction implements Parcelable {
         }
     }
 
-    public Attraction(String name, String description, String longDescription, Uri imageUrl,
+    public Attraction(String name, String description, String id, String longDescription, Uri imageUrl,
                       Uri secondaryImageUrl, LatLng location, String city) {
         this.name = name;
         this.description = description;
+        this.id = id;
         this.longDescription = longDescription;
         this.imageUrl = imageUrl;
         this.secondaryImageUrl = secondaryImageUrl;
@@ -139,6 +150,7 @@ public class Attraction implements Parcelable {
         // Write data in any order
         dest.writeString(name);
         dest.writeString(description);
+        dest.writeString(id);
         dest.writeParcelable(imageUrl, flags);
         dest.writeParcelable(secondaryImageUrl, flags);
         dest.writeParcelable(location, flags);
@@ -156,4 +168,5 @@ public class Attraction implements Parcelable {
                 return new Attraction[0];
             }
         };
+
 }

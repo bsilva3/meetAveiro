@@ -132,8 +132,7 @@ public class Utils {
             bitmap = BitmapFactory.decodeStream(stream, null, bmOptions);
             stream.close();
         } catch (IOException e1) {
-            e1.printStackTrace();
-            System.out.println("downloadImage" + e1.toString());
+            Log.e("ERROR", e1.toString());
         }
         return bitmap;
     }

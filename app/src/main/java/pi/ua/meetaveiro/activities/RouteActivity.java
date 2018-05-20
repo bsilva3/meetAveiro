@@ -278,6 +278,7 @@ public class RouteActivity extends FragmentActivity implements
 
         buttonAddPhoto.setOnClickListener(v -> {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            cameraIntent.putExtra("routeAct", 1);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         });
         if (isFollowingTour){
@@ -350,7 +351,7 @@ public class RouteActivity extends FragmentActivity implements
                                     routePoints.clear();
                                     imageMarkers.clear();
                                     markerDate.clear();
-                                    line.remove();
+                                    mMap.clear();
                                     //now procede to the tour
                                     onRouteStateChanged(true);
                                     Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
@@ -775,6 +776,7 @@ public class RouteActivity extends FragmentActivity implements
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("cal", "called in route activity");
         switch (requestCode) {
             // Check for the integer request code originally supplied to startResolutionForResult().
             case REQUEST_CHECK_SETTINGS:
@@ -792,25 +794,21 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
-                    //To ease the time to send a photo the photo is compressed
-                    //Bitmap photo = (Bitmap) data.getExtras().get("data");
-                    //This is to be used in the markers (To fix the loss of quality)
+                    Bitmap photo = (Bitmap) data.getExtras().get("data");
                     Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
+
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
-
-
-
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    resetMarkers();
+
+                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
-
                     String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
-
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
+                    long date = Calendar.getInstance().getTimeInMillis();
                     try {
-                        long date = Calendar.getInstance().getTimeInMillis();
                         jsonRequest.put("date", date);
                         jsonRequest.put("image", base64Photo);
                         jsonRequest.put("lat", mLastKnownLocation.getLatitude());
@@ -819,21 +817,21 @@ public class RouteActivity extends FragmentActivity implements
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
-
+                    //create marker and store it (also store the date we took the photo for the marker)
                     if (mLastKnownLocation!=null) {
                         //add the marker to the map of markers, but indicate that this marker
                         //does not have an updated info yet
                         Marker m = mMap.addMarker(new MarkerOptions()
                                 .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                 .title(this.getString(R.string.unknown_string))
-                                .snippet("Unknown")
+                                .snippet(this.getString(R.string.unknown_string))
                                 .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
                         markers.put(m, false);
                         imageMarkers.put(m, photoHighQuality);
+                        markerDate.put(m, date);
                         //send a base 64 encoded photo to server
-                        new UploadFileToServerTask().execute(jsonRequest.toString(),IMAGE_SCAN_URL);
-
-
+                        Log.d("req", jsonRequest.toString()+"");
+                        new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
                     }else {
                         //Report error to user
                         Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
@@ -842,6 +840,18 @@ public class RouteActivity extends FragmentActivity implements
                 Utils.uncompletedCameraRequest = false;
                 break;
         }
+    }
+
+    public void resetMarkers(){
+        imageMarkers = new HashMap<>();
+        markers = new HashMap<>();
+        markerDate = new HashMap<>();
+        markerID = new HashMap<>();
+        if (mMap != null){
+            mMap.clear();
+            redrawLine();
+        }
+
     }
 
     public void onImageResponseReceived(Object result) {
@@ -882,28 +892,44 @@ public class RouteActivity extends FragmentActivity implements
         Marker oldMarker = markerToUpdate;
         String title = "";
         String description = "";
+        String conceptID = "";
         int id = 0;
         //we get the data from the json
         //if the image was recognized, we get the title, description and id, else
         //we get unknown (desconhecido) as title, "" as description (still return an id)
         try {
-            title = json.get("name").toString();
-            description = json.get("description").toString();
+            title = json.getString("name");
+            description = json.getString("description");
             id = json.getInt("id");
+            conceptID = json.getString("concept_id");
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage());
         }
         markerToUpdate.setTitle(title);
         markerToUpdate.setSnippet(this.getString(R.string.unknown_photo_dialog_description)+
-                Utils.convertTimeInMilisAndFormat(markerDate.get(markerToUpdate))+" \n"+description);
+                Utils.convertTimeInMilisAndFormatPretty(markerDate.get(markerToUpdate))+" \n"+description);
+        markerToUpdate.setTag(conceptID);
         markers.put(markerToUpdate, true);
         markerID.put(markerToUpdate, id);
         Log.d("marker", "ids: "+markerID);
         updateMarkerOnMap(oldMarker, markerToUpdate);
-        //setClickListenersOnMap(id);
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
         createAndShowInfoDialog(markerToUpdate, id, true);
+        addMarkerListener();
+    }
+
+    private void addMarkerListener(){
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                if (markerID.containsKey(m)) {
+                    createAndShowInfoDialog(m, markerID.get(m), false);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     public void onFeedbackResponseReceived (Object result){
@@ -929,7 +955,7 @@ public class RouteActivity extends FragmentActivity implements
             Toast.makeText(this, this.getString(R.string.feedback_fail), Toast.LENGTH_LONG).show();
             return;
         }
-        Toast.makeText(this, this.getString(R.string.feedback_success), Toast.LENGTH_LONG).show();
+        Toast.makeText(this, this.getString(R.string.tour_sent_server_confirmation), Toast.LENGTH_LONG).show();
     }
 
     @Override

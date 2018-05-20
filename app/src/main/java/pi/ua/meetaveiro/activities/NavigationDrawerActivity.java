@@ -197,7 +197,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public void onAttractionSelected(Attraction item) {
         Intent intent = new Intent(NavigationDrawerActivity.this, POIDetails.class);
-        intent.putExtra("attraction", item.getName());
+        intent.putExtra("attraction", item.getId());
         startActivity(intent);
     }
 

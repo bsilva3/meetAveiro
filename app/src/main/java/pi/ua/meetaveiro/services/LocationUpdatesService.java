@@ -28,7 +28,6 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -154,8 +153,8 @@ public class LocationUpdatesService extends Service {
             if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
                 pauseLocationUpdates();
             else if(Utils.getRouteState(this).equals(ROUTE_STATE.PAUSED))
-                requestLocationUpdates();
-            startForeground(NOTIFICATION_ID, getNotification());
+                resumeLocationUpdates();
+            startForeground(NOTIFICATION_ID, getNotification(intent.getBooleanExtra(NEW_ROUTE_EXTRA, true)));
         }
         Log.i("stateeee", Utils.getRouteState(this).toString());
         // Tells the system to not try to recreate the service after it has been killed.
@@ -199,7 +198,7 @@ public class LocationUpdatesService extends Service {
         // do nothing. Otherwise, we make this service a foreground service.
         if (!mChangingConfiguration && !Utils.getRouteState(this).equals(ROUTE_STATE.STOPPED)) {
             Log.i(TAG, "Starting foreground service");
-            startForeground(NOTIFICATION_ID, getNotification());
+            startForeground(NOTIFICATION_ID, getNotification(intent.getBooleanExtra(NEW_ROUTE_EXTRA, true)));
         }
         return true; // Ensures onRebind() is called when a client re-binds.
     }
@@ -213,10 +212,10 @@ public class LocationUpdatesService extends Service {
      * Makes a request for location updates. Note that in this sample we merely log the
      * {@link SecurityException}.
      */
-    public void requestLocationUpdates() {
+    public void requestLocationUpdates(boolean newRoute) {
         Log.i(TAG, "Requesting location updates");
         Utils.setRouteState(this, ROUTE_STATE.STARTED);
-        startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
+        startService(new Intent(getApplicationContext(), LocationUpdatesService.class).putExtra(NEW_ROUTE_EXTRA, newRoute));
         try {
             mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                     mLocationCallback, Looper.myLooper());
@@ -242,6 +241,21 @@ public class LocationUpdatesService extends Service {
     }
 
     /**
+     * Resumes location updates.
+     */
+    public void resumeLocationUpdates() {
+        Log.i(TAG, "Resuming location updates");
+        Utils.setRouteState(this, ROUTE_STATE.STARTED);
+        try {
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest,
+                    mLocationCallback, Looper.myLooper());
+        } catch (SecurityException unlikely) {
+            Utils.setRouteState(this, ROUTE_STATE.STOPPED);
+            Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
+        }
+    }
+
+    /**
      * Removes location updates. Note that in this sample we merely log the
      * {@link SecurityException}.
      */
@@ -260,7 +274,7 @@ public class LocationUpdatesService extends Service {
     /**
      * Returns the {@link NotificationCompat} used as part of the foreground service.
      */
-    private Notification getNotification() {
+    private Notification getNotification(boolean newRoute) {
 
         //Service Intent
         Intent serviceIntent = new Intent(this, LocationUpdatesService.class);
@@ -313,14 +327,16 @@ public class LocationUpdatesService extends Service {
                     //.setStyle(new Notification.MediaStyle())
                     .addAction(R.drawable.ic_add_photo, getString(R.string.take_picture), activityPhotoPendingIntent);
 
-            if(Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
-                builder.addAction(R.drawable.ic_pause,
-                        getString(R.string.pause_route),
-                        servicePendingIntent);
-            else
-                builder.addAction(R.drawable.ic_play_arrow_black_24dp,
-                        getString(R.string.return_route),
-                        servicePendingIntent);
+            if(newRoute) {
+                if (Utils.getRouteState(this).equals(ROUTE_STATE.STARTED))
+                    builder.addAction(R.drawable.ic_pause,
+                            getString(R.string.pause_route),
+                            servicePendingIntent);
+                else
+                    builder.addAction(R.drawable.ic_play_arrow_black_24dp,
+                            getString(R.string.return_route),
+                            servicePendingIntent);
+            }
 
             notification = builder.build();
         }

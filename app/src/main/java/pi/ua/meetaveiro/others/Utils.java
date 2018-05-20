@@ -89,7 +89,6 @@ public class Utils {
         }
     }
 
-
     /**
      * Opens the file with the route and reconctructs it
      * File name format: route+++.json

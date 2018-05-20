@@ -43,6 +43,7 @@ import android.widget.Toast;
 
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
+import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -597,6 +598,18 @@ public class RouteActivity extends FragmentActivity implements
         mGeofencingClient.removeGeofences(getGeofencePendingIntent()).addOnCompleteListener(this);
     }
 
+    public void shareRouteLink(String routeInstanceId){
+        Intent intent = new Intent(Intent.ACTION_SEND);
+
+        intent.setType("text/plain");
+
+        intent.putExtra(Intent.EXTRA_TEXT, "http://192.168.160.192:8080/resources/routes/instances/" + routeInstanceId + "/share");
+
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Check out my meetAveiro route!");
+
+        startActivity(Intent.createChooser(intent, "Share"));
+    }
+
     /**
      * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
      * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
@@ -925,17 +938,37 @@ public class RouteActivity extends FragmentActivity implements
         Toast.makeText(this, this.getString(R.string.feedback_success), Toast.LENGTH_LONG).show();
     }
 
-    public void onRouteSentResponseReceived (Object result){
+    public void onRouteSentResponseReceived (String result){
         JSONObject json = null;
+        String routeInstanceId = "";
+        Log.i("Resultttt", result);
         try {
-            json = new JSONObject(result.toString());
-        } catch (JSONException e) {
-            Log.e(TAG, e.getMessage());
-        } catch (java.lang.NullPointerException e){
+            json = new JSONObject(result);
+            routeInstanceId = json.getString("inst");
+        } catch (Exception e) {
+            Log.i("errorroute", e.getMessage());
             Toast.makeText(this, this.getString(R.string.feedback_fail), Toast.LENGTH_LONG).show();
             return;
         }
-        Toast.makeText(this, this.getString(R.string.feedback_success), Toast.LENGTH_LONG).show();
+
+        String finalRouteInstanceId = routeInstanceId;
+        new MaterialStyledDialog.Builder(this)
+                .setTitle(this.getString(R.string.route_success))
+                .setDescription(R.string.share_route)
+                .setStyle(Style.HEADER_WITH_ICON)
+                .setIcon(R.drawable.ic_share_black_24dp)
+                .setHeaderColor(R.color.colorAccent)
+                .setCancelable(true)
+                .withIconAnimation(true)
+                .withDialogAnimation(true)
+                .setPositiveText(this.getString(R.string.share))
+                .onPositive(
+                        (dialog12, which) -> {
+                            shareRouteLink(finalRouteInstanceId);
+                        }
+                )
+                .setNegativeText(this.getString(R.string.close))
+                .show();
     }
 
     @Override
@@ -1409,36 +1442,30 @@ public class RouteActivity extends FragmentActivity implements
         // show it
         alertDialog.show();
 
-        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                String boxTitle = routeTitleBox.getText().toString();
-                String boxDescription = routeDescriptionBox.getText().toString();
-                if (TextUtils.isEmpty(boxTitle)){
-                    Log.d("text", "here");
-                    routeTitleBox.setError(getString(R.string.fill_out));
-                    routeTitleBox.requestFocus();
-                }
-                else if (TextUtils.isEmpty(boxDescription)){
-                    routeDescriptionBox.setError(getString(R.string.fill_out));
-                    routeDescriptionBox.requestFocus();
-                }
-                else {
-                    // get user input and create a route object
-                    Route route = new Route(routeTitleBox.getText().toString(), line,
-                            routeDescriptionBox.getText().toString(), imageMarkers);
-                    RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, imageMarkers);
-
-                    //Save to Storage and send to the server
-                    saveRouteToFile(rt);
-                    JSONObject jsonT = placeRoutesOnJson(rt);
-                    new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
-                    alertDialog.dismiss();
-                }
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String boxTitle = routeTitleBox.getText().toString();
+            String boxDescription = routeDescriptionBox.getText().toString();
+            if (TextUtils.isEmpty(boxTitle)){
+                Log.d("text", "here");
+                routeTitleBox.setError(getString(R.string.fill_out));
+                routeTitleBox.requestFocus();
             }
+            else if (TextUtils.isEmpty(boxDescription)){
+                routeDescriptionBox.setError(getString(R.string.fill_out));
+                routeDescriptionBox.requestFocus();
+            }
+            else {
+                // get user input and create a route object
+                Route route = new Route(routeTitleBox.getText().toString(), line,
+                        routeDescriptionBox.getText().toString(), imageMarkers);
+                RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, imageMarkers);
 
+                //Save to Storage and send to the server
+                saveRouteToFile(rt);
+                JSONObject jsonT = placeRoutesOnJson(rt);
+                new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
+                alertDialog.dismiss();
+            }
         });
     }
 

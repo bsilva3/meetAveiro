@@ -548,6 +548,8 @@ def get_atractions():
 
     for c in conceitos:
         temp = {}
+        if c.nomeconceito == 'desconhecido':
+            continue
         temp['id'] = c.nomeconceito
         temp['name'] = c.nome
         temp['latitude'] = c.latitude

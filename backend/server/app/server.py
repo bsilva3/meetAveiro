@@ -362,6 +362,8 @@ def receive_routes():
     marks = markers.split(',')
 
     for m in marks:
+        if m == '':
+            continue
         foto = getFoto(m)
         addPonto(foto.latitude, foto.longitude, percurso.id)
         foto.idinstperc = instancia.id
@@ -370,6 +372,8 @@ def receive_routes():
     print('Markers')
     trajs = trajectory.split(';')
     for coord in trajs:
+        if coord == '':
+            continue
         c = coord.split(',') 
         lat = c[0]
         lon = c[1]

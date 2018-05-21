@@ -320,7 +320,7 @@ def updateFotografia(id, conceito, path):
     return
 
 def updateFotoByPath(path, newpath):
-    foto = db.session.query().filter(Fotografia.path == path).first()
+    foto = db.session.query(Fotografia).filter(Fotografia.path == path).first()
     foto.path = newpath
     db.session.commit()
     return foto

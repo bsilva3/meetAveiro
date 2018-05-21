@@ -7,6 +7,8 @@ import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
 from math import sqrt
+from geopy import distance
+from geopy.geocoders import Nominatim
 
 import random
 import datetime
@@ -115,8 +117,8 @@ def show_gallery(query):
 def show_stats():
     return render_template('stats.html',
                            totalusers = nTotalUsers(),
-                           totalAdmin=10,
-                           totalTuristas = 80,
+                           totalAdmin = nTotalTipoUser('Administrador'),
+                           totalTuristas = nTotalTipoUser('Turista'),
                            totalconcepts = nTotalConcepts(),
                            totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
@@ -259,7 +261,7 @@ def classify_image():
     writeImage(image)
     print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
-    img_name = classification[0]
+    img_name = classification[0].lower()
     img_name = img_name.replace(' ', '_')
     print('Conceito: ' + img_name)
     conceito = db.session.query(Conceito).get(img_name)
@@ -270,9 +272,8 @@ def classify_image():
 
     conc_lat = conceito.latitude
     conc_long = conceito.longitude
-    raio = conceito.raio
-
-    if sqrt((lat-conc_lat)**2 + (lon-conc_long)**2) > raio:
+    
+    if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.1:
         img_name = 'desconhecido'
 
     
@@ -314,12 +315,17 @@ def classify_image():
 def send_feedback():
     res = request.get_json(force=True)
     file_id = res['image_id']
-    concept = res['concept']
+    concept = res['concept'].lower()
     feedback = res['answer']
     print('feedback ' + str(feedback))
+
+    if concept == 'desconhecido':
+        return jsonify({
+            'status': str(feedback)
+        })
+    print(type(feedback))
     if feedback == 1:
-        #req_path = os.path.join('./static/img', concept)
-        #file_path = os.path.join(req_path, file_id)
+        print('I am in')
         foto = getFoto(file_id)
         file_path = foto.path
         dest_path = os.path.join(IMAGE_FOLDER, concept)
@@ -542,16 +548,47 @@ def get_atractions():
 
     for c in conceitos:
         temp = {}
+        if c.nomeconceito == 'desconhecido':
+            continue
         temp['id'] = c.nomeconceito
         temp['name'] = c.nome
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
+        if c.latitude is not None:
+            geolocator = Nominatim()
+            print(str(c.latitude) + ', ' + str(c.longitude))
+            location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
+            location = location.address.split(',')
+            if len(location) == 9:
+                temp['city'] = location[2]
+            elif len(location) == 10:
+                temp['city'] = location[3]
+        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
+        f = fotos[0]
+        foto = {}
+        path = ''
+        try:
+            
+            readImage(f.path)
+            if f.nomeconc == 'desconhecido':
+                foto['concept'] = ''
+            else:
+                foto['concept'] = f.nomeconc
+            if './static' in f.path:
+                temp1 = f.path.replace('./static/img/', '')
+                temp1 = temp1.split('/')
+                path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
+            else:
+                temp1 = f.path.replace('../', '')
+                temp1 = temp1.replace('treino/', '')
+                path = 'http://192.168.160.192:8080/sendimage/' + temp1
+        except:
+            print('Could not find: ' + f.path)
+        temp['imgName'] = path
         res.append(temp)
 
-    return jsonify({
-        'atractions': res
-    })
+    return jsonify(res)
 
 @app.route('/resources/photos/byuser', methods=['POST'])
 def get_photo_history():

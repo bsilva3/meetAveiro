@@ -816,7 +816,7 @@ public class RouteActivity extends FragmentActivity implements
 
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-                    resetMarkers();
+                    //resetMarkers();
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
@@ -862,12 +862,12 @@ public class RouteActivity extends FragmentActivity implements
     }
 
     public void resetMarkers(){
-        imageMarkers = new HashMap<>();
-        markers = new HashMap<>();
-        markerDate = new HashMap<>();
-        markerID = new HashMap<>();
+        //imageMarkers = new HashMap<>();
+       // markers = new HashMap<>();
+        //markerDate = new HashMap<>();
+        //markerID = new HashMap<>();
         if (mMap != null){
-            mMap.clear();
+           // mMap.clear();
             redrawLine();
         }
 
@@ -967,8 +967,8 @@ public class RouteActivity extends FragmentActivity implements
     public void onRouteSentResponseReceived (String result){
         JSONObject json = null;
         String routeInstanceId = "";
-        Log.i("Resultttt", result+"");
         try {
+            Log.i("Resultttt", result + "");
             json = new JSONObject(result);
             routeInstanceId = json.getString("inst");
         } catch (Exception e) {
@@ -1620,9 +1620,19 @@ public class RouteActivity extends FragmentActivity implements
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
             j.put("trajectory", routePointsString);
+            /*String rpts = "";
+            for(int z = 0; z< routePoints.size();z++){
+                rpts+= routePoints.get(z).latitude + "," + routePoints.get(z).longitude + ";";
+            }
+            rpts = rpts.substring(0, rpts.length() - 1);
+
+            j.put("trajectory", rpts);*/
+
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        Log.d("ROUTE", j.toString());
         return j;
     }
 

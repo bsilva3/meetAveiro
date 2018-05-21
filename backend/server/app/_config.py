@@ -13,3 +13,4 @@ POSTGRES = {
 WTF_CSRF_ENABLED = True
 SECRET_KEY = '1234567'
 SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(password)s@%(host)s:%(port)s/%(database)s' % POSTGRES
+SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -249,6 +249,16 @@ def manage_requests():
 #######################################################
 #######################################################
 
+@app.route('/resources/users', methods=['POST'])
+def register_user():
+    req = request.get_json(force=True)
+    email = req['user']
+    addUtilizador(email, 2)
+    return jsonify({
+        'user': email
+    })
+
+
 @app.route('/search', methods=['POST'])
 def classify_image():
     res = request.get_json(force=True)

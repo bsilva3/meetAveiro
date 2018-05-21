@@ -555,7 +555,7 @@ def get_atractions():
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
-        geolocator = Nomatim()
+        geolocator = Nominatim()
         location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
         temp['city'] = location
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)

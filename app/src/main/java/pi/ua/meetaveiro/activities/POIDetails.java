@@ -110,6 +110,7 @@ public class POIDetails extends AppCompatActivity {
 
         //toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
         map = (FloatingActionButton) findViewById(R.id.show_on_map);
+        map.setVisibility(View.GONE);
         description = (TextView) findViewById(R.id.attraction_description);
 
 
@@ -294,10 +295,7 @@ public class POIDetails extends AppCompatActivity {
                                 startActivity(intent);
                             }
                         });
-                    }
-                    else{
-                        //if there are no coordinates we dont show the button
-                        map.setVisibility(View.GONE);
+                        map.setVisibility(View.VISIBLE);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

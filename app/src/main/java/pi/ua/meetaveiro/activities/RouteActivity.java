@@ -1588,15 +1588,6 @@ public class RouteActivity extends FragmentActivity implements
     // put trajectory coordinates as string and marker's id as string)
     public JSONObject placeRoutesOnJson(RouteInstance rt){
         JSONObject j = new JSONObject();
-        String routePointsString = "";
-        for (int i = 0; i < routePoints.size(); i++){
-            if (i == routePoints.size() - 1)//last one
-                routePointsString+=routePoints.get(i).latitude+","+routePoints.get(i).longitude;
-            else
-                routePointsString+=routePoints.get(i).latitude+","+routePoints.get(i).longitude+";";
-
-        }
-        Log.d("routePoints", routePointsString+"");
         //String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
         //add markers
         //send image ids as string (server has problems converting from int[])
@@ -1619,14 +1610,14 @@ public class RouteActivity extends FragmentActivity implements
             j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
-            j.put("trajectory", routePointsString);
-            /*String rpts = "";
-            for(int z = 0; z< routePoints.size();z++){
+            //j.put("trajectory", routePointsString);
+            String rpts = "";
+            for(int z = 0; z < routePoints.size();z++){
                 rpts+= routePoints.get(z).latitude + "," + routePoints.get(z).longitude + ";";
             }
             rpts = rpts.substring(0, rpts.length() - 1);
 
-            j.put("trajectory", rpts);*/
+            j.put("trajectory", rpts);
 
 
         } catch (JSONException e) {

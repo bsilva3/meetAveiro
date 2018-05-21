@@ -1,6 +1,7 @@
 package pi.ua.meetaveiro.activities;
 
 
+import android.app.Fragment;
 import android.graphics.Bitmap;
 
 import android.graphics.BitmapFactory;
@@ -13,12 +14,17 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -48,12 +54,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.others.MapScrollWorkAround;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
@@ -110,7 +118,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(R.id.map_route_details);
         mapFragment.getMapAsync(this);
 
         //Initialize the TextViews
@@ -129,7 +137,17 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 this.routeInstanceID = b.getString("RouteInstanceID");
         }
 
+        NestedScrollView mScrollView = (NestedScrollView) findViewById(R.id.route_details_scroll);
+        //fix for google maps scroll inside a nested scroll (a tap is required sometimes...)
+        ((MapScrollWorkAround) getSupportFragmentManager().findFragmentById(R.id.map_route_details)).setListener(new MapScrollWorkAround.OnTouchListener() {
+            @Override
+            public void onTouch() {
+                mScrollView.requestDisallowInterceptTouchEvent(true);
+            }
+        });
     }
+
+
 
 
     /**
@@ -247,7 +265,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             }
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markLar, 17));
+            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markLar, 17));
 
 
             //Reconstruct the polilyne
@@ -261,17 +279,31 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
                 options.add(l);
             }
+            int i = getMiddleofArray(arr);
+            double lat = arr.getJSONObject(i).getDouble("Latitude");
+            double longt = arr.getJSONObject(i).getDouble("Longitude");
+            Log.d("latLong", lat+", "+longt);
+            //center the map in the route
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, longt), 18.0f));
             mMap.addPolyline(options);
 
             //Set the route Description if there is any
             if (routeDesc != "" || routeDesc != null)
                 routeDescription.setText(routeDesc);
-
             return;
         } catch (JSONException e) {
             e.printStackTrace();
             return;
         }
+    }
+
+
+    //returns the middle element of a list
+    private int getMiddleofArray(JSONArray arrayOfNames) {
+        if (arrayOfNames.length() %2 == 0)
+            return arrayOfNames.length() /2;
+        else
+            return (arrayOfNames.length() /2)-1;
     }
 
 
@@ -310,7 +342,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
     private void rearrangeJSONDataRoute(String inFo){
-
+            Log.d("routeInfo", inFo+"");
         try {
             JSONObject json = new JSONObject(inFo);
             routeTitle = json.getString("title");
@@ -342,7 +374,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     //Rearranges all the information from the Instance as Images
     private void rearrangeJSONDataInstance(String inFo){
-        try {
+         try {
             JSONObject json = new JSONObject(inFo);
 
             routeTitle = json.getString("title");
@@ -372,6 +404,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 String lat = obj.get("latitude").toString();
                 String longi = obj.get("longitude").toString();
                 LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                Log.d("line", l+"");
                 options.add(l);
             }
 
@@ -406,7 +439,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 it.remove();
             }
         }
-
         adapter.notifyDataSetChanged();
     }
 

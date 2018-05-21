@@ -559,24 +559,30 @@ public class PhotoLogFragment extends Fragment implements
                         Log.e(TAG, e.getMessage());
                     }
                     //create marker and store it (also store the date we took the photo for the marker)
-                    if (mLastKnownLocation!=null) {
-                        //add the marker to the map of markers, but indicate that this marker
-                        //does not have an updated info yet
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
-                                .title(getContext().getString(R.string.unknown_string))
-                                .snippet(getContext().getString(R.string.unknown_string))
-                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
-                        markers.put(m, false);
-                        imageMarkers.put(m, photoHighQuality);
-                        markerDate.put(m, date);
-                        //send a base 64 encoded photo to server
-                        Log.d("req", jsonRequest.toString()+"");
-                        new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
-                    }else {
-                        //Report error to user
-                        Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
-                    }
+
+                        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                            public void onMapLoaded() {
+                                if (mLastKnownLocation!=null ) {
+                                    //add the marker to the map of markers, but indicate that this marker
+                                    //does not have an updated info yet
+                                    Marker m = mMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                                            .title(getContext().getString(R.string.unknown_string))
+                                            .snippet(getContext().getString(R.string.unknown_string))
+                                            .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
+                                    markers.put(m, false);
+                                    imageMarkers.put(m, photoHighQuality);
+                                    markerDate.put(m, date);
+                                    //send a base 64 encoded photo to server
+                                    Log.d("req", jsonRequest.toString()+"");
+                                    new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                                }else {
+                                    //Report error to user
+                                    Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+
                 }
                 Utils.uncompletedCameraRequest = false;
                 break;

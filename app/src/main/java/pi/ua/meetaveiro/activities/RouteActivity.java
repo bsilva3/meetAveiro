@@ -102,6 +102,7 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
+import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MyApplication;
@@ -806,7 +807,6 @@ public class RouteActivity extends FragmentActivity implements
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     resetMarkers();
-
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
@@ -823,25 +823,28 @@ public class RouteActivity extends FragmentActivity implements
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage());
                     }
-                    //create marker and store it (also store the date we took the photo for the marker)
-                    if (mLastKnownLocation!=null) {
-                        //add the marker to the map of markers, but indicate that this marker
-                        //does not have an updated info yet
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
-                                .title(this.getString(R.string.unknown_string))
-                                .snippet(this.getString(R.string.unknown_string))
-                                .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
-                        markers.put(m, false);
-                        imageMarkers.put(m, photoHighQuality);
-                        markerDate.put(m, date);
-                        //send a base 64 encoded photo to server
-                        Log.d("req", jsonRequest.toString()+"");
-                        new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
-                    }else {
-                        //Report error to user
-                        Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
-                    }
+                    mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                        public void onMapLoaded() {
+                            if (mLastKnownLocation!=null ) {
+                                //add the marker to the map of markers, but indicate that this marker
+                                //does not have an updated info yet
+                                Marker m = mMap.addMarker(new MarkerOptions()
+                                        .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                                        .title(getString(R.string.unknown_string))
+                                        .snippet(getString(R.string.unknown_string))
+                                        .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
+                                markers.put(m, false);
+                                imageMarkers.put(m, photoHighQuality);
+                                markerDate.put(m, date);
+                                //send a base 64 encoded photo to server
+                                Log.d("req", jsonRequest.toString()+"");
+                                new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                            }else {
+                                //Report error to user
+                                Toast.makeText(RouteActivity.this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
                 }
                 Utils.uncompletedCameraRequest = false;
                 break;
@@ -1460,6 +1463,7 @@ public class RouteActivity extends FragmentActivity implements
                     //Save to Storage and send to the server
                     saveRouteToFile(rt);
                     JSONObject jsonT = placeRoutesOnJson(rt);
+                    Log.d("routeSend", jsonT.toString()+"");
                     new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
                     alertDialog.dismiss();
                 }

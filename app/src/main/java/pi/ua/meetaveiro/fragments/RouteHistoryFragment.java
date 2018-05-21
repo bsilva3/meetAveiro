@@ -199,8 +199,7 @@ public class RouteHistoryFragment extends Fragment implements
                     items.add(e);
                 }
             }
-
-            // adding contacts to contacts list
+            // adding routes to routes list
             routeList.clear();
             routeList.addAll(items);
 
@@ -381,7 +380,7 @@ public class RouteHistoryFragment extends Fragment implements
             try {
                 List<RouteInstance> items = new ArrayList<>();
                 JSONObject js = new JSONObject(response);
-                System.out.println(js.toString());
+                Log.d("res", js.toString()+"");
                 JSONArray arr = js.getJSONArray("instances");
                 Route r;
                 RouteInstance e;

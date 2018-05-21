@@ -550,6 +550,7 @@ def get_atractions():
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
         f = fotos[0]
         foto = {}
+        path = ''
         try:
             
             readImage(f.path)
@@ -560,14 +561,14 @@ def get_atractions():
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+                path = 'http://192.168.160.192:8080/sendimage/' + temp
         except:
             print('Could not find: ' + f.path)
-        temp['imgName'] = foto['img']
+        temp['imgName'] = path
         res.append(temp)
 
     return jsonify({

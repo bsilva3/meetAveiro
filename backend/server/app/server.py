@@ -115,8 +115,8 @@ def show_gallery(query):
 def show_stats():
     return render_template('stats.html',
                            totalusers = nTotalUsers(),
-                           totalAdmin=10,
-                           totalTuristas = 80,
+                           totalAdmin = nTotalTipoUser('Administrador'),
+                           totalTuristas = nTotalTipoUser('Turista'),
                            totalconcepts = nTotalConcepts(),
                            totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
@@ -317,7 +317,7 @@ def send_feedback():
     concept = res['concept']
     feedback = res['answer']
     print('feedback ' + str(feedback))
-    if feedback == 1:
+    if feedback == '1':
         #req_path = os.path.join('./static/img', concept)
         #file_path = os.path.join(req_path, file_id)
         foto = getFoto(file_id)
@@ -547,6 +547,26 @@ def get_atractions():
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
+        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
+        f = fotos[0]
+        try:
+            foto = {}
+            readImage(f.path)
+            if f.nomeconc == 'desconhecido':
+                foto['concept'] = ''
+            else:
+                foto['concept'] = f.nomeconc
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+        except:
+            print('Could not find: ' + f.path)
+        temp['imgName'] = foto['img']
         res.append(temp)
 
     return jsonify({

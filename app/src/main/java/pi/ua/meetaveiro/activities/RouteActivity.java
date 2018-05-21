@@ -816,7 +816,7 @@ public class RouteActivity extends FragmentActivity implements
 
                     //ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-                    resetMarkers();
+                    //resetMarkers();
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
 
@@ -861,13 +861,14 @@ public class RouteActivity extends FragmentActivity implements
         }
     }
 
+
     public void resetMarkers(){
-        imageMarkers = new HashMap<>();
-        markers = new HashMap<>();
-        markerDate = new HashMap<>();
-        markerID = new HashMap<>();
+        //imageMarkers = new HashMap<>();
+       // markers = new HashMap<>();
+        //markerDate = new HashMap<>();
+        //markerID = new HashMap<>();
         if (mMap != null){
-            mMap.clear();
+           // mMap.clear();
             redrawLine();
         }
 
@@ -967,8 +968,8 @@ public class RouteActivity extends FragmentActivity implements
     public void onRouteSentResponseReceived (String result){
         JSONObject json = null;
         String routeInstanceId = "";
-        Log.i("Resultttt", result);
         try {
+            Log.i("Resultttt", result + "");
             json = new JSONObject(result);
             routeInstanceId = json.getString("inst");
         } catch (Exception e) {
@@ -1486,9 +1487,13 @@ public class RouteActivity extends FragmentActivity implements
                         routeDescriptionBox.getText().toString(), imageMarkers);
                 RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, imageMarkers);
 
+
+
                 //Save to Storage and send to the server
                 saveRouteToFile(rt);
                 JSONObject jsonT = placeRoutesOnJson(rt);
+
+
                 new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
                 alertDialog.dismiss();
             }
@@ -1588,7 +1593,7 @@ public class RouteActivity extends FragmentActivity implements
     public JSONObject placeRoutesOnJson(RouteInstance rt){
         JSONObject j = new JSONObject();
 
-        String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
+        //String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
         //add markers
         //send image ids as string (server has problems converting from int[])
         String listOfMarkers = "";
@@ -1603,6 +1608,8 @@ public class RouteActivity extends FragmentActivity implements
                 listOfMarkers+=entry.getValue()+",";
             i++;
         }
+
+
         try {
             j.put("title", rt.getRoute().getRouteTitle());
             j.put("description", rt.getRoute().getRouteDescription());
@@ -1610,7 +1617,16 @@ public class RouteActivity extends FragmentActivity implements
             j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
-            j.put("trajectory", routePoints);
+
+            String rpts = "";
+            for(int z = 0; z< routePoints.size();z++){
+                rpts+= routePoints.get(z).latitude + "," + routePoints.get(z).longitude + ";";
+            }
+            rpts = rpts.substring(0, rpts.length() - 1);
+
+            j.put("trajectory", rpts);
+
+
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -398,17 +399,22 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             JSONArray jarrTrajectory = json.getJSONArray("trajectory");
             PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
-
-            for (int i = 0;i<jarrTrajectory.length();i++){
+             LatLng l = null;
+             for (int i = 0;i<jarrTrajectory.length();i++){
                 JSONObject obj = jarrTrajectory.getJSONObject(i);
                 String lat = obj.get("latitude").toString();
                 String longi = obj.get("longitude").toString();
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
                 Log.d("line", l+"");
                 options.add(l);
             }
+            try {
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 10);
+                mMap.animateCamera(cameraUpdate);
 
-            mMap.addPolyline(options);
+            }catch (Exception e){}
+
+             mMap.addPolyline(options);
 
             Bundle b = getIntent().getExtras();
             routeDate.setText("Start: " + b.getString("StartDate") + "\nFinished: " + b.getString("EndDate"));

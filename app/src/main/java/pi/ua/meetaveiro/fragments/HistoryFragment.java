@@ -48,8 +48,8 @@ public class HistoryFragment extends Fragment {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         // load the store fragment by default
-        toolbar.setTitle("Route History");
-        loadFragment(new RouteHistoryFragment());
+        toolbar.setTitle("Photo History");
+        loadFragment(new PhotoHistoryFragment());
 
         return view;
     }
@@ -63,12 +63,12 @@ public class HistoryFragment extends Fragment {
             switch (item.getItemId()) {
                 case R.id.option_routes:
                     toolbar.setTitle("Routes History");
-                    fragment = new AccountSettingsFragment();
+                    fragment = new RouteHistoryFragment();
                     loadFragment(fragment);
                     return true;
                 case R.id.option_attractions:
-                    toolbar.setTitle("Attractions History");
-                    fragment = new AccountSettingsFragment();
+                    toolbar.setTitle("Photo History");
+                    fragment = new PhotoHistoryFragment();
                     loadFragment(fragment);
                     return true;
             }

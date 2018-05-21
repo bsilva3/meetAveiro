@@ -1,6 +1,7 @@
 package pi.ua.meetaveiro.adapters;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +49,7 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
         View mView;
         Attraction mItem;
         TextView name, city;
-        ImageView thumbnail, overflow;
+        ImageView thumbnail;
 
         public MyViewHolder(View view) {
             super(view);
@@ -52,7 +57,6 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
             name = view.findViewById(R.id.attraction_name);
             city = view.findViewById(R.id.attraction_city);
             thumbnail = view.findViewById(R.id.attraction_thumbnail);
-            overflow = view.findViewById(R.id.overflow);
             mView.setOnClickListener(view1 -> {
                 // send selected Route in callback
                 mListener.onAttractionSelected(attractionListFiltered.get(getAdapterPosition()));
@@ -75,9 +79,21 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
         holder.city.setText(attraction.getCity());
 
         // loading album cover using Glide library
-        Glide.with(mContext).load(attraction.getImage()).into(holder.thumbnail);
+        RequestOptions options = new RequestOptions()
+                .centerCrop()
+                .placeholder(R.drawable.ic_photo_camera_black_24dp)
+                .error(R.drawable.ic_photo_camera_black_24dp)
+                .priority(Priority.HIGH)
+                .diskCacheStrategy(DiskCacheStrategy.ALL);
 
-        holder.overflow.setOnClickListener(view -> showPopupMenu(holder.overflow));
+        Glide.with(mContext)
+                .load(attraction.getImgName())
+                .thumbnail(0.5f)
+                .transition(
+                        (new DrawableTransitionOptions())
+                                .crossFade())
+                .apply(options)
+                .into(holder.thumbnail);
 
         holder.mView.setOnClickListener(v -> {
             if (null != mListener) {

@@ -1,8 +1,8 @@
 package pi.ua.meetaveiro.fragments;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -12,18 +12,22 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -34,7 +38,6 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.data.Attraction;
-import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -67,6 +70,11 @@ public class AttractionListFragment extends Fragment implements
     private ShimmerFrameLayout mShimmerViewContainer;
 
     /**
+     * Options menu searchView
+     */
+    private SearchView searchView;
+
+    /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
@@ -91,10 +99,12 @@ public class AttractionListFragment extends Fragment implements
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
+        setHasOptionsMenu(true);
     }
 
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
+        Log.i("onprocessfinished",String.valueOf(hasNetworkConnection));
         if (hasNetworkConnection)
             fetchAttractions();
         else {
@@ -203,8 +213,10 @@ public class AttractionListFragment extends Fragment implements
                         return;
                     }
 
-                    List<Attraction> items = new Gson().fromJson(response.toString(), new TypeToken<List<Route>>() {
-                    }.getType());
+                    List<Attraction> items = new Gson().fromJson(
+                            response.toString(),
+                            new TypeToken<List<Attraction>>() {}
+                            .getType());
 
                     // adding contacts to contacts list
                     attractionList.clear();
@@ -227,28 +239,16 @@ public class AttractionListFragment extends Fragment implements
                     mShimmerViewContainer.setVisibility(View.GONE);
                     swipeRefreshLayout.setRefreshing(false);
 
-                    Log.e(TAG, "Error: " + error.getMessage());
+                    Log.e(TAG, "Error: Could not fetch attractions");
                     // stopping swipe refresh
                 }
         );
-        Attraction attraction = new Attraction();
-        attraction.setName("Biblioteca");
-        attraction.setCity("Aveiro");
-        attraction.setId("biblioteca");
-        attraction.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-        //attraction.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-        attraction.setLocation(new LatLng(40.6442700, -8.6455400));
-        Attraction attraction2 = new Attraction();
-        attraction2.setName("Biblioteca");
-        attraction2.setCity("Porto");
-        attraction.setId("biblioteca");
-        attraction2.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-        //attraction2.setSecondaryImage(BitmapFactory.decodeResource(getResources(), R.drawable.moliceiro));
-        attraction2.setLocation(new LatLng(40.6442700, -8.6455400));
-        attractionList.clear();
-        attractionList.add(attraction);
-        attractionList.add(attraction2);
-        adapter.notifyDataSetChanged();
+
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                8000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
         MyApplication.getInstance().addToRequestQueue(request);
     }
 
@@ -273,6 +273,54 @@ public class AttractionListFragment extends Fragment implements
                     + " must implement OnAttractionSelectedListener");
         }
     }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.search_menu, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        searchView = (SearchView) menu.findItem(R.id.action_search)
+                .getActionView();
+        searchView.setSearchableInfo(searchManager
+                .getSearchableInfo(getActivity().getComponentName()));
+        searchView.setMaxWidth(Integer.MAX_VALUE);
+
+        // listening to search query text change
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // filter recycler view when query submitted
+                adapter.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String query) {
+                // filter recycler view when query submitted
+                adapter.getFilter().filter(query);
+                return false;
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_search) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
 
     @Override
     public void onDetach() {

@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@color/white"
-        android:elevation="16dp"
+        android:elevation="80dp"
         android:foreground="?attr/selectableItemBackground"
         app:itemIconTint="@color/colorPrimary"
         app:itemTextColor="@color/colorPrimary"

@@ -219,11 +219,7 @@ public class PhotoLogFragment extends Fragment implements
         optionsImages = new Integer[]{R.drawable.ic_highlight_off_black_24dp,
                 R.drawable.ic_edit_black_24dp}; //icons for the options
 
-        tts = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-            }
-        });
+        tts = new TextToSpeech(getActivity().getApplicationContext(), this);
 
     }
 
@@ -856,7 +852,7 @@ public class PhotoLogFragment extends Fragment implements
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
 
-            int result = tts.setLanguage(new Locale("pt", "PT"));
+            int result = tts.setLanguage(Locale.ENGLISH);
 
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {

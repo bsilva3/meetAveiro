@@ -9,7 +9,7 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
- * A simple shared tourist attraction class to easily pass data around.
+ * A simple tourist attraction class to easily pass data around.
  */
 public class Attraction implements Parcelable {
     private String name;
@@ -18,11 +18,39 @@ public class Attraction implements Parcelable {
     private Uri imageUrl;
     private Uri secondaryImageUrl;
     private LatLng location;
+    private String imgName;
+    private String latitude;
+    private String longitude;
     private String city;
     private String id;
 
     private Bitmap image;
     private Bitmap secondaryImage;
+
+
+    public String getImgName() {
+        return imgName;
+    }
+
+    public void setImgName(String imgName) {
+        this.imgName = imgName;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
 
     public String getName() {
         return name;

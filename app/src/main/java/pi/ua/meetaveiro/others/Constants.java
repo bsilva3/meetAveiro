@@ -27,7 +27,7 @@ public class Constants {
     // Rota pelo email do utilizador
     public static final String URL_ROUTE_HISTORY = API_URL + "/resources/routes/byuser";
     // url to fetch routes history json
-    public static final String URL_ATTRACTIONS = API_URL + "/blahblah";
+    public static final String URL_ATTRACTIONS = API_URL + "/resources/atractions";
     // url to fetch routes history json
     public static final String URL_PHOTO_HISTORY = API_URL + "/resources/photos/byuser";
     // url to fetch routes that have a certain attraction

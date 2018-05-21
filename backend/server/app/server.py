@@ -555,15 +555,22 @@ def get_atractions():
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
-        if c.latitude is not None:
+        if c.latitude is None:
+            temp['city'] = ''
+        elif c.latitude is not None:
             geolocator = Nominatim()
             print(str(c.latitude) + ', ' + str(c.longitude))
             location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
-            location = location.address.split(',')
-            if len(location) == 9:
-                temp['city'] = location[2]
-            elif len(location) == 10:
-                temp['city'] = location[3]
+            if location is None:
+                temp['city'] = ''
+            else:
+                location = location.address.split(',')
+                if len(location) <= 9 and len(location) > 1:
+                    temp['city'] = location[2]
+                elif len(location) >= 10:
+                    temp['city'] = location[3]
+                else:
+                    temp['city'] = ''
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
         f = fotos[0]
         foto = {}

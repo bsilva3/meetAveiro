@@ -967,7 +967,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onRouteSentResponseReceived (String result){
         JSONObject json = null;
         String routeInstanceId = "";
-        Log.i("Resultttt", result);
+        Log.i("Resultttt", result+"");
         try {
             json = new JSONObject(result);
             routeInstanceId = json.getString("inst");
@@ -1489,6 +1489,7 @@ public class RouteActivity extends FragmentActivity implements
                 //Save to Storage and send to the server
                 saveRouteToFile(rt);
                 JSONObject jsonT = placeRoutesOnJson(rt);
+                Log.d("sendRoute", jsonT+"");
                 new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
                 alertDialog.dismiss();
             }
@@ -1587,8 +1588,16 @@ public class RouteActivity extends FragmentActivity implements
     // put trajectory coordinates as string and marker's id as string)
     public JSONObject placeRoutesOnJson(RouteInstance rt){
         JSONObject j = new JSONObject();
+        String routePointsString = "";
+        for (int i = 0; i < routePoints.size(); i++){
+            if (i == routePoints.size() - 1)//last one
+                routePointsString+=routePoints.get(i).latitude+","+routePoints.get(i).longitude;
+            else
+                routePointsString+=routePoints.get(i).latitude+","+routePoints.get(i).longitude+";";
 
-        String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
+        }
+        Log.d("routePoints", routePointsString+"");
+        //String routePoints = "40.6442700,-8.6455400;40.6442704,-8.6455401;40.6442705,-8.6455402";
         //add markers
         //send image ids as string (server has problems converting from int[])
         String listOfMarkers = "";
@@ -1610,11 +1619,10 @@ public class RouteActivity extends FragmentActivity implements
             j.put("end", Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()));
             j.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
             j.put("markers", listOfMarkers);
-            j.put("trajectory", routePoints);
+            j.put("trajectory", routePointsString);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Log.d("ROUTE", j.toString());
         return j;
     }
 

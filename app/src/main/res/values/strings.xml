@@ -127,8 +127,7 @@
     <string name="feedback">Do you think our app was able to identify succesfully your image?</string>
     <string name="feedback_success">Your response was registered. Thank you!</string>
     <string name="feedback_fail">There was a problem and we were unable to send your response</string>
-    <string name="image_rec_fail">Unfortunately, we were unable to identify the content of this image.\n
-    Try taking another picture from a different angle, and make sure theres enough light in the picture.</string>
+    <string name="image_rec_fail">Unfortunately, we were unable to identify the content of this image.  Try taking another picture from a different angle, and make sure theres enough light in the picture.</string>
     <string name="dont_answer">Don\'t answer</string>
     <!--general confirmation buttons -->
     <string name="yes">Yes</string>
@@ -144,10 +143,12 @@
     <string name="stop_tour_btn">Stop Tour</string>
     <string name="start_tour_btn">Start Tour</string>
     <string name="picture_btn">Take picture</string>
-    <string name="unknown_photo_dialog_description">Photo taken on: </string>
+    <string name="unknown_photo_dialog_description">"Photo taken on: "</string>
+    <string name="server_connect_error">Could not connect to server, please try again later</string>
     <!--dialog box to save tour-->
     <string name="save_tour_dialog_title">You can now save this tour, but first, please give it a
     name and a description</string>
+    <string name="routes_in_attr">Routes that pass in this attraction</string>
     <string name="edit_tour_dialog_title">Change this tour\'s description and/or title</string>
     <string name="save_tour_title">Name this tour</string>
     <string name="save_tour_description">Describe this tour</string>
@@ -155,8 +156,7 @@
     <string name="save_tour">Save</string>
     <string name="exit_tour_confirmation">You are currently in route mode. If you exit now, this route will
     be lost forever. To avoid this, go back and end your tour.\n Are you sure you want to leave?</string>
-    <string name="start_tour_confirmation">If you start a new tour, the previous tour will be removed from the map
-    but if you saved it, you can access it later on the "my history" menu</string>
+    <string name="start_tour_confirmation">If you start a new tour, the previous tour will be removed from the map but if you saved it, you can access it later on the \"My history\" menu</string>
     <string name="tour_sent_server_confirmation">Your Tour was saved!</string>
     <string name="default_info_snippet">No places found, because location permission is disabled.</string>
     <string name="option_get_place">Points of Interest</string>
@@ -175,6 +175,7 @@
     <string name="title_most_recent">Most Recent</string>
     <string name="title_top_rated">Top Rated</string>
     <string name="title_most_traveled">Most Traveled</string>
+
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
@@ -285,7 +286,7 @@
     </string>
     <string name="more_info_attraction">Would you like to know more about this attraction?</string>
     <string name="title_activity_route">Route</string>
-    <string name="notification_on_a_route">You are on a meetAveiro route. Click to know more!</string>
+    <string name="notification_on_a_route">You are on a meetAveiro route. Touch to know more!</string>
     <string name="return_route">Return Route</string>
     <string name="title_activity_event_details">EventDetailsActivity</string>
     <string name="event_detail_price">Price</string>

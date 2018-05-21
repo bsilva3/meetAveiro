@@ -322,10 +322,9 @@ def send_feedback():
         return jsonify({
             'status': str(feedback)
         })
-
-    if feedback == '1':
-        #req_path = os.path.join('./static/img', concept)
-        #file_path = os.path.join(req_path, file_id)
+    print(type(feedback))
+    if feedback == 1:
+        print('I am in')
         foto = getFoto(file_id)
         file_path = foto.path
         dest_path = os.path.join(IMAGE_FOLDER, concept)

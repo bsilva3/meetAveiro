@@ -317,6 +317,12 @@ def send_feedback():
     concept = res['concept']
     feedback = res['answer']
     print('feedback ' + str(feedback))
+
+    if concept == 'desconhecido':
+        return jsonify({
+            'status': str(feedback)
+        })
+
     if feedback == '1':
         #req_path = os.path.join('./static/img', concept)
         #file_path = os.path.join(req_path, file_id)

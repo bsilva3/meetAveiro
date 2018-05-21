@@ -579,9 +579,7 @@ def get_atractions():
         temp['imgName'] = path
         res.append(temp)
 
-    return jsonify({
-        'atractions': res
-    })
+    return jsonify(res)
 
 @app.route('/resources/photos/byuser', methods=['POST'])
 def get_photo_history():

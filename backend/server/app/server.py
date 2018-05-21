@@ -7,6 +7,8 @@ import sys, shutil, subprocess
 sys.path.append('../../../database')
 from models import *
 from math import sqrt
+from geopy import distance
+from geopy.geocoders import Nominatim
 
 import random
 import datetime
@@ -270,9 +272,8 @@ def classify_image():
 
     conc_lat = conceito.latitude
     conc_long = conceito.longitude
-    raio = conceito.raio
-
-    if sqrt((lat-conc_lat)**2 + (lon-conc_long)**2) > raio:
+    
+    if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.1:
         img_name = 'desconhecido'
 
     
@@ -554,6 +555,9 @@ def get_atractions():
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
+        geolocator = Nomatim()
+        location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
+        temp['city'] = location
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
         f = fotos[0]
         foto = {}

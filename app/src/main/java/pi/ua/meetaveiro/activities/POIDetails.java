@@ -24,6 +24,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -62,7 +63,7 @@ import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_IN_ATTRACTION;
 
 
 //TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff
-public class POIDetails extends AppCompatActivity implements DataReceiver {
+public class POIDetails extends AppCompatActivity {
     private Attraction attraction;
     private String attractionName;
     private TextView description;
@@ -109,6 +110,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
         //toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
         map = (FloatingActionButton) findViewById(R.id.show_on_map);
+        map.setVisibility(View.GONE);
         description = (TextView) findViewById(R.id.attraction_description);
 
 
@@ -129,14 +131,10 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v,
                                         int groupPosition, int childPosition, long id) {
-                Toast.makeText(
-                        getApplicationContext(),
-                        listDataHeader.get(groupPosition)
-                                + " : "
-                                + listDataChild.get(
-                                listDataHeader.get(groupPosition)).get(
-                                childPosition), Toast.LENGTH_SHORT)
-                        .show();
+                Intent intent = new Intent(POIDetails.this, RouteDetailsActivity.class);
+                intent.putExtra("", "");
+
+                startActivity(intent);
                 return false;
             }
         });
@@ -206,18 +204,24 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         listDataChild = new HashMap<String, List<Route>>();
 
         // Adding child data
-        listDataHeader.add("Routes that pass in this place");
+        listDataHeader.add(getString(R.string.routes_in_attr)+" ( 0 )");
 
         // Adding child data
-        routeList = new ArrayList<Route>();
+        /*routeList = new ArrayList<Route>();
         routeList.add(new Route("Salreu", "Nice wal in salreu's corn"));
         routeList.add(new Route("Aveiro city", "Beatifull tour in Aveiro"));
         routeList.add(new Route("UA", "Route that goes around UA"));
-
-
-        listDataChild.put(listDataHeader.get(0), routeList); // Header, Child data
+        */
     }
 
+    public void placeRoutesOnListExp(List<Route> routes){
+        //add the number of routes found
+        String s = listDataHeader.get(0);
+        listDataHeader.clear();
+        listDataHeader.add(getString(R.string.routes_in_attr)+" ("+routeList.size()+")");
+        //add the routes to the list
+        listDataChild.put(listDataHeader.get(0), routes);
+    }
 
     private void setListViewHeight(ExpandableListView listView,
                                    int group) {
@@ -271,9 +275,10 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                 try {
                     photosArray = response.getJSONArray("photos");
                     //download the photos from url (usually, its just 2
-                    /*for (int i = 0; i < photosArray.length(); i++){
-                        imagesArray.add(Utils.downloadImage(photosArray.get(i).toString()));
-                    }*/
+                    //Log.d("url", photosArray.get(0).toString().replace("\\", ""));
+                    for (int i = 0; i < photosArray.length(); i++){
+                        downloadImageFromURL(photosArray.get(i).toString().replace("\\", ""));
+                    }
                     mShimmerViewContainer.stopShimmerAnimation();
                     mShimmerViewContainer.setVisibility(View.GONE);
                     name = response.getString("name");
@@ -290,12 +295,8 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                                 startActivity(intent);
                             }
                         });
+                        map.setVisibility(View.VISIBLE);
                     }
-                    else{
-                        //if there are no coordinates we dont show the button
-                        map.setVisibility(View.GONE);
-                    }
-                    initImageSlider();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -320,6 +321,26 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
         MyApplication.getInstance().addToRequestQueue(jsonObjReq);
     }
 
+    public void downloadImageFromURL(String url){
+        // Retrieves an image specified by the URL, displays it in the UI.
+        ImageRequest request = new ImageRequest(url,
+                new Response.Listener<Bitmap>() {
+                    @Override
+                    public void onResponse(Bitmap bitmap) {
+                        imagesArray.add(bitmap);
+                        Log.d("imagesArray", imagesArray.size()+"");
+                        initImageSlider();
+                    }
+                }, 0, 0, null,
+                new Response.ErrorListener() {
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+// Access the RequestQueue through your singleton class.
+        MyApplication.getInstance().addToRequestQueue(request);
+    }
+
     private void getRoutesThatHaveAttraction() {
         JSONObject jsonRequest = new JSONObject();
         try {
@@ -336,7 +357,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             @Override
             public void onResponse(JSONObject response) {
                 Log.d("ERROR", response.toString());
-
+                routeList = new ArrayList<>();
                 try {
                     // Parsing json object response
                     Log.d("res", response.toString());
@@ -346,22 +367,21 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    List<Route> attr = new ArrayList<>();
                     if (jsonArray != null) {
                         Route rt = new Route();
                         for (int i = 0; i < jsonArray.length(); i++) {
                             rt.setRouteTitle(jsonArray.getJSONObject(i).getString("title"));
                             rt.setRouteDescription(jsonArray.getJSONObject(i).getString("description"));
                             //INCOMPLETE! fazer o assign do id
-                            jsonArray.getJSONObject(i).getString("id");
+                            rt.setId(jsonArray.getJSONObject(i).getInt("id"));
+                            routeList.add(rt);
                         }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Toast.makeText(getApplicationContext(),
-                            "Error: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(POIDetails.this, getString(R.string.server_connect_error), Toast.LENGTH_SHORT).show();
                 }
+                placeRoutesOnListExp(routeList);
                 // stop animating Shimmer and hide the layout
                 mShimmerViewContainer.stopShimmerAnimation();
                 mShimmerViewContainer.setVisibility(View.GONE);
@@ -372,7 +392,7 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.d("ERROR", "Error: " + error.getMessage());
                 Toast.makeText(getApplicationContext(),
-                        error.getMessage(), Toast.LENGTH_SHORT).show();
+                        getString(R.string.server_connect_error), Toast.LENGTH_SHORT).show();
                 // stop animating Shimmer and hide the layout
                 mShimmerViewContainer.stopShimmerAnimation();
                 mShimmerViewContainer.setVisibility(View.GONE);
@@ -381,113 +401,5 @@ public class POIDetails extends AppCompatActivity implements DataReceiver {
 
         // Adding request to request queue
         MyApplication.getInstance().addToRequestQueue(jsonObjReq);
-    }
-
-    public void requestRoutes(){
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("concept", attractionName);
-            jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
-        } catch (JSONException e) {
-            Log.e("Request Route Error", e.toString());
-        }
-
-        new POIDetails.getRoutesFromServerTask().execute(jsonRequest.toString(), URL_ATTRACTION_INFO);
-    }
-
-    private class getRoutesFromServerTask extends AsyncTask<String, Void, String> {
-        ProgressDialog progDailog;
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mShimmerViewContainer.startShimmerAnimation();
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            String JsonResponse = null;
-            String JsonDATA = params[0];
-            String serverUrl = params[1];
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            Log.d("response", "begin");
-            try {
-                //Create a URL object holding our url
-                URL url = new URL(serverUrl);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setDoOutput(true);
-                // is output buffer writter
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setRequestProperty("Content-Type", "application/json");
-                urlConnection.setRequestProperty("Accept", "application/json");
-                //set headers and method
-                Writer writer = new BufferedWriter(new OutputStreamWriter
-                        (urlConnection.getOutputStream(), "UTF-8"));
-                writer.write(JsonDATA);
-                // json data
-                writer.close();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                //input stream
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String inputLine;
-                while ((inputLine = reader.readLine()) != null)
-                    buffer.append(inputLine + "\n");
-                if (buffer.length() == 0) {
-                    // Stream was empty. No point in parsing.
-                    return null;
-                }
-                JsonResponse = buffer.toString();
-                //send to post execute
-                return JsonResponse;
-
-            } catch (IOException e) {
-                Log.e("IOException on response", e.toString());
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e("Error", "Error closing stream", e);
-                    }
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String response) {
-            super.onPostExecute(response);
-            onResponseReceived(response);
-        }
-
-    }
-
-    @Override
-    public void onResponseReceived(Object result) {
-        JSONObject json = null;
-        try {
-            json = new JSONObject(result.toString());
-        } catch (JSONException e) {
-            Log.e("Error on response", e.toString());
-        } catch (java.lang.NullPointerException e){
-            Toast.makeText(POIDetails.this, "Connection error", Toast.LENGTH_LONG).show();
-            return;
-        }
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-        //.... recriar aqui objetos route e colocá-los numa lista
-        JSONArray jsonArray = null;
-
     }
 }

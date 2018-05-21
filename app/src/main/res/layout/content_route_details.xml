@@ -2,6 +2,7 @@
 <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/route_details_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
@@ -49,7 +50,7 @@
 
 
         <fragment
-            android:id="@+id/map"
+            android:id="@+id/map_route_details"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="0dp"
             android:layout_height="300dp"
@@ -59,7 +60,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/view_images"
-            tools:context="pi.ua.meetaveiro.activities.RouteDetailsActivity" />
+            tools:context="pi.ua.meetaveiro.activities.RouteDetailsActivity"
+            class="pi.ua.meetaveiro.others.MapScrollWorkAround"/>
 
         <TextView
             android:id="@+id/DateRoute"

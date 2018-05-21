@@ -13,6 +13,9 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.google.android.gms.maps.model.Marker;
 
 import java.io.BufferedReader;
@@ -30,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 

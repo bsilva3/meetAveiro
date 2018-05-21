@@ -559,7 +559,7 @@ def get_atractions():
             geolocator = Nominatim()
             print(str(c.latitude) + ', ' + str(c.longitude))
             location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
-            location = location.split(',')
+            location = location.address.split(',')
             if len(location) == 9:
                 temp['city'] = location[2]
             elif len(location) == 10:

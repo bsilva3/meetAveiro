@@ -572,26 +572,28 @@ def get_atractions():
                 else:
                     temp['city'] = ''
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
-        f = fotos[0]
-        foto = {}
         path = ''
-        try:
+        for f in fotos:
+            foto = {}
             
-            readImage(f.path)
-            if f.nomeconc == 'desconhecido':
-                foto['concept'] = ''
-            else:
-                foto['concept'] = f.nomeconc
-            if './static' in f.path:
-                temp1 = f.path.replace('./static/img/', '')
-                temp1 = temp1.split('/')
-                path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
-            else:
-                temp1 = f.path.replace('../', '')
-                temp1 = temp1.replace('treino/', '')
-                path = 'http://192.168.160.192:8080/sendimage/' + temp1
-        except:
-            print('Could not find: ' + f.path)
+            try:
+            
+                readImage(f.path)
+                if f.nomeconc == 'desconhecido':
+                    foto['concept'] = ''
+                else:
+                    foto['concept'] = f.nomeconc
+                if './static' in f.path:
+                    temp1 = f.path.replace('./static/img/', '')
+                    temp1 = temp1.split('/')
+                    path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
+                else:
+                    temp1 = f.path.replace('../', '')
+                    temp1 = temp1.replace('treino/', '')
+                    path = 'http://192.168.160.192:8080/sendimage/' + temp1
+                break
+            except:
+                print('Could not find: ' + f.path)
         temp['imgName'] = path
         res.append(temp)
 

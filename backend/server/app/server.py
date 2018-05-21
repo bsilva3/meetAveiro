@@ -559,13 +559,13 @@ def get_atractions():
             else:
                 foto['concept'] = f.nomeconc
             if './static' in f.path:
-                temp = f.path.replace('./static/img/', '')
-                temp = temp.split('/')
-                path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                temp1 = f.path.replace('./static/img/', '')
+                temp1 = temp1.split('/')
+                path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
             else:
-                temp = f.path.replace('../', '')
-                temp = temp.replace('treino/', '')
-                path = 'http://192.168.160.192:8080/sendimage/' + temp
+                temp1 = f.path.replace('../', '')
+                temp1 = temp1.replace('treino/', '')
+                path = 'http://192.168.160.192:8080/sendimage/' + temp1
         except:
             print('Could not find: ' + f.path)
         temp['imgName'] = path

@@ -555,7 +555,9 @@ def get_atractions():
         temp['latitude'] = c.latitude
         temp['longitude'] = c.longitude
         temp['description'] = c.descricao
-        if c.latitude is not None:
+        if c.latitude is None:
+            temp['city'] = ''
+        elif c.latitude is not None:
             geolocator = Nominatim()
             print(str(c.latitude) + ', ' + str(c.longitude))
             location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))

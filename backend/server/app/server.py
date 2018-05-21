@@ -549,8 +549,9 @@ def get_atractions():
         temp['description'] = c.descricao
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
         f = fotos[0]
+        foto = {}
         try:
-            foto = {}
+            
             readImage(f.path)
             if f.nomeconc == 'desconhecido':
                 foto['concept'] = ''

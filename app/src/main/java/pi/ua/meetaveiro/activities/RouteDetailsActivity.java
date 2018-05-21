@@ -356,14 +356,21 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             JSONArray jarrTrajectory = json.getJSONArray("trajectory");
             PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
-
+            LatLng l = null;
             for (int i = 0;i<jarrTrajectory.length();i++){
                 JSONObject obj = jarrTrajectory.getJSONObject(i);
                 String lat = obj.get("latitude").toString();
                 String longi = obj.get("longitude").toString();
-                LatLng l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
+                l = new LatLng(Double.parseDouble(lat), Double.parseDouble(longi));
                 options.add(l);
             }
+
+            try {
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 10);
+                mMap.animateCamera(cameraUpdate);
+
+            }catch (Exception e){}
+
 
             mMap.addPolyline(options);
 

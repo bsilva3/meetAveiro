@@ -261,7 +261,7 @@ def classify_image():
     writeImage(image)
     print("Calling tensorflow.....")
     classification = predict_image('./temp.jpg')
-    img_name = classification[0]
+    img_name = classification[0].lower()
     img_name = img_name.replace(' ', '_')
     print('Conceito: ' + img_name)
     conceito = db.session.query(Conceito).get(img_name)
@@ -315,7 +315,7 @@ def classify_image():
 def send_feedback():
     res = request.get_json(force=True)
     file_id = res['image_id']
-    concept = res['concept']
+    concept = res['concept'].lower()
     feedback = res['answer']
     print('feedback ' + str(feedback))
 
@@ -559,7 +559,11 @@ def get_atractions():
             geolocator = Nominatim()
             print(str(c.latitude) + ', ' + str(c.longitude))
             location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
-            temp['city'] = location.address
+            location = location.split(',')
+            if len(location) == 9:
+                temp['city'] = location[2]
+            else if len(location) == 10:
+                temp['city'] = location[3]
         fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
         f = fotos[0]
         foto = {}

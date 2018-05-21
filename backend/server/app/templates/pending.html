@@ -21,15 +21,14 @@
                     <div class="card-body">
                         <button class="btn btn-primary" onclick="confirmRequest('{{ image }}', '{{ key }}', 'POST')">Confirm</button>
                         <button class="btn btn-danger" onclick="confirmRequest('{{ image }}', '{{ key }}', 'DELETE')">Delete</button>
+                        <button class="btn btn-warning" onclick="changeRequest('{{ image }}', '{{ key }}')">Change</button>
                         <div class="form-group">
                             <select id="{{ image }}" class="selectpicker form-control">
                                 {% for t in topics %}
                                 <option value="{{ t }}">{{ t }}</option>
                                 {% endfor %}
                             </select>
-                            <span class="input-group-btn">
-                                <button class="btn btn-warning" onclick="changeRequest('{{ image }}', '{{ key }}')">Change</button>
-                            </span>
+                            
                         </div>
                     </div>
                 </div>

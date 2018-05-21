@@ -26,6 +26,8 @@ def addUsers():
     addUtilizador('joaoserpa1997@outlook.com',1)
     addUtilizador('admin@ua.pt',1)
     addUtilizador('joana@ua.pt', 2)
+    addUtilizador('almeidaanafilipa999@gmail.com', 1)
+    addUtilizador('franciscomanuelmatos@gmail.com', 1)
 
 
 def addTiposExemplo():
@@ -250,7 +252,7 @@ def queriesChico():
 @app.route('/')
 def index():
     addInfoExemplo()
-    
+    addUsers()
    
     # queriesExemplo()
     #queriesChico()

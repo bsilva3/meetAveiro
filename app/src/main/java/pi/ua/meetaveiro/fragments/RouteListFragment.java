@@ -249,7 +249,12 @@ public class RouteListFragment extends Fragment implements
         }
 
         //routeList.add(new Route("route 1", "desc"));
-        new uploadFileToServerTask().execute(jsonRequest.toString(), url);
+        if(URL_CREATED_ROUTES == url) {
+            new uploadFileToServerTask().execute(jsonRequest.toString(), url);
+        }
+        else
+            new fetchDataAsRoute().execute(url);
+
 
         // refreshing recycler view
         mShimmerViewContainer.stopShimmerAnimation();
@@ -344,6 +349,81 @@ public class RouteListFragment extends Fragment implements
             fetchLocalRoutes();
         }
     }
+
+
+
+    public void rearrangeCommunity(String data){
+
+        try {
+            List<Route> items = new ArrayList<>();
+            JSONObject js = new JSONObject(data);
+            JSONArray arr = js.getJSONArray("routes");
+            Route r;
+            if (arr != null) {
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject row = arr.getJSONObject(i);
+                    String idRoute = row.getString("id");
+                    String title = row.getString("title");
+                    String desc = row.getString("description");
+                    r = new Route(title,desc);
+                    r.setType("Route");
+                    r.setId(Integer.parseInt(idRoute));
+                    items.add(r);
+                }
+                // adding contacts to contacts list
+                routeList.clear();
+                routeList.addAll(items);
+                mAdapter.notifyDataSetChanged();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+
+    // Fetch the data as it was a Route  only trajectory and description/name
+    public class fetchDataAsRoute extends AsyncTask<String, Void, Void> {
+        String data = "";
+
+        @Override
+        protected Void doInBackground(String... params) {
+            try {
+                URL url = new URL(params[0]);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line = "";
+                while (line != null) {
+                    line = bufferedReader.readLine();
+                    data = data + line;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            rearrangeCommunity(data);
+        }
+    }
+
+
+
+
+
+
+
+
+
 
     /**
      * Used to send a POST call

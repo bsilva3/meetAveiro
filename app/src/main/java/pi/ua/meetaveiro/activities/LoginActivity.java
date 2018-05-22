@@ -109,7 +109,6 @@ public class LoginActivity extends AppCompatActivity {
                                 // the auth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 progressBar.setVisibility(View.GONE);
-                                logUserInServer(email, password);
                                 if (!task.isSuccessful()) {
                                     // there was an error
                                     if (password.length() < 6) {
@@ -127,47 +126,6 @@ public class LoginActivity extends AppCompatActivity {
                         });
             }
         });
-    }
-
-    private void logUserInServer(String email, String password) {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("user", email);
-            json.put("password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,
-                URL_LOG_USER, json, new Response.Listener<JSONObject>() {
-
-            @Override
-            public void onResponse(JSONObject response) {
-                Log.d("res", response.toString());
-                try {
-                    if (!response.getString("user").equals(email)){
-                        Toast.makeText(LoginActivity.this, getString(R.string.server_connect_error), Toast.LENGTH_SHORT).show();
-                    }
-                    /*else{
-                        Intent intent = new Intent(LoginActivity.this, NavigationDrawerActivity.class);
-                        startActivity(intent);
-                        finish();
-                    }*/
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.d("ERROR", "Error: " + error.getMessage());
-
-            }
-        });
-
-        // Adding request to request queue
-        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
     }
 
 }

@@ -61,8 +61,8 @@ import pi.ua.meetaveiro.others.Utils;
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTION_INFO;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_IN_ATTRACTION;
 
-
-//TODO remove default text, image for slider and elements in list when we can connect to server; finish asynchronous/intent stuff
+//ToDo: Image slider only has one image... there should be two... is it parsing both correctly?
+//is it overrding the first on the slider?
 public class POIDetails extends AppCompatActivity {
     private Attraction attraction;
     private String attractionName;

@@ -20,7 +20,7 @@ public class Route implements Parcelable, Serializable {
     private String routeDescription = ""; //default
     private String Type  ="";  //To be used to split into ROUTE or ROUTE INSTANCE (To see the ROUTES WITHOUT MARKERS)
 
-    public Route(String routeTitle, Polyline routePath, String routeDescription, Map<Marker, Bitmap> routeMarkers) {
+    public Route(String routeTitle, Polyline routePath, String routeDescription) {
         this.routeTitle = routeTitle;
         this.routePath = routePath;
         this.routeDescription = routeDescription;

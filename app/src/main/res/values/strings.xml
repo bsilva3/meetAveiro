@@ -145,6 +145,8 @@
     <string name="picture_btn">Take picture</string>
     <string name="unknown_photo_dialog_description">"Photo taken on: "</string>
     <string name="server_connect_error">Could not connect to server, please try again later</string>
+
+    <string name="problem_marker_load_from_storage">There was a problem loading from storage</string>
     <!--dialog box to save tour-->
     <string name="save_tour_dialog_title">You can now save this tour, but first, please give it a
     name and a description</string>
@@ -163,6 +165,7 @@
     <string name="pick_place">Choose a place</string>
 
     <string name="route_empty">This route is too small or empty. It will not be saved</string>
+    <string name="foto_intent_fail">A problem ocurred with this photo. Try taking another one!</string>
 
     <string name="title_popular_routes">Popular Routes</string>
     <string name="title_top_rated_routes">Top Rated Routes</string>

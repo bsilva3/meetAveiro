@@ -44,12 +44,7 @@ db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)
 
-mynav = Navbar('MeetAveiro', 
-    View('Home', 'index'),
-    View('Stats', 'show_stats'),
-    View('Requests', 'show_requests'),
-    View('Logout', 'signOut'))
-nav.register_element('mynavbar', mynav)
+
 
 
 config = {
@@ -71,8 +66,9 @@ def welcome():
 
 @app.route('/signIn', methods=['POST'])
 def signIn():
-    email = request.form['user']
-    passwd = request.form['password']
+    req = request.get_json(force=True)
+    email = req['user']
+    passwd = req['password']
     try:
         user = auth.sign_in_with_email_and_password(email, passwd)
         session_id = user['idToken']
@@ -80,11 +76,21 @@ def signIn():
         session['email'] = email
         utilizador = db.session.query(Utilizador).get(email)
         session['type'] = utilizador.tipoid
+        if utilizador.tipoid == 1:
+            mynav = Navbar('MeetAveiro', 
+                View('Home', 'index'),
+                View('Stats', 'show_stats'),
+                View('Requests', 'show_requests'),
+                View('Logout', 'signOut'))
+            nav.register_element('mynavbar', mynav)
     except:
-        message = 'Invalid credentials'
-        return render_template('signIn.html', message=message)
+        return jsonify({
+            'url': ''
+        })
     
-    return redirect(url_for('index'))
+    return jsonify({
+        'url': url_for('index')
+    })
 
 @app.route('/signOut', methods=['GET'])
 def signOut():

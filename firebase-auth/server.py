@@ -30,9 +30,9 @@ def welcome():
 
 @app.route('/signIn', methods=['POST'])
 def signIn():
-    email = request.form['user']
-    passwd = request.form['password']
-    user = None
+    req = request.get_json(force=True)
+    email = req['user']
+    passwd = req['password']
     try:
         user = auth.sign_in_with_email_and_password(email, passwd)
         session_id = user['idToken']
@@ -40,12 +40,19 @@ def signIn():
         session['email'] = email
         utilizador = db.session.query(Utilizador).get(email)
         session['type'] = utilizador.tipoid
-    except:
-        message = 'Invalid credentials'
-        return render_template('signIn.html', message=message)
+    except Exception as e:
+        print(e)
+        return jsonify({
+            'url': ''
+        })
     
+    return jsonify({
+        'url': url_for('success')
+    })
+
+@app.route('/welcome')
+def success():
     return render_template('welcome.html')
-    
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080, host='0.0.0.0')

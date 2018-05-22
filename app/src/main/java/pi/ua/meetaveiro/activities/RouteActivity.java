@@ -22,6 +22,7 @@ import android.location.Location;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -31,6 +32,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.view.ContextThemeWrapper;
 import android.text.TextUtils;
@@ -102,6 +104,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import pi.ua.meetaveiro.BuildConfig;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Photo;
@@ -289,10 +292,7 @@ public class RouteActivity extends FragmentActivity implements
         buttonStopRoute = findViewById(R.id.stop);
 
         buttonAddPhoto.setOnClickListener(v -> {
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-            File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
-            startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
+            startCameraIntent();
         });
         if (isFollowingTour){
             //we are following a pre created route
@@ -438,11 +438,10 @@ public class RouteActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
 
 
-        Log.i("uncompletedcamerareques", String.valueOf(Utils.uncompletedCameraRequest) );
+        Log.i("uncompletedCameraRequest: ", String.valueOf(Utils.uncompletedCameraRequest) );
         if (Utils.uncompletedCameraRequest && getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Utils.uncompletedCameraRequest = false;
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+            startCameraIntent();
         }
 
         //start text to speech
@@ -502,6 +501,21 @@ public class RouteActivity extends FragmentActivity implements
 
         MyApplication.getInstance().addToRequestQueue(request);
 
+    }
+
+    private void startCameraIntent(){
+        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+        File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //bigger than api 24 needs this
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file));
+        } else {
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+        }
+
+        startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
     }
 
     //Called when Start/Stop route button is pressed

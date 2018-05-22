@@ -304,6 +304,10 @@ public class RouteListFragment extends Fragment implements
 
     @Override
     public void onRefresh() {
+        // removing events
+        routeList.clear();
+        mAdapter.notifyDataSetChanged();
+
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);

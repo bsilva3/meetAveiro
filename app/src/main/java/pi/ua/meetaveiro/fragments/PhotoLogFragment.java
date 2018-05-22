@@ -10,11 +10,9 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -24,7 +22,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -37,8 +34,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
@@ -63,7 +58,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -88,32 +82,25 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 
+import pi.ua.meetaveiro.BuildConfig;
 import pi.ua.meetaveiro.activities.POIDetails;
-import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
-import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MultiDrawable;
-import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
 import static android.content.Context.MODE_PRIVATE;
 import static pi.ua.meetaveiro.others.Constants.*;
 
 /**
- * Photo logging  {@link Fragment} subclass.
  * Photo logging  {@link Fragment} subclass.
  * A user takes a photo, and sends the photo to the server. He also sends the current Date
  * When the server responds, we see if the image was recognized or not.
@@ -263,13 +250,14 @@ public class PhotoLogFragment extends Fragment implements
         Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
         File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
 
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //bigger than api 24 needs this
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(getContext(), getContext().getApplicationContext().getPackageName() + ".pi.ua.meetaveiro.others.provider", file));
-        }
-        else
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".provider", file));
+        } else {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+        }
+
         startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
     }
 

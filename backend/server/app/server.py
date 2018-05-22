@@ -44,9 +44,6 @@ db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)
 
-
-
-
 config = {
     'apiKey': "AIzaSyDCYwU48HMDzFbz_98UUl_NzNXgzy16LOY",
     'authDomain': "meetaveiro-1520289975584.firebaseapp.com",
@@ -54,7 +51,7 @@ config = {
     'projectId': "meetaveiro-1520289975584",
     'storageBucket': "meetaveiro-1520289975584.appspot.com",
     'messagingSenderId': "938454414503"
-};
+}
 
 
 firebase = pyrebase.initialize_app(config)
@@ -422,9 +419,15 @@ def receive_routes():
     description = res['description']
     markers = res['markers']
     trajectory = res['trajectory']
+    public = res['public']
+
+    privacy = 'Privado'
+
+    if public == 1:
+        privacy = 'Publico'
 
     print('Recebido')
-    percurso = addPercurso(email, title, 1, description)
+    percurso = addPercurso(email, title, privacy, description)
     instancia = addInstanciaPercurso(email, percurso.id, start, end)
     print('Percurso criado')
     marks = markers.split(',')
@@ -477,6 +480,23 @@ def get_routes():
         'routes': res
     })
 
+@app.route('/resources/routes/community', methods=['GET'])
+def get_community_routes():
+    routes = db.session.query(Percurso).filter(Percurso.estado=='Publico').all()
+    if len(routes) == 0:
+        return jsonify({
+            "routes": []
+        })
+    res = []
+    for r in routes:
+        temp = {}
+        temp['id'] = r.id
+        temp['title'] = r.titulo
+        temp['description'] = r.descricao
+        res.append(temp)
+    return jsonify({
+        'routes': res
+    })
 
 @app.route('/resources/routes/<int:id>', methods=['GET', 'PUT'])
 def get_specific_route(id):

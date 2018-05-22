@@ -210,12 +210,20 @@ def upload(topic):
 
 @app.route('/resources/topics', methods=['POST'])
 def create_topic():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     if request.method == "POST":
         topic = request.form['topic']
+        name = request.form['name']
+        description = request.form['description']
+        latitude = request.form['latitude']
+        longitude = request.form['longitude']
+        raio = request.form['raio']
+
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
-            addConceito(topic, 'admin@ua.pt')
+            addConceito(topic, session['email'], float(latitude), float(longitude), float(raio), description, name, 5)
     return redirect(url_for('index'))
 
 @app.route('/resources/topics/manage', methods=['POST'])

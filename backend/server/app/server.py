@@ -426,24 +426,35 @@ def get_routes():
     })
 
 
-@app.route('/resources/routes/<int:id>', methods=['GET'])
+@app.route('/resources/routes/<int:id>', methods=['GET', 'PUT'])
 def get_specific_route(id):
     percurso = db.session.query(Percurso).get(id)
     if percurso is None:
         return jsonify({})
-    pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
-    res = {}
-    
-    res['title'] = percurso.titulo
-    res['description'] = percurso.titulo
-    pnts = []
-    for p in pontos:
-        temp = {}
-        temp['latitude'] = p.latitude
-        temp['longitude'] = p.longitude
-        pnts.append(temp)
-    res['trajectory'] = pnts
-    return jsonify(res)
+    if request.method == 'GET':
+        pontos = db.session.query(Ponto).filter(Ponto.idperc == id).all()
+        res = {}
+        
+        res['title'] = percurso.titulo
+        res['description'] = percurso.titulo
+        pnts = []
+        for p in pontos:
+            temp = {}
+            temp['latitude'] = p.latitude
+            temp['longitude'] = p.longitude
+            pnts.append(temp)
+        res['trajectory'] = pnts
+        return jsonify(res)
+    else:
+        req = request.get_json(force=True)
+        title = req['title']
+        description = req['description']
+        percurso.titulo = title
+        percurso.descricao = description
+        db.session.commit()
+        return jsonify({
+            "status": "changed"
+        })
 
 @app.route('/resources/routes/instances', methods=['POST'])
 def get_route_instances():

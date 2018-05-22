@@ -33,10 +33,6 @@
 {% block scripts %}
 <script>
     function initMap() {
-
-        //var coord = [{lat: -33.890, lng: 151.274}, 
-        //                 {lat: -33.82, lng: 151.3}, 
-        //                 {lat: -33.86, lng: 151.1}]
          
         var coord = []
 
@@ -45,15 +41,13 @@
         {% endfor %}
 
         var urls = []
+        var fotos_coords = []
+        var fotos_desc = []
     
         {% for f in fotos %}
             urls.push("{{f['path']}}");
-        {% endfor %}
-
-        var fotos_coords = []
-
-        {% for f in fotos %}
             fotos_coords.push({lat: {{f['latitude']}}, lng: {{f['longitude']}}});
+            fotos_desc.push("{{ f.description }}");
         {% endfor %}
 
         
@@ -82,7 +76,11 @@
               });
             
             }
-  
+
+            var infowindow = new google.maps.InfoWindow({
+                content: fotos_desc[i]
+              });
+
               var flightPath = new google.maps.Polyline({
                     path: coord,
                     geodesic: true,

@@ -234,6 +234,10 @@ public class EventListFragment extends Fragment implements
 
     @Override
     public void onRefresh() {
+        // removing events
+        eventList.clear();
+        mAdapter.notifyDataSetChanged();
+
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
         fetchEvents();

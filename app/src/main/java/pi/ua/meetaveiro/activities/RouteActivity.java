@@ -879,19 +879,8 @@ public class RouteActivity extends FragmentActivity implements
         } catch (NullPointerException e){
             Log.e(TAG, e.getMessage());
             Toast.makeText(this, "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
-            /*Marker markerToUpdate = null;
-            for(Map.Entry entry : markers.entrySet()){
-                if(entry.getValue().equals(false)){
-                    //remove this image and marker
-                    markerToUpdate = (Marker) entry.getKey();
-                    imageMarkers.remove(markerToUpdate);
-                    markerDate.remove(markerToUpdate);
-                    markers.remove(markerToUpdate);
-                    markerToUpdate.remove();
-                    break;
-                }
-            }
-            return;*/
+            photoToUpdate = new Photo();
+            return;
         }
 
         String title = "";
@@ -1037,7 +1026,7 @@ public class RouteActivity extends FragmentActivity implements
             //String date = convertTimeInMilisAndFormat(markerDate.get(m));
             Drawable d = new BitmapDrawable(getResources(), photo.getImgBitmap());
             //image was recognized
-            if (!name.toLowerCase().equals("desconhecido") || !name.toLowerCase().equals("unknown") || !name.equals("")) {
+            if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
                 //when the dialog with the description is closed, we show a feedback box;
                 //the user says if the app was able to identify the image succesfully, or close the dialog
                 //without providing an answer

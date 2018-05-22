@@ -110,7 +110,7 @@ public class AttractionListFragment extends Fragment implements
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
-        Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.aveiro);
+        /*Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.aveiro);
         if(myBitmap !=null&&!myBitmap.isRecycled()) {
             Palette.from(myBitmap).generate(palette -> {
 
@@ -119,7 +119,7 @@ public class AttractionListFragment extends Fragment implements
                 toolbar.setBackgroundColor(palette.getLightVibrantColor(def));
 
             });
-        }
+        }*/
 
         setHasOptionsMenu(true);
     }

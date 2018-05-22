@@ -10,10 +10,11 @@ from math import sqrt
 from geopy import distance
 from geopy.geocoders import Nominatim
 
+import pyrebase
 import random
 import datetime
 import requests
-from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
+from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect, session
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
@@ -46,13 +47,53 @@ nav = Nav(app)
 mynav = Navbar('MeetAveiro', 
     View('Home', 'index'),
     View('Stats', 'show_stats'),
-    View('Requests', 'show_requests'))
+    View('Requests', 'show_requests'),
+    View('Logout', 'signOut'))
 nav.register_element('mynavbar', mynav)
 
 
-#firebase_admin.initialize_app(options={
-#    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
-#})
+config = {
+    'apiKey': "AIzaSyDCYwU48HMDzFbz_98UUl_NzNXgzy16LOY",
+    'authDomain': "meetaveiro-1520289975584.firebaseapp.com",
+    'databaseURL': "https://meetaveiro-1520289975584.firebaseio.com",
+    'projectId': "meetaveiro-1520289975584",
+    'storageBucket': "meetaveiro-1520289975584.appspot.com",
+    'messagingSenderId': "938454414503"
+};
+
+
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
+
+@app.route('/', methods=['GET'])
+def welcome():
+    return render_template('signIn.html')
+
+@app.route('/signIn', methods=['POST'])
+def signIn():
+    email = request.form['user']
+    passwd = request.form['password']
+    try:
+        user = auth.sign_in_with_email_and_password(email, passwd)
+        session_id = user['idToken']
+        session['uid'] = str(session_id)
+        session['email'] = email
+        utilizador = db.session.query(Utilizador).get(email)
+        session['type'] = utilizador.tipoid
+    except:
+        message = 'Invalid credentials'
+        return render_template('signIn.html', message=message)
+    
+    return redirect(url_for('index'))
+
+@app.route('/signOut', methods=['GET'])
+def signOut():
+    if 'uid' in session:
+        session.pop('uid', None)
+        session.pop('type', None)
+        session.pop('email', None)
+    return redirect(url_for('welcome'))
+
 
 def get_request_files():
     folder = './static/img'
@@ -100,21 +141,26 @@ def retrain():
         pending=count_elems_dict(pending_requests))
     
 
-@app.route('/')
 @app.route('/index')
 def index():
-    pending_requests = get_request_files()
-    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
-        pending=count_elems_dict(pending_requests))
+    if 'uid' in session:
+        pending_requests = get_request_files()
+        return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
+            pending=count_elems_dict(pending_requests))
+    return render_template('signIn.html', message='You have to log in first.')
 
 @app.route('/gallery/<string:query>', methods=['GET'])
 def show_gallery(query):
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     folder = os.path.join(IMAGE_FOLDER, query)
     images = os.listdir(folder)
     return render_template('gallery.html', topic=images, path=query)
 
 @app.route('/stats', methods=['GET'])
 def show_stats():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     return render_template('stats.html',
                            totalusers = nTotalUsers(),
                            totalAdmin = nTotalTipoUser('Administrador'),
@@ -192,6 +238,8 @@ def manage_topic():
 
 @app.route('/requests')
 def show_requests():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     pending_requests = get_request_files()
     return render_template('pending.html', requests=pending_requests, 
         topics=next(os.walk(IMAGE_FOLDER))[1])
@@ -248,16 +296,6 @@ def manage_requests():
 ###################### API ##########################
 #######################################################
 #######################################################
-
-@app.route('/resources/users', methods=['POST'])
-def register_user():
-    req = request.get_json(force=True)
-    email = req['user']
-    addUtilizador(email, 2)
-    return jsonify({
-        'user': email
-    })
-
 
 @app.route('/search', methods=['POST'])
 def classify_image():

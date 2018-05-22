@@ -230,13 +230,13 @@ def create_topic():
 def manage_topic():
     res = request.get_json(force=True)
     method = res['method']
-    topic = res['topic']
+    topic = res['topic'].lower()
     if method == 'GET':
         print(topic)
         return jsonify({
                 'url': url_for('show_gallery', query=topic)
             })
-    elif method == 'POST':
+    elif method == 'POST' and topic != 'desconhecido':
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder, ignore_errors=True)
@@ -257,7 +257,7 @@ def change_request():
     folder = './static/img'
     res = request.get_json(force=True)
     filename = res['filename']
-    concept = res['path']
+    concept = res['path'].lower()
     old = res['old']
     req_folder = os.path.join(folder, old, filename)
 
@@ -279,11 +279,11 @@ def manage_requests():
     folder = './static/img'
     res = request.get_json(force=True)
     filename = res['filename']
-    concept = res['path']
+    concept = res['path'].lower()
     method = res['operation']
     req_folder = os.path.join(folder, concept, filename)
 
-    if method == 'POST':
+    if method == 'POST' and concept != 'desconhecido':
         file_desc = filename.split('.')
         dest_folder = os.path.join(IMAGE_FOLDER, concept)
         if not os.path.exists(dest_folder):

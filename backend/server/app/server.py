@@ -30,8 +30,6 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-#import firebase_admin
-#from firebase_admin import db
 import flask
 
 IMAGE_FOLDER = '../../../../treino'
@@ -419,7 +417,8 @@ def receive_routes():
     description = res['description']
     markers = res['markers']
     trajectory = res['trajectory']
-    public = res['public']
+    public = res['state']
+    route = res['route']
 
     privacy = 'Privado'
 
@@ -427,7 +426,11 @@ def receive_routes():
         privacy = 'Publico'
 
     print('Recebido')
-    percurso = addPercurso(email, title, privacy, description)
+    percurso = None
+    if route > 0:
+        percurso = db.session.query(Percurso).get(route)
+    else:
+        percurso = addPercurso(email, title, privacy, description)
     instancia = addInstanciaPercurso(email, percurso.id, start, end)
     print('Percurso criado')
     marks = markers.split(',')
@@ -521,6 +524,11 @@ def get_specific_route(id):
         req = request.get_json(force=True)
         title = req['title']
         description = req['description']
+        privacy = req['state']
+        if privacy == 0:
+            percurso.estado = 'Privado'
+        elif privacy == 1:
+            percurso.estado = 'Publico'
         percurso.titulo = title
         percurso.descricao = description
         db.session.commit()
@@ -762,6 +770,9 @@ def share_map(id):
             foto['longitude'] = f.longitude
             foto['id'] = f.id
             foto['date'] = f.datafoto
+            foto['concept'] = f.nomeconc
+            conceito = db.session.query(Conceito).get(f.nomeconc)
+            foto['description'] = conceito.descricao
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')

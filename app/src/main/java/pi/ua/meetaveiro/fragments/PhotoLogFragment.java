@@ -18,6 +18,7 @@ import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -181,10 +182,6 @@ public class PhotoLogFragment extends Fragment implements
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
 
-    private String mCurrentPhotoPath;
-
-    static final int REQUEST_TAKE_PHOTO = 1;
-
 
     private ClusterManager<Photo> mClusterManager;
 
@@ -245,10 +242,7 @@ public class PhotoLogFragment extends Fragment implements
         buttonAddPhoto = view.findViewById(R.id.search);
 
         buttonAddPhoto.setOnClickListener(v -> {
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-            File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
-            startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
+            startCameraIntent();
         });
         buttonAddPhoto.setVisibility(View.GONE);
 
@@ -262,6 +256,21 @@ public class PhotoLogFragment extends Fragment implements
         transaction.replace(R.id.map, mapFragment);
         transaction.commit();
         return view;
+    }
+
+
+    private void startCameraIntent(){
+        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+        File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
+
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+            //bigger then api 24 needs this
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(getContext(), getContext().getApplicationContext().getPackageName() + "pi.ua.meetaveiro.others.GenericFileProvider", file));
+        }
+        else
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+        startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
     }
 
     @Override
@@ -710,19 +719,8 @@ public class PhotoLogFragment extends Fragment implements
         } catch (NullPointerException e){
             Log.e(TAG, e.getMessage());
             Toast.makeText(getContext(), "Server didn't return a response. Please try again later", Toast.LENGTH_LONG).show();
-            /*Marker markerToUpdate = null;
-            for(Map.Entry entry : markers.entrySet()){
-                if(entry.getValue().equals(false)){
-                    //remove this image and marker
-                    markerToUpdate = (Marker) entry.getKey();
-                    imageMarkers.remove(markerToUpdate);
-                    markerDate.remove(markerToUpdate);
-                    markers.remove(markerToUpdate);
-                    markerToUpdate.remove();
-                    break;
-                }
-            }
-            return;*/
+            photoToUpdate = new Photo();
+            return;
         }
 
         String title = "";
@@ -803,7 +801,7 @@ public class PhotoLogFragment extends Fragment implements
             //String date = convertTimeInMilisAndFormat(markerDate.get(m));
             Drawable d = new BitmapDrawable(getResources(), p.getImgBitmap());
             //image was recognized
-            if (!name.toLowerCase().equals("desconhecido") || !name.toLowerCase().equals("unknown") || !name.equals("")) {
+            if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
                 //when the dialog with the description is closed, we show a feedback box;
                 //the user says if the app was able to identify the image succesfully, or close the dialog
                 //without providing an answer

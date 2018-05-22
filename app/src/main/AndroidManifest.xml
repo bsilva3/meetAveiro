@@ -97,7 +97,7 @@
         </activity>
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.example.android.fileprovider"
+            android:authorities="pi.ua.meetaveiro.others.GenericFileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

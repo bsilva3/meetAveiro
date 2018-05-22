@@ -1,29 +1,19 @@
 package pi.ua.meetaveiro.fragments;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.ViewPagerAdapter;
@@ -31,6 +21,12 @@ import pi.ua.meetaveiro.adapters.ViewPagerAdapter;
 import static pi.ua.meetaveiro.others.Constants.URL_COMMUNITY_ROUTES;
 import static pi.ua.meetaveiro.others.Constants.URL_CREATED_ROUTES;
 
+
+/**
+ * A fragment representing the lists of routes (created and community)
+ * Activities containing this fragment MUST implement the {@link OnNewRouteListener}
+ * interface.
+ */
 public class RouteListsFragment extends Fragment {
 
     private static final String TAG = RouteListsFragment.class.getSimpleName();
@@ -41,14 +37,13 @@ public class RouteListsFragment extends Fragment {
 
     private ViewPager viewPager;
 
+    // Required empty public constructor
     public RouteListsFragment() {
-        // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -96,12 +91,6 @@ public class RouteListsFragment extends Fragment {
         return view;
     }
 
-    private void invalidateFragmentMenus(int position){
-        for(int i = 0; i < viewPager.getAdapter().getCount(); i++){
-            ((ViewPagerAdapter)viewPager.getAdapter()).getItem(i).setHasOptionsMenu(i == position);
-        }
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -121,8 +110,14 @@ public class RouteListsFragment extends Fragment {
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getChildFragmentManager());
-        adapter.addFrag(RouteListFragment.newInstance(URL_COMMUNITY_ROUTES), "Community");
-        adapter.addFrag(RouteListFragment.newInstance(URL_CREATED_ROUTES), "Created");
+        adapter.addFrag(RouteListFragment
+                .newInstance(URL_COMMUNITY_ROUTES,
+                        true),
+                "Community");
+        adapter.addFrag(RouteListFragment
+                .newInstance(URL_CREATED_ROUTES,
+                        false),
+                "Created");
         viewPager.setAdapter(adapter);
     }
 

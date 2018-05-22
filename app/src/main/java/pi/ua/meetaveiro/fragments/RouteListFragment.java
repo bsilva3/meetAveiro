@@ -63,6 +63,8 @@ public class RouteListFragment extends Fragment implements
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
+
 
     private RouteAdapter.OnRouteItemSelectedListener mListener;
 
@@ -83,9 +85,14 @@ public class RouteListFragment extends Fragment implements
     private String url;
 
     /**
-    * Options menu searchView
+    *   Options menu searchView
      */
     private SearchView searchView;
+
+    /**
+    *   true if fragment has options menu
+     */
+    private boolean hasOptionsMenu;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -101,10 +108,11 @@ public class RouteListFragment extends Fragment implements
      * @param url Parameter 1.
      * @return A new instance of fragment RouteListFragment.
      */
-    public static RouteListFragment newInstance(String url) {
+    public static RouteListFragment newInstance(String url, boolean hasOptionsMenu) {
         RouteListFragment fragment = new RouteListFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, url);
+        args.putBoolean(ARG_PARAM2, hasOptionsMenu);
         fragment.setArguments(args);
         return fragment;
     }
@@ -114,7 +122,12 @@ public class RouteListFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             this.url = getArguments().getString(ARG_PARAM1);
+            this.hasOptionsMenu = getArguments().getBoolean(ARG_PARAM2);
         }
+        if(hasOptionsMenu)
+            setHasOptionsMenu(true);
+        else
+            setHasOptionsMenu(false);
     }
 
     @Override
@@ -250,7 +263,6 @@ public class RouteListFragment extends Fragment implements
 
     /**
      * Gets all the route names saved in the phone.
-     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
      */
     private void fetchLocalRoutes() {
 
@@ -261,7 +273,7 @@ public class RouteListFragment extends Fragment implements
             Route r;
             for (int i = 0; i < files.length; i++) {
                 if (files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route", "");
+                    String title = files[i].getName().replaceFirst("route", "").replaceFirst(".json","");
                     getRouteFromFile(title);
                     r = new Route(title);
                     items.add(r);

@@ -59,6 +59,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -66,6 +67,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
+import com.google.maps.android.ui.IconGenerator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,18 +90,20 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
 import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.others.MultiDrawable;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -113,7 +121,11 @@ import static pi.ua.meetaveiro.others.Constants.*;
 public class PhotoLogFragment extends Fragment implements
         OnMapReadyCallback,
         ImageDataReceiver,
-        TextToSpeech.OnInitListener{
+        TextToSpeech.OnInitListener,
+        ClusterManager.OnClusterClickListener<Photo>,
+        ClusterManager.OnClusterInfoWindowClickListener<Photo>,
+        ClusterManager.OnClusterItemClickListener<Photo>,
+        ClusterManager.OnClusterItemInfoWindowClickListener<Photo>{
 
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -195,6 +207,8 @@ public class PhotoLogFragment extends Fragment implements
 
     static final int REQUEST_TAKE_PHOTO = 1;
 
+
+    private ClusterManager<Photo> mClusterManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -315,6 +329,7 @@ public class PhotoLogFragment extends Fragment implements
         FragmentManager manager = getFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         transaction.replace(R.id.map, mapFragment);transaction.commit();
+        transaction.commit();
         return view;
     }
 
@@ -350,6 +365,139 @@ public class PhotoLogFragment extends Fragment implements
         //JSONObject j = placeRoutesOnJson();
         //Log.d("sendRoute", j.toString());
         //new uploadFileToServerTask().execute(j.toString(), URL_SEND_ROUTE);
+
+        startDemo();
+    }
+
+    /**
+     * Draws photos inside markers (using IconGenerator).
+     * When there are multiple people in the cluster, draw multiple photos (using MultiDrawable).
+     */
+    private class PhotoRenderer extends DefaultClusterRenderer<Photo> {
+        private final IconGenerator mIconGenerator = new IconGenerator(getContext());
+        private final IconGenerator mClusterIconGenerator = new IconGenerator(getContext());
+        private final ImageView mImageView;
+        private final ImageView mClusterImageView;
+        private final int mDimension;
+
+        public PhotoRenderer() {
+            super(getContext(), mMap, mClusterManager);
+
+            View multiProfile = getLayoutInflater().inflate(R.layout.multi_profile, null);
+            mClusterIconGenerator.setContentView(multiProfile);
+            mClusterImageView = multiProfile.findViewById(R.id.image);
+
+            mImageView = new ImageView(getContext());
+            mDimension = (int) getResources().getDimension(R.dimen.custom_profile_image);
+            mImageView.setLayoutParams(new ViewGroup.LayoutParams(mDimension, mDimension));
+            int padding = (int) getResources().getDimension(R.dimen.custom_profile_padding);
+            mImageView.setPadding(padding, padding, padding, padding);
+            mIconGenerator.setContentView(mImageView);
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(Photo photo, MarkerOptions markerOptions) {
+            // Draw a single Photo.
+            // Set the info window to show their name.
+            mImageView.setImageBitmap(photo.getImgBitmap());
+            Bitmap icon = mIconGenerator.makeIcon();
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon)).title(photo.getConcept());
+        }
+
+        @Override
+        protected void onBeforeClusterRendered(Cluster<Photo> cluster, MarkerOptions markerOptions) {
+            // Draw multiple people.
+            // Note: this method runs on the UI thread. Don't spend too much time in here (like in this example).
+            List<Drawable> profilePhotos = new ArrayList<Drawable>(Math.min(4, cluster.getSize()));
+            int width = mDimension;
+            int height = mDimension;
+
+            for (Photo p : cluster.getItems()) {
+                // Draw 4 at most.
+                if (profilePhotos.size() == 4) break;
+                Drawable drawable = new BitmapDrawable(getResources(), p.getImgBitmap());
+                //Drawable drawable = getResources().getDrawable(p.profilePhoto);
+                drawable.setBounds(0, 0, width, height);
+                profilePhotos.add(drawable);
+            }
+            MultiDrawable multiDrawable = new MultiDrawable(profilePhotos);
+            multiDrawable.setBounds(0, 0, width, height);
+
+            mClusterImageView.setImageDrawable(multiDrawable);
+            Bitmap icon = mClusterIconGenerator.makeIcon(String.valueOf(cluster.getSize()));
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
+        }
+
+        @Override
+        protected boolean shouldRenderAsCluster(Cluster cluster) {
+            // Always render clusters.
+            return cluster.getSize() > 1;
+        }
+    }
+
+    @Override
+    public boolean onClusterClick(Cluster<Photo> cluster) {
+        // Show a toast with some info when the cluster is clicked.
+        String date = cluster.getItems().iterator().next().getDate();
+        Toast.makeText(getContext(), cluster.getSize() + " (including photos taken at" + date + ")", Toast.LENGTH_SHORT).show();
+
+        // Zoom in the cluster. Need to create LatLngBounds and including all the cluster items
+        // inside of bounds, then animate to center of the bounds.
+
+        // Create the builder to collect all essential cluster items for the bounds.
+        LatLngBounds.Builder builder = LatLngBounds.builder();
+        for (ClusterItem item : cluster.getItems()) {
+            builder.include(item.getPosition());
+        }
+        // Get the LatLngBounds
+        final LatLngBounds bounds = builder.build();
+
+        // Animate camera to the bounds
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onClusterInfoWindowClick(Cluster<Photo> cluster) {
+        // Does nothing, but you could go to a list of the users.
+    }
+
+    @Override
+    public boolean onClusterItemClick(Photo item) {
+        // Does nothing, but you could go into the user's profile page, for example.
+        return false;
+    }
+
+    @Override
+    public void onClusterItemInfoWindowClick(Photo item) {
+        // Does nothing, but you could go into the user's profile page, for example.
+    }
+
+    protected void startDemo() {
+        mClusterManager = new ClusterManager<>(getContext(), mMap);
+        mClusterManager.setRenderer(new PhotoRenderer());
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mMap.setOnInfoWindowClickListener(mClusterManager);
+        mClusterManager.setOnClusterClickListener(this);
+        mClusterManager.setOnClusterInfoWindowClickListener(this);
+        mClusterManager.setOnClusterItemClickListener(this);
+        mClusterManager.setOnClusterItemInfoWindowClickListener(this);
+
+        addItems();
+        mClusterManager.cluster();
+    }
+
+    /**
+     * É suposto adicionar as fotos da storage ao cluster aqui
+     */
+    private void addItems() {
+        //mClusterManager.addItem(new Photo());
     }
 
     public void getMarkersFromStorage(){
@@ -413,15 +561,12 @@ public class PhotoLogFragment extends Fragment implements
     }
 
     private void addMarkerListener(){
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker m) {
-                if (markerID.containsKey(m)) {
-                    createAndShowInfoDialog(m, markerID.get(m), false);
-                    return true;
-                }
-                return false;
+        mMap.setOnMarkerClickListener(m -> {
+            if (markerID.containsKey(m)) {
+                createAndShowInfoDialog(m, markerID.get(m), false);
+                return true;
             }
+            return false;
         });
     }
 
@@ -589,6 +734,26 @@ public class PhotoLogFragment extends Fragment implements
                     }
                     //create marker and store it (also store the date we took the photo for the marker)
 
+                        mMap.setOnMapLoadedCallback(() -> {
+                            if (mLastKnownLocation!=null ) {
+                                //add the marker to the map of markers, but indicate that this marker
+                                //does not have an updated info yet
+                                Marker m = mMap.addMarker(new MarkerOptions()
+                                        .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                                        .title(getContext().getString(R.string.unknown_string))
+                                        .snippet(getContext().getString(R.string.unknown_string))
+                                        .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
+                                markers.put(m, false);
+                                imageMarkers.put(m, photoHighQuality);
+                                markerDate.put(m, date);
+                                //send a base 64 encoded photo to server
+                                Log.d("req", jsonRequest.toString()+"");
+                                new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                            }else {
+                                //Report error to user
+                                Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     mMap.setOnMapLoadedCallback(() -> {
                         if (mLastKnownLocation!=null ) {
                             //add the marker to the map of markers, but indicate that this marker

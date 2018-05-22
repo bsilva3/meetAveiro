@@ -1,15 +1,24 @@
 package pi.ua.meetaveiro.data;
 
+import android.graphics.Bitmap;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.clustering.ClusterItem;
+
 /**
  * Created by fabio on 18-05-2018.
  */
 
-public class Photo {
+public class Photo implements ClusterItem {
     private String img;
     private String date;
     private String concept;
     private String latitude;
     private String longitude;
+    private LatLng latLngLocation;
+    private Bitmap imgBitmap;
+
+    public Photo() { }
 
     public Photo(String img, String date, String concept, String latitude, String longitude) {
         this.img = img;
@@ -57,5 +66,36 @@ public class Photo {
 
     public void setLongitude(String longitude) {
         this.longitude = longitude;
+    }
+
+    public LatLng getLatLngLocation() {
+        return latLngLocation;
+    }
+
+    public void setLatLngLocation(LatLng latLngLocation) {
+        this.latLngLocation = latLngLocation;
+    }
+
+    public Bitmap getImgBitmap() {
+        return imgBitmap;
+    }
+
+    public void setImgBitmap(Bitmap imgBitmap) {
+        this.imgBitmap = imgBitmap;
+    }
+
+    @Override
+    public LatLng getPosition() {
+        return latLngLocation;
+    }
+
+    @Override
+    public String getTitle() {
+        return null;
+    }
+
+    @Override
+    public String getSnippet() {
+        return null;
     }
 }

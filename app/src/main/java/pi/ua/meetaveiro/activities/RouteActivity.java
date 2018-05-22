@@ -439,11 +439,7 @@ public class RouteActivity extends FragmentActivity implements
         }
 
         //start text to speech
-        tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-            }
-        });
+        tts = new TextToSpeech(getApplicationContext(), this);
     }
 
     @Override
@@ -1207,7 +1203,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
 
-            int result = tts.setLanguage(new Locale("pt", "PT"));
+            int result = tts.setLanguage(Locale.ENGLISH);
 
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {

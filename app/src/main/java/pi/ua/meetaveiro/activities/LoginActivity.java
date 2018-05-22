@@ -1,22 +1,37 @@
 package pi.ua.meetaveiro.activities;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.others.MyApplication;
+
+import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTION_INFO;
+import static pi.ua.meetaveiro.others.Constants.URL_LOG_USER;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -94,6 +109,7 @@ public class LoginActivity extends AppCompatActivity {
                                 // the auth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 progressBar.setVisibility(View.GONE);
+                                logUserInServer(email, password);
                                 if (!task.isSuccessful()) {
                                     // there was an error
                                     if (password.length() < 6) {
@@ -101,7 +117,8 @@ public class LoginActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
                                     }
-                                } else {
+                                }
+                                else{
                                     Intent intent = new Intent(LoginActivity.this, NavigationDrawerActivity.class);
                                     startActivity(intent);
                                     finish();
@@ -111,4 +128,46 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void logUserInServer(String email, String password) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("user", email);
+            json.put("password", password);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,
+                URL_LOG_USER, json, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("res", response.toString());
+                try {
+                    if (!response.getString("user").equals(email)){
+                        Toast.makeText(LoginActivity.this, getString(R.string.server_connect_error), Toast.LENGTH_SHORT).show();
+                    }
+                    /*else{
+                        Intent intent = new Intent(LoginActivity.this, NavigationDrawerActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }*/
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("ERROR", "Error: " + error.getMessage());
+
+            }
+        });
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
 }

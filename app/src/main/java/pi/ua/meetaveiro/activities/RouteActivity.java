@@ -19,7 +19,9 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
@@ -80,6 +82,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -284,7 +287,6 @@ public class RouteActivity extends FragmentActivity implements
 
         buttonAddPhoto.setOnClickListener(v -> {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            cameraIntent.putExtra("routeAct", 1);
             startActivityForResult(cameraIntent, CAMERA_REQUEST);
         });
         if (isFollowingTour){
@@ -811,16 +813,21 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAMERA_REQUEST:
                 if (resultCode == Activity.RESULT_OK) {
-                    Bitmap photo = (Bitmap) data.getExtras().get("data");
-                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
+                    File file = new File(Environment.getExternalStorageDirectory()+File.separator +
+                            "image.jpg");
+                    Log.d("file", file.getAbsolutePath());
+                    Bitmap photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                    Bitmap photoThumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
+                            THUMBSIZE, THUMBSIZE);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream bosThumb = new ByteArrayOutputStream();
+                    resetMarkers();
 
-                    //ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-                    //resetMarkers();
-                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                    photoThumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bosThumb);
 
-                    String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
+                    String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
@@ -842,9 +849,9 @@ public class RouteActivity extends FragmentActivity implements
                                         .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                                         .title(getString(R.string.unknown_string))
                                         .snippet(getString(R.string.unknown_string))
-                                        .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
+                                        .icon(BitmapDescriptorFactory.fromBitmap(photoThumbnail)));
                                 markers.put(m, false);
-                                imageMarkers.put(m, photoHighQuality);
+                                imageMarkers.put(m, photoThumbnail);
                                 markerDate.put(m, date);
                                 //send a base 64 encoded photo to server
                                 Log.d("req", jsonRequest.toString()+"");
@@ -862,12 +869,12 @@ public class RouteActivity extends FragmentActivity implements
     }
 
     public void resetMarkers(){
-        //imageMarkers = new HashMap<>();
-       // markers = new HashMap<>();
-        //markerDate = new HashMap<>();
-        //markerID = new HashMap<>();
+        imageMarkers = new HashMap<>();
+        markers = new HashMap<>();
+        markerDate = new HashMap<>();
+        markerID = new HashMap<>();
         if (mMap != null){
-           // mMap.clear();
+            //mMap.clear();
             redrawLine();
         }
 
@@ -1481,17 +1488,24 @@ public class RouteActivity extends FragmentActivity implements
                 routeDescriptionBox.requestFocus();
             }
             else {
-                // get user input and create a route object
-                Route route = new Route(routeTitleBox.getText().toString(), line,
-                        routeDescriptionBox.getText().toString(), imageMarkers);
-                RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, imageMarkers);
+                if (routePoints.isEmpty()){
+                    Toast.makeText(this, getString(R.string.route_empty), Toast.LENGTH_SHORT).show();
+                    alertDialog.dismiss();
+                    resetMarkers();
+                }
+                else {
+                    // get user input and create a route object
+                    Route route = new Route(routeTitleBox.getText().toString(), line,
+                            routeDescriptionBox.getText().toString(), imageMarkers);
+                    RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, imageMarkers);
 
-                //Save to Storage and send to the server
-                saveRouteToFile(rt);
-                JSONObject jsonT = placeRoutesOnJson(rt);
-                Log.d("sendRoute", jsonT+"");
-                new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
-                alertDialog.dismiss();
+                    //Save to Storage and send to the server
+                    saveRouteToFile(rt);
+                    JSONObject jsonT = placeRoutesOnJson(rt);
+                    Log.d("sendRoute", jsonT + "");
+                    new UploadFileToServerTask().execute(jsonT.toString(), URL_SEND_ROUTE);
+                    alertDialog.dismiss();
+                }
             }
         });
     }

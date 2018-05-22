@@ -4,7 +4,6 @@ package pi.ua.meetaveiro.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -15,9 +14,13 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.Image;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
@@ -25,15 +28,14 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.content.FileProvider;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,7 +62,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -72,7 +73,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -80,6 +81,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -92,9 +94,7 @@ import java.util.Map;
 import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.adapters.TourOptionsAdapter;
 import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
-import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
@@ -106,7 +106,7 @@ import static pi.ua.meetaveiro.others.Constants.*;
  * Photo logging  {@link Fragment} subclass.
  * Photo logging  {@link Fragment} subclass.
  * A user takes a photo, and sends the photo to the server. He also sends the current Date
- * When the server respondes, we see if the image was recognized or not.
+ * When the server responds, we see if the image was recognized or not.
  * If it was, we show a dialog with the concept and its description
  * else we only show a dialog with the date in which the user took the photo
  */
@@ -118,6 +118,7 @@ public class PhotoLogFragment extends Fragment implements
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int CAMERA_REQUEST = 1888;
+    public static final int CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE = 1777;
     private static final String TAG = "ERRO";
     private static final int DEFAULT_ZOOM = 17;
     private static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
@@ -190,6 +191,11 @@ public class PhotoLogFragment extends Fragment implements
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
 
+    private String mCurrentPhotoPath;
+
+    static final int REQUEST_TAKE_PHOTO = 1;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -221,6 +227,29 @@ public class PhotoLogFragment extends Fragment implements
 
         tts = new TextToSpeech(getActivity().getApplicationContext(), this);
 
+    }
+
+    //camera intent to save the picture taken on file
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.e("ERROR", ex.getMessage());
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(getContext(),
+                        "pi.ua.meetaveiro.fileprovider", photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
     }
 
 
@@ -259,9 +288,12 @@ public class PhotoLogFragment extends Fragment implements
         buttonAddPhoto = view.findViewById(R.id.search);
 
         buttonAddPhoto.setOnClickListener(v -> {
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+            File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+            startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
         });
+        buttonAddPhoto.setVisibility(View.GONE);
 
         //start bottom sheet
         mBottomSheetBehavior = BottomSheetBehavior.from(getActivity().findViewById(R.id.bottom_sheet_tour));
@@ -282,8 +314,7 @@ public class PhotoLogFragment extends Fragment implements
         mapFragment.getMapAsync(this);
         FragmentManager manager = getFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
-        transaction.replace(R.id.map, mapFragment);
-        transaction.commit();
+        transaction.replace(R.id.map, mapFragment);transaction.commit();
         return view;
     }
 
@@ -310,13 +341,11 @@ public class PhotoLogFragment extends Fragment implements
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
-
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
-
+        buttonAddPhoto.setVisibility(View.VISIBLE);
         getMarkersFromStorage();
         //JSONObject j = placeRoutesOnJson();
         //Log.d("sendRoute", j.toString());
@@ -529,19 +558,23 @@ public class PhotoLogFragment extends Fragment implements
                         break;
                 }
                 break;
-            case CAMERA_REQUEST:
+            case CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE:
                 if (resultCode == Activity.RESULT_OK) {
-                    Bitmap photo = (Bitmap) data.getExtras().get("data");
-                    Bitmap photoHighQuality = (Bitmap) data.getExtras().get("data");
-
-                    //ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    File file = new File(Environment.getExternalStorageDirectory()+File.separator +
+                            "image.jpg");
+                    Log.d("file", file.getAbsolutePath());
+                    Bitmap photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                    Bitmap photoThumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
+                            THUMBSIZE, THUMBSIZE);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream bosThumb = new ByteArrayOutputStream();
                     resetMarkers();
 
-                    ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                    photoThumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bosThumb);
 
-                    String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
+                    String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
+
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
@@ -556,33 +589,47 @@ public class PhotoLogFragment extends Fragment implements
                     }
                     //create marker and store it (also store the date we took the photo for the marker)
 
-                        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-                            public void onMapLoaded() {
-                                if (mLastKnownLocation!=null ) {
-                                    //add the marker to the map of markers, but indicate that this marker
-                                    //does not have an updated info yet
-                                    Marker m = mMap.addMarker(new MarkerOptions()
-                                            .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
-                                            .title(getContext().getString(R.string.unknown_string))
-                                            .snippet(getContext().getString(R.string.unknown_string))
-                                            .icon(BitmapDescriptorFactory.fromBitmap(photoHighQuality)));
-                                    markers.put(m, false);
-                                    imageMarkers.put(m, photoHighQuality);
-                                    markerDate.put(m, date);
-                                    //send a base 64 encoded photo to server
-                                    Log.d("req", jsonRequest.toString()+"");
-                                    new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
-                                }else {
-                                    //Report error to user
-                                    Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
+                    mMap.setOnMapLoadedCallback(() -> {
+                        if (mLastKnownLocation!=null ) {
+                            //add the marker to the map of markers, but indicate that this marker
+                            //does not have an updated info yet
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                                    .title(getContext().getString(R.string.unknown_string))
+                                    .snippet(getContext().getString(R.string.unknown_string))
+                                    .icon(BitmapDescriptorFactory.fromBitmap(photoThumbnail)));
+                            markers.put(m, false);
+                            imageMarkers.put(m, photoThumbnail);
+                            markerDate.put(m, date);
+                            //send a base 64 encoded photo to server
+                            Log.d("req", jsonRequest.toString()+"");
+                            new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                        }else {
+                            //Report error to user
+                            Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
                 }
                 Utils.uncompletedCameraRequest = false;
                 break;
         }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 
     @Override
@@ -1075,19 +1122,6 @@ public class PhotoLogFragment extends Fragment implements
                 .setTitle(R.string.pick_place)
                 .setItems(mLikelyPlaceNames, listener)
                 .show();
-    }
-    //simple method to change the color of a polyline. if false, returns the color of the
-    // current index (usefull when on route and we want to maintain the same color)
-    //if true, increments the index and returns the next color (usefull when placing all routes
-    //and we want to change the color of each path
-    private int getNextColor(boolean nextColor){
-        if (nextColor) {
-            colorIndex++;
-            if (colorIndex == lineColors.length)
-                colorIndex = 0;
-        }
-        return lineColors[colorIndex];
-
     }
 
     /**

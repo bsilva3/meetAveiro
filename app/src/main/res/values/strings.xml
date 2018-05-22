@@ -162,6 +162,8 @@
     <string name="option_get_place">Points of Interest</string>
     <string name="pick_place">Choose a place</string>
 
+    <string name="route_empty">This route is too small or empty. It will not be saved</string>
+
     <string name="title_popular_routes">Popular Routes</string>
     <string name="title_top_rated_routes">Top Rated Routes</string>
     <string name="title_new_routes">New Routes</string>

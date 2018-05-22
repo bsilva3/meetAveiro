@@ -240,6 +240,8 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 listPermissionsNeeded.add(Manifest.permission.CAMERA);
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
                 listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+                listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             // Should we show an explanation?
             if(listPermissionsNeeded.size()>0){
                 ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), PERMISSIONS_REQUEST);
@@ -273,13 +275,16 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
                 // Initialize the map with both permissions
                 perms.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
                 perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
                 // Fill with actual results from user
                 if (grantResults.length > 0) {
                     for (int i = 0; i < permissions.length; i++)
                         perms.put(permissions[i], grantResults[i]);
-                    // Check for both permissions
-                    if (perms.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "Camera and Location permission granted");
+                    // Check for all permissions
+                    if (perms.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                            perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+                        Log.d(TAG, "Camera, Location and write to storage permissions granted");
                         mPermissionsGranted = true;
                         setupNavigationFragments();
                     } else {

@@ -6,6 +6,7 @@ import com.google.android.gms.maps.model.Marker;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +18,7 @@ public class RouteInstance {
     private Date endDate;
     private Route route;
     private Map<Marker, Bitmap> routeMarkers;
+    private List<Photo> bitmaps;
 
     private int idInstance;
 
@@ -25,6 +27,13 @@ public class RouteInstance {
         this.endDate = endDate;
         this.route = route;
         this.routeMarkers = routeMarkers;
+    }
+
+    public RouteInstance(Date startDate, Date endDate, Route route, List<Photo> bitmaps) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.route = route;
+        this.bitmaps = bitmaps;
     }
 
     public RouteInstance(){
@@ -68,6 +77,13 @@ public class RouteInstance {
         this.routeMarkers = routeMarkers;
     }
 
+    public List<Photo> getBitmaps() {
+        return bitmaps;
+    }
+
+    public void setBitmaps(List<Photo> bitmaps) {
+        this.bitmaps = bitmaps;
+    }
 
     public int getIdInstance() {
         return idInstance;

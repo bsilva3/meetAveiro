@@ -408,7 +408,7 @@ public class PhotoLogFragment extends Fragment implements
 
     @Override
     public boolean onClusterItemClick(Photo item) {
-        //createAndShowInfoDialog(m, markerID.get(m), false);
+        createAndShowInfoDialog(item, false);
         // Does nothing, but you could go into the user's profile page, for example.
         return false;
     }
@@ -759,7 +759,7 @@ public class PhotoLogFragment extends Fragment implements
         m.remove();
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
-        createAndShowInfoDialog(photoToUpdate, id, true);
+        createAndShowInfoDialog(photoToUpdate, true);
         photoToUpdate = new Photo();
         //addMarkerListener();
         saveMarkersOnStorage();
@@ -794,7 +794,7 @@ public class PhotoLogFragment extends Fragment implements
     }
 
 
-    private void createAndShowInfoDialog(Photo p, int id, boolean showFeedback){
+    private void createAndShowInfoDialog(Photo p, boolean showFeedback){
         String name = p.getConcept();
         String conceptID = p.getConceptId();
         String description = p.getDescription();
@@ -818,7 +818,7 @@ public class PhotoLogFragment extends Fragment implements
                                 (dialog12, which) -> {
                                     dialog12.dismiss();
                                     if (showFeedback)
-                                        showFeedbackDialogAndSend(name, id, d);
+                                        showFeedbackDialogAndSend(name, p.getId(), d);
                                 }
                         )
                         .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)

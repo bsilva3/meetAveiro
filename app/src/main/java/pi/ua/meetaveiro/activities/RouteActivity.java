@@ -243,6 +243,8 @@ public class RouteActivity extends FragmentActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
+        photos = new ArrayList<>();
+        markers = new ArrayList<>();
 
         locationsReceiver = new LocationsReceiver();
 

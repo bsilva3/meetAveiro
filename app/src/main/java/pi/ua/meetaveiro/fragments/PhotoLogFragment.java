@@ -431,6 +431,7 @@ public class PhotoLogFragment extends Fragment implements
 
     @Override
     public boolean onClusterItemClick(Photo item) {
+        //createAndShowInfoDialog(m, markerID.get(m), false);
         // Does nothing, but you could go into the user's profile page, for example.
         return false;
     }
@@ -869,15 +870,13 @@ public class PhotoLogFragment extends Fragment implements
                     .setCancelable(false)
                     .setPositiveText(getContext().getString(R.string.ok))
                     .onPositive(
-                            (dialog12, which) -> {
-                                dialog12.dismiss();
-                            }
+                            (dialog12, which) -> dialog12.dismiss()
                     ).setScrollable(true, 5).build();
 
             dialog.show();
 
         }
-        //Log.d("tts", name+". "+ description);
+
         speakOut(name);
     }
 

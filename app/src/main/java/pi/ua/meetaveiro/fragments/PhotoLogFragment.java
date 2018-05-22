@@ -264,9 +264,9 @@ public class PhotoLogFragment extends Fragment implements
         File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
 
         if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-            //bigger then api 24 needs this
+            //bigger than api 24 needs this
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(getContext(), getContext().getApplicationContext().getPackageName() + "pi.ua.meetaveiro.others.GenericFileProvider", file));
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(getContext(), getContext().getApplicationContext().getPackageName() + ".pi.ua.meetaveiro.others.provider", file));
         }
         else
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));

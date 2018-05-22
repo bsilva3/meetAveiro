@@ -79,7 +79,8 @@ def signIn():
                 View('Requests', 'show_requests'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
-    except:
+    except Exception as e:
+        print(e)
         return jsonify({
             'url': ''
         })

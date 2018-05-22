@@ -128,7 +128,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
         //Verify if it comes from the server or it is local
-        if (Objects.equals(b.getString("RouteInstanceID"), "noNumber")) {
+        if (Objects.equals(b.getString("RouteInstanceID"), "noNumber") || b.getString("RouteInstanceID") == null) {
             isFromServer = false;
         } else {
             isFromServer = true;
@@ -137,6 +137,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             else
                 this.routeInstanceID = b.getString("RouteInstanceID");
         }
+
 
         NestedScrollView mScrollView = (NestedScrollView) findViewById(R.id.route_details_scroll);
         //fix for google maps scroll inside a nested scroll (a tap is required sometimes...)
@@ -163,17 +164,21 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             //Get the fileName in case of local
             Bundle b = getIntent().getExtras();
-            if (b != null && b.getString("fileName") != null)
-                value = b.getString("fileName");
+
+            value = "route" + b.getString("routeTitle") + ".json";
 
             //Get all info
             if (!isFromServer) {
                 reconstructRoute(Utils.getRouteFromFile(value, this.getApplicationContext()));
             } else {
-                //TODO: METHOD GET
                 if (b.getString("Type").equals("Route")) {
                     //Do as it is a Route
                     viewPager.setVisibility(View.GONE);
+                    TextView txt = (TextView) findViewById(R.id.PercursoTextoData);
+                    TextView txtImg = (TextView) findViewById(R.id.ImagemTexto);
+                    txtImg.setVisibility(View.GONE);
+                    txt.setVisibility(View.GONE);
+
 
                     ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
                     params.height = 1000;
@@ -187,6 +192,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 }
 
             }
+
 
 
             adapter = new RouteHistoryDetailAdapter(this, images);
@@ -233,10 +239,19 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             //Get Route Description
             r.setRouteDescription(json.get("Description").toString());
             String routeDesc = json.get("Description").toString();
+
+            if(r.getRouteDescription().length() > 300){
+                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
+                params.height = 1000;
+                routeDescription.setLayoutParams(params);
+            }
+
+
+
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
             Date endDate = new Date(json.get("EndDate").toString());
-            routeDate.setText("Start: " + startDate.toString() + "\nFinished: " + endDate.toString());
+            routeDate.setText("Começo: " + startDate.toString() + "\nFim: " + endDate.toString());
 
             LatLng markLar = null;
 
@@ -351,6 +366,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             String description = b.getString("routeDescription");
 
+            if(description.length() > 300){
+                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
+                params.height = 1000;
+                routeDescription.setLayoutParams(params);
+            }
+
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
 
@@ -388,6 +409,12 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             routeTitle = json.getString("title");
             String description = json.getString("description");
 
+             if(description.length() > 300){
+                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
+                 params.height = 1000;
+                 routeDescription.setLayoutParams(params);
+             }
+
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
 
@@ -424,7 +451,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
              mMap.addPolyline(options);
 
             Bundle b = getIntent().getExtras();
-            routeDate.setText("Start: " + b.getString("StartDate") + "\nFinished: " + b.getString("EndDate"));
+            routeDate.setText("Começo: " + b.getString("StartDate") + "\nFim: " + b.getString("EndDate"));
 
         } catch (JSONException e) {
             e.printStackTrace();

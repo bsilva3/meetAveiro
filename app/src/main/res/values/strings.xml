@@ -299,4 +299,7 @@
     <string name="share_route">Do you wish to share this route with your friends?</string>
     <string name="share">Share</string>
     <string name="close">Close</string>
+    <string name="data_do_percurso"><u><b>Data do percurso</b></u></string>
+    <string name="descri_o"><u><b>Descrição</b></u></string>
+    <string name="fotos"><u><b>Fotos</b></u></string>
 </resources>

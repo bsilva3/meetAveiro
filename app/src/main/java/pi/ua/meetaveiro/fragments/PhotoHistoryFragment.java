@@ -96,7 +96,7 @@ public class PhotoHistoryFragment extends Fragment  {
                 )
         );
 
-        //(new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+        fetchImages();
 
         return view;
     }
@@ -104,7 +104,6 @@ public class PhotoHistoryFragment extends Fragment  {
     @Override
     public void onResume(){
         super.onResume();
-        fetchImages();
     }
 
     @Override
@@ -127,7 +126,7 @@ public class PhotoHistoryFragment extends Fragment  {
 
     private void fetchImages() {
 
-        pDialog.setMessage("Downloading json...");
+        pDialog.setMessage(getString(R.string.download_images));
         pDialog.show();
 
         JSONObject json = new JSONObject();
@@ -163,74 +162,5 @@ public class PhotoHistoryFragment extends Fragment  {
         // Adding request to request queue
         MyApplication.getInstance().addToRequestQueue(req);
     }
-/*
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        menu.clear();
 
-        inflater.inflate(R.menu.search_menu, menu);
-
-        // Associate searchable configuration with the SearchView
-        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
-        searchView = (SearchView) menu.findItem(R.id.action_search)
-                .getActionView();
-        searchView.setSearchableInfo(searchManager
-                .getSearchableInfo(getActivity().getComponentName()));
-        searchView.setMaxWidth(Integer.MAX_VALUE);
-
-        // listening to search query text change
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                // filter recycler view when query submitted
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String query) {
-                // filter recycler view when text is changed
-                mAdapter.getFilter().filter(query);
-                return false;
-            }
-        });
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onRefresh() {
-        // start animating Shimmer and hide the layout
-        mShimmerViewContainer.startShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.VISIBLE);
-        (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
-    }
-
-    @Override
-    public void onProcessFinished(boolean hasNetworkConnection) {
-        if (hasNetworkConnection)
-            fetchAttractions();
-        else {
-            // stop animating Shimmer and hide the layout
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            // stopping swipe refresh
-            swipeRefreshLayout.setRefreshing(false);
-            //fetchLocalAttractions();
-        }
-    }*/
 }

@@ -3,16 +3,21 @@ package pi.ua.meetaveiro.fragments;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -28,10 +33,13 @@ import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import pi.ua.meetaveiro.R;
@@ -74,6 +82,9 @@ public class AttractionListFragment extends Fragment implements
      */
     private SearchView searchView;
 
+
+    private FastScroller fastScroller;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -99,12 +110,22 @@ public class AttractionListFragment extends Fragment implements
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
+        Bitmap myBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.aveiro);
+        if(myBitmap !=null&&!myBitmap.isRecycled()) {
+            Palette.from(myBitmap).generate(palette -> {
+
+                int def = R.id.toolbar;
+                CollapsingToolbarLayout toolbar = getActivity().findViewById(R.id.collapsing_toolbar);
+                toolbar.setBackgroundColor(palette.getLightVibrantColor(def));
+
+            });
+        }
+
         setHasOptionsMenu(true);
     }
 
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
-        Log.i("onprocessfinished",String.valueOf(hasNetworkConnection));
         if (hasNetworkConnection)
             fetchAttractions();
         else {
@@ -115,8 +136,13 @@ public class AttractionListFragment extends Fragment implements
         }
     }
 
+
     @Override
     public void onRefresh() {
+        // removing attractions
+        attractionList.clear();
+        adapter.notifyDataSetChanged();
+
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
@@ -167,6 +193,8 @@ public class AttractionListFragment extends Fragment implements
 
         mShimmerViewContainer = view.findViewById(R.id.attraction_list_shimmer_view_container);
         recyclerView = view.findViewById(R.id.attraction_list_recycler_view);
+        fastScroller = view.findViewById(R.id.fastscroll);
+
         // Set the adapter
         Context context = view.getContext();
         if (mColumnCount <= 1) {
@@ -195,6 +223,8 @@ public class AttractionListFragment extends Fragment implements
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
 
+        fastScroller.setRecyclerView(recyclerView);
+
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
@@ -217,6 +247,11 @@ public class AttractionListFragment extends Fragment implements
                             response.toString(),
                             new TypeToken<List<Attraction>>() {}
                             .getType());
+
+                    Collections.sort(items, (lhs, rhs) -> {
+                        // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
+                        return lhs.getName().trim().compareTo(rhs.getName().trim());
+                    });
 
                     // adding contacts to contacts list
                     attractionList.clear();

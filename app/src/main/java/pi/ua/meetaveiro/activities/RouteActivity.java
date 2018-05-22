@@ -437,11 +437,7 @@ public class RouteActivity extends FragmentActivity implements
         }
 
         //start text to speech
-        tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-            }
-        });
+        tts = new TextToSpeech(getApplicationContext(), this);
     }
 
     @Override
@@ -818,7 +814,7 @@ public class RouteActivity extends FragmentActivity implements
                     //photo.compress(Bitmap.CompressFormat.JPEG, 70, bos);
                     //resetMarkers();
                     ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 100, bos2);
+                    photoHighQuality.compress(Bitmap.CompressFormat.PNG, 100, bos2);
 
                     String base64Photo = Base64.encodeToString(bos2.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
@@ -1200,7 +1196,7 @@ public class RouteActivity extends FragmentActivity implements
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
 
-            int result = tts.setLanguage(new Locale("pt", "PT"));
+            int result = tts.setLanguage(Locale.ENGLISH);
 
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {

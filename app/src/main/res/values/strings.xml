@@ -299,4 +299,5 @@
     <string name="share_route">Do you wish to share this route with your friends?</string>
     <string name="share">Share</string>
     <string name="close">Close</string>
+    <string name="download_images">Downloading image data...</string>
 </resources>

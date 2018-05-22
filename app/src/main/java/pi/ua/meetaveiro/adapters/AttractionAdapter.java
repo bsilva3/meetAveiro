@@ -16,6 +16,7 @@ import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
+import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,9 @@ import pi.ua.meetaveiro.data.Attraction;
  * {@link RecyclerView.Adapter} that can display a {@link Attraction} and makes a call to the
  * specified {@link OnAttractionSelectedListener}.
  */
-public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.MyViewHolder> implements Filterable {
+public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.MyViewHolder> implements
+        Filterable,
+        SectionTitleProvider {
 
     private Context mContext;
 
@@ -69,6 +72,12 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_attraction, parent, false);
         return new MyViewHolder(view);
+    }
+
+    @Override
+    public String getSectionTitle(int position) {
+        //this String will be shown in a bubble for specified position
+        return attractionListFiltered.get(position).getName().substring(0, 1);
     }
 
     @Override
@@ -145,19 +154,6 @@ public class AttractionAdapter extends RecyclerView.Adapter<AttractionAdapter.My
             }
         };
     }
-
-    /**
-     * Showing popup menu when tapping on 3 dots
-     */
-    private void showPopupMenu(View view) {
-        // inflate menu
-        /*PopupMenu popup = new PopupMenu(mContext, view);
-        MenuInflater inflater = popup.getMenuInflater();
-        inflater.inflate(R.menu.menu_album, popup.getMenu());
-        popup.setOnMenuItemClickListener(new MyMenuItemClickListener());
-        popup.show();*/
-    }
-
 
     /**
      * This interface must be implemented by activities that contain this

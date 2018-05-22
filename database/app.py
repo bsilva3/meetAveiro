@@ -20,12 +20,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(password)s@%(ho
 db.init_app(app)
 
 def addUsers():
-    addUtilizador('bjpsilva@hotmail.com', 1)
-    addUtilizador('joao@outlook.com',1)
-    addUtilizador('youngf3@live.com.pt',1)
-    addUtilizador('joaoserpa1997@outlook.com',1)
-    addUtilizador('admin@ua.pt',1)
-    addUtilizador('joana@ua.pt', 2)
+    #addUtilizador('bjpsilva@hotmail.com', 1)
+    #addUtilizador('joao@outlook.com',1)
+    #addUtilizador('youngf3@live.com.pt',1)
+    #addUtilizador('joaoserpa1997@outlook.com',1)
+    #addUtilizador('admin@ua.pt',1)
+    #addUtilizador('joana@ua.pt', 2)
+    #addUtilizador('almeidaanafilipa999@gmail.com', 1)
+    #addUtilizador('franciscomanuelmatos@gmail.com', 1)
+    addUtilizador('franciscomatos@ua.pt', 1)
 
 
 def addTiposExemplo():
@@ -249,8 +252,8 @@ def queriesChico():
 
 @app.route('/')
 def index():
-    addInfoExemplo()
-    
+    #addInfoExemplo()
+    addUsers()
    
     # queriesExemplo()
     #queriesChico()

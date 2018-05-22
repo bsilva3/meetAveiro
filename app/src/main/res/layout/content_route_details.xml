@@ -15,6 +15,38 @@
         android:layout_height="match_parent"
         android:verticalScrollbarPosition="left">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/data_do_percurso"
+            android:id="@+id/PercursoTextoData"
+            android:textColor="@color/bg_login"
+            android:textSize="20sp"
+            android:layout_marginStart="3dp"
+            app:layout_constraintBottom_toTopOf="@+id/DateRoute"/>
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/descri_o"
+            android:id="@+id/DescricaoTexto"
+            android:textColor="@color/bg_login"
+            android:textSize="20sp"
+            android:layout_marginStart="3dp"
+            app:layout_constraintBottom_toTopOf="@+id/descriptRoute"
+            app:layout_constraintTop_toBottomOf="@id/DateRoute"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/fotos"
+            android:id="@+id/ImagemTexto"
+            android:textColor="@color/bg_login"
+            android:textSize="20sp"
+            android:layout_marginStart="3dp"
+            app:layout_constraintBottom_toTopOf="@+id/view_images"
+            app:layout_constraintTop_toBottomOf="@id/descriptRoute"/>
 
         <TextView
             android:id="@+id/descriptRoute"
@@ -25,6 +57,8 @@
             android:layout_marginEnd="2dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
+            android:textSize="16sp"
+            android:textColor="#161616"
             app:layout_constraintBottom_toBottomOf="@+id/DateRoute"
             app:layout_constraintBottom_toTopOf="@+id/view_images"
             app:layout_constraintEnd_toEndOf="parent"
@@ -71,6 +105,8 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
             android:text=""
+            android:textSize="16sp"
+            android:textColor="#161616"
             app:layout_constraintBottom_toTopOf="@+id/descriptRoute"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"

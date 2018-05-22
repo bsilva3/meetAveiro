@@ -263,7 +263,6 @@ public class RouteListFragment extends Fragment implements
 
     /**
      * Gets all the route names saved in the phone.
-     * SHOOULD APPEAR IN THE LIST ITEMS THE Name of the route
      */
     private void fetchLocalRoutes() {
 
@@ -274,7 +273,7 @@ public class RouteListFragment extends Fragment implements
             Route r;
             for (int i = 0; i < files.length; i++) {
                 if (files[i].getName().startsWith("route")) {
-                    String title = files[i].getName().replaceFirst("route", "");
+                    String title = files[i].getName().replaceFirst("route", "").replaceFirst(".json","");
                     getRouteFromFile(title);
                     r = new Route(title);
                     items.add(r);

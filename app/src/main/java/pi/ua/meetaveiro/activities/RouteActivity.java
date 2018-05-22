@@ -469,7 +469,7 @@ public class RouteActivity extends FragmentActivity implements
      * fetches json by making http calls
      */
     private void fetchGeofences() {
-       JsonArrayRequest request = new JsonArrayRequest(URL_ROUTE_HISTORY,
+       JsonArrayRequest request = new JsonArrayRequest(URL_ATTRACTIONS,
                 response -> {
                     if (response == null) {
                         Log.e(TAG, "Couldn't fetch the attractions.");
@@ -679,8 +679,8 @@ public class RouteActivity extends FragmentActivity implements
 
                     // Set the circular region of this geofence.
                     .setCircularRegion(
-                            entry.getLocation().latitude,
-                            entry.getLocation().longitude,
+                            Integer.valueOf(entry.getLatitude()),
+                            Integer.valueOf(entry.getLongitude()),
                             Constants.GEOFENCE_RADIUS_IN_METERS
                     )
 

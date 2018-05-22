@@ -10,10 +10,11 @@ from math import sqrt
 from geopy import distance
 from geopy.geocoders import Nominatim
 
+import pyrebase
 import random
 import datetime
 import requests
-from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect
+from flask import jsonify, request, Flask, render_template, url_for, send_from_directory, redirect, session
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
@@ -43,16 +44,59 @@ db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)
 
-mynav = Navbar('MeetAveiro', 
-    View('Home', 'index'),
-    View('Stats', 'show_stats'),
-    View('Requests', 'show_requests'))
-nav.register_element('mynavbar', mynav)
+config = {
+    'apiKey': "AIzaSyDCYwU48HMDzFbz_98UUl_NzNXgzy16LOY",
+    'authDomain': "meetaveiro-1520289975584.firebaseapp.com",
+    'databaseURL': "https://meetaveiro-1520289975584.firebaseio.com",
+    'projectId': "meetaveiro-1520289975584",
+    'storageBucket': "meetaveiro-1520289975584.appspot.com",
+    'messagingSenderId': "938454414503"
+}
 
 
-#firebase_admin.initialize_app(options={
-#    'databaseURL': 'https://<DB_NAME>.firebaseio.com'
-#})
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
+
+@app.route('/', methods=['GET'])
+def welcome():
+    return render_template('signIn.html')
+
+@app.route('/signIn', methods=['POST'])
+def signIn():
+    req = request.get_json(force=True)
+    email = req['user']
+    passwd = req['password']
+    try:
+        user = auth.sign_in_with_email_and_password(email, passwd)
+        session_id = user['idToken']
+        session['uid'] = str(session_id)
+        session['email'] = email
+        utilizador = db.session.query(Utilizador).get(email)
+        session['type'] = utilizador.tipoid
+        if utilizador.tipoid == 1:
+            mynav = Navbar('MeetAveiro', 
+                View('Home', 'index'),
+                View('Stats', 'show_stats'),
+                View('Requests', 'show_requests'),
+                View('Logout', 'signOut'))
+            nav.register_element('mynavbar', mynav)
+    except:
+        return jsonify({
+            'url': ''
+        })
+    
+    return jsonify({
+        'url': url_for('index')
+    })
+
+@app.route('/signOut', methods=['GET'])
+def signOut():
+    if 'uid' in session:
+        session.pop('uid', None)
+        session.pop('type', None)
+        session.pop('email', None)
+    return redirect(url_for('welcome'))
+
 
 def get_request_files():
     folder = './static/img'
@@ -100,21 +144,26 @@ def retrain():
         pending=count_elems_dict(pending_requests))
     
 
-@app.route('/')
 @app.route('/index')
 def index():
-    pending_requests = get_request_files()
-    return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
-        pending=count_elems_dict(pending_requests))
+    if 'uid' in session:
+        pending_requests = get_request_files()
+        return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
+            pending=count_elems_dict(pending_requests))
+    return render_template('signIn.html', message='You have to log in first.')
 
 @app.route('/gallery/<string:query>', methods=['GET'])
 def show_gallery(query):
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     folder = os.path.join(IMAGE_FOLDER, query)
     images = os.listdir(folder)
     return render_template('gallery.html', topic=images, path=query)
 
 @app.route('/stats', methods=['GET'])
 def show_stats():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     return render_template('stats.html',
                            totalusers = nTotalUsers(),
                            totalAdmin = nTotalTipoUser('Administrador'),
@@ -164,25 +213,33 @@ def upload(topic):
 
 @app.route('/resources/topics', methods=['POST'])
 def create_topic():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     if request.method == "POST":
         topic = request.form['topic']
+        name = request.form['name']
+        description = request.form['description']
+        latitude = request.form['latitude']
+        longitude = request.form['longitude']
+        raio = request.form['raio']
+
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
-            addConceito(topic, 'admin@ua.pt')
+            addConceito(topic, session['email'], float(latitude), float(longitude), float(raio), description, name, 5)
     return redirect(url_for('index'))
 
 @app.route('/resources/topics/manage', methods=['POST'])
 def manage_topic():
     res = request.get_json(force=True)
     method = res['method']
-    topic = res['topic']
+    topic = res['topic'].lower()
     if method == 'GET':
         print(topic)
         return jsonify({
                 'url': url_for('show_gallery', query=topic)
             })
-    elif method == 'POST':
+    elif method == 'POST' and topic != 'desconhecido':
         dest_folder = os.path.join(IMAGE_FOLDER, topic)
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder, ignore_errors=True)
@@ -192,6 +249,8 @@ def manage_topic():
 
 @app.route('/requests')
 def show_requests():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
     pending_requests = get_request_files()
     return render_template('pending.html', requests=pending_requests, 
         topics=next(os.walk(IMAGE_FOLDER))[1])
@@ -201,7 +260,7 @@ def change_request():
     folder = './static/img'
     res = request.get_json(force=True)
     filename = res['filename']
-    concept = res['path']
+    concept = res['path'].lower()
     old = res['old']
     req_folder = os.path.join(folder, old, filename)
 
@@ -223,11 +282,11 @@ def manage_requests():
     folder = './static/img'
     res = request.get_json(force=True)
     filename = res['filename']
-    concept = res['path']
+    concept = res['path'].lower()
     method = res['operation']
     req_folder = os.path.join(folder, concept, filename)
 
-    if method == 'POST':
+    if method == 'POST' and concept != 'desconhecido':
         file_desc = filename.split('.')
         dest_folder = os.path.join(IMAGE_FOLDER, concept)
         if not os.path.exists(dest_folder):
@@ -248,16 +307,6 @@ def manage_requests():
 ###################### API ##########################
 #######################################################
 #######################################################
-
-@app.route('/resources/users', methods=['POST'])
-def register_user():
-    req = request.get_json(force=True)
-    email = req['user']
-    addUtilizador(email, 2)
-    return jsonify({
-        'user': email
-    })
-
 
 @app.route('/search', methods=['POST'])
 def classify_image():
@@ -370,9 +419,15 @@ def receive_routes():
     description = res['description']
     markers = res['markers']
     trajectory = res['trajectory']
+    public = res['public']
+
+    privacy = 'Privado'
+
+    if public == 1:
+        privacy = 'Publico'
 
     print('Recebido')
-    percurso = addPercurso(email, title, 1, description)
+    percurso = addPercurso(email, title, privacy, description)
     instancia = addInstanciaPercurso(email, percurso.id, start, end)
     print('Percurso criado')
     marks = markers.split(',')
@@ -425,6 +480,23 @@ def get_routes():
         'routes': res
     })
 
+@app.route('/resources/routes/community', methods=['GET'])
+def get_community_routes():
+    routes = db.session.query(Percurso).filter(Percurso.estado=='Publico').all()
+    if len(routes) == 0:
+        return jsonify({
+            "routes": []
+        })
+    res = []
+    for r in routes:
+        temp = {}
+        temp['id'] = r.id
+        temp['title'] = r.titulo
+        temp['description'] = r.descricao
+        res.append(temp)
+    return jsonify({
+        'routes': res
+    })
 
 @app.route('/resources/routes/<int:id>', methods=['GET', 'PUT'])
 def get_specific_route(id):

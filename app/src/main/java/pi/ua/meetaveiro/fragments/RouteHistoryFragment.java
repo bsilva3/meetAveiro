@@ -376,6 +376,7 @@ public class RouteHistoryFragment extends Fragment implements
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
 
+            assert response != null;
 
             try {
                 List<RouteInstance> items = new ArrayList<>();

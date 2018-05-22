@@ -12,12 +12,14 @@ public class Constants {
 
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
     public final static String API_URL = "http://192.168.160.192:8080";
+    //url to log in a user
+    public final static String URL_LOG_USER = API_URL + "/resources/users";
     //url to send an image to the server to scan
     public final static String IMAGE_SCAN_URL = API_URL + "/search";
     //url to send image feedback
     public final static String FEEDBACK_URL = API_URL + "/search/feedback";
     // url to fetch all community routes
-    public static final String URL_COMMUNITY_ROUTES = API_URL + "/blahblah";
+    public static final String URL_COMMUNITY_ROUTES = API_URL + "/resources/routes/community";
     // url to fetch all created routes
     public static final String URL_CREATED_ROUTES = API_URL + "/resources/routes/byuser";
     //url to send image feedback
@@ -66,6 +68,11 @@ public class Constants {
     public static final String ACTION_BROADCAST = SERVICES_PACKAGE_NAME + ".broadcast";
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
     public static final String NEW_ROUTE_EXTRA = SERVICES_PACKAGE_NAME + ".new_route";
+    //for image size when photo is taken
+    public final static int DEFAULT_WIDTH = 1280;
+    public final static int DEFAULT_HEIGHT = 720;
+    //image width and height of images in markers
+    public final static  int THUMBSIZE = 150;
 
     public enum ROUTE_STATE{
         STARTED, PAUSED, STOPPED;

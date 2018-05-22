@@ -89,6 +89,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     //RouteID
     private String routeID;
 
+    //Boolean to check if it is an instance or a Route
+    private Boolean isRoute;
 
     //Variables to be used only
     Map<LatLng,Bitmap> mapBit = new HashMap<>();
@@ -227,6 +229,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
      */
     private void reconstructRoute(String datax) {
 
+        this.isRoute = true;
+
         Route r;
         Map<Marker, Bitmap> tempMap = new HashMap<>();
         try {
@@ -358,6 +362,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
 
     private void rearrangeJSONDataRoute(String inFo){
+
+        this.isRoute = true;
             Log.d("routeInfo", inFo+"");
         try {
             JSONObject json = new JSONObject(inFo);
@@ -403,7 +409,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     //Rearranges all the information from the Instance as Images
     private void rearrangeJSONDataInstance(String inFo){
-         try {
+        this.isRoute = false;
+
+        try {
             JSONObject json = new JSONObject(inFo);
 
             routeTitle = json.getString("title");

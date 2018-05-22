@@ -399,6 +399,7 @@ public class PhotoLogFragment extends Fragment implements
 
     @Override
     public boolean onClusterItemClick(Photo item) {
+        //createAndShowInfoDialog(m, markerID.get(m), false);
         // Does nothing, but you could go into the user's profile page, for example.
         return false;
     }

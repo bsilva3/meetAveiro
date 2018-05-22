@@ -277,7 +277,7 @@ public class RouteActivity extends FragmentActivity implements
         newRoute = true;
         if (getIntent().hasExtra("route")){
             isFollowingTour = true;
-            routeToFollow = (Route) getIntent().getExtras().getParcelable("route");
+            routeToFollow = getIntent().getExtras().getParcelable("route");
             newRoute = false;
         }
         // Inflate the layout for this fragment
@@ -435,6 +435,8 @@ public class RouteActivity extends FragmentActivity implements
                 .findFragmentById(R.id.route_map);
         mapFragment.getMapAsync(this);
 
+
+        Log.i("uncompletedcamerareques", String.valueOf(Utils.uncompletedCameraRequest) );
         if (Utils.uncompletedCameraRequest && getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Utils.uncompletedCameraRequest = false;
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
@@ -854,7 +856,7 @@ public class RouteActivity extends FragmentActivity implements
                 else if (resultCode == Activity.RESULT_CANCELED){
                     Toast.makeText(this, getString(R.string.foto_intent_fail), Toast.LENGTH_SHORT).show();
                 }
-                Utils.uncompletedCameraRequest = false;
+                Utils.uncompletedCameraRequest = true;
                 break;
         }
     }
@@ -1449,6 +1451,8 @@ public class RouteActivity extends FragmentActivity implements
         AlertDialog alertDialog = alertDialogBuilder.create();
         // show it
         alertDialog.show();
+
+        Utils.setRouteState(this, ROUTE_STATE.STOPPED);
 
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String boxTitle = routeTitleBox.getText().toString();

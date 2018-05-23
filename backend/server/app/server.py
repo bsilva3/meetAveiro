@@ -351,6 +351,7 @@ def classify_image():
     print("Folder created")
     file_id = str(len(files)) + '.jpg'
     filename = os.path.join(folder, file_id)
+    print("Filename: " + filename)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
 

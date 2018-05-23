@@ -697,7 +697,7 @@ def get_atractions():
                 break
             except:
                 print('Could not find: ' + f.path)
-            temp['imgName'] = path
+        temp['imgName'] = path
         res.append(temp)
 
     return jsonify(res)

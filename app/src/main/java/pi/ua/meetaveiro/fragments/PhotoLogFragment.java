@@ -624,7 +624,7 @@ public class PhotoLogFragment extends Fragment implements
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     ByteArrayOutputStream bosThumb = new ByteArrayOutputStream();
 
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
                     photoThumbnail.compress(Bitmap.CompressFormat.PNG, 100, bosThumb);
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
@@ -645,7 +645,7 @@ public class PhotoLogFragment extends Fragment implements
                         //create a new photo object with info to be completed by the server's response
                         photoToUpdate = new Photo(getContext().getString(R.string.unknown_string),
                                 getContext().getString(R.string.unknown_string) , new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
-                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoThumbnail);
+                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoHighQuality);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
                         new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);

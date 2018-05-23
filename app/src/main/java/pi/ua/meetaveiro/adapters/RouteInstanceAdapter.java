@@ -39,12 +39,14 @@ public class RouteInstanceAdapter extends RecyclerView.Adapter<RouteInstanceAdap
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mTitleView;
+        public final TextView mDateView;
         public RouteInstance mItem;
 
         public MyViewHolder(View view) {
             super(view);
             mView = view;
             mTitleView = view.findViewById(R.id.route_title);
+            mDateView = view.findViewById(R.id.route_description);
             view.setOnClickListener(view1 -> {
                 // send selected Route in callback
                 listener.onRouteInstanceSelected(routeListFiltered.get(getAdapterPosition()));
@@ -77,6 +79,7 @@ public class RouteInstanceAdapter extends RecyclerView.Adapter<RouteInstanceAdap
     public void onBindViewHolder(final RouteInstanceAdapter.MyViewHolder holder, int position) {
         holder.mItem = routeListFiltered.get(position);
         holder.mTitleView.setText(routeListFiltered.get(position).getRoute().getRouteTitle());
+        holder.mDateView.setText(routeListFiltered.get(position).getStartDate().toString());
 
         //When it is clicked all these actions will follow
         holder.mView.setOnClickListener(v -> {

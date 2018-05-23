@@ -122,11 +122,13 @@ public class RouteHistoryFragment extends Fragment implements
         mAdapter = new RouteInstanceAdapter(getContext(), routeList, mListener);
         recyclerView.setAdapter(mAdapter);
 
+
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new MyDividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL, 0));
         recyclerView.setAdapter(mAdapter);
+        fastScroller.setRecyclerView(recyclerView);
 
         mShimmerViewContainer.setVisibility(View.VISIBLE);
         mShimmerViewContainer.startShimmerAnimation();

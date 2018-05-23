@@ -79,7 +79,8 @@ def signIn():
                 View('Requests', 'show_requests'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
-    except:
+    except Exception as e:
+        print(e)
         return jsonify({
             'url': ''
         })
@@ -171,7 +172,10 @@ def show_stats():
                            totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
                            percursos = infoPercursos(),
-                           totalfotos = nTotalFotos())
+                           totalfotos = nTotalFotos(),
+                           fotosPorConceito = fotosPorConceito(),
+                           conc = conc(),
+                           descConh = nDesconhConhe())
 
 @app.route('/sendimage/<string:topic>/<string:filename>')
 def send_image(filename, topic):

@@ -22,6 +22,7 @@ import android.location.Location;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -31,6 +32,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.view.ContextThemeWrapper;
 import android.text.TextUtils;
@@ -38,8 +40,10 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,6 +71,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -77,6 +82,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
+import com.google.maps.android.ui.IconGenerator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,6 +112,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import pi.ua.meetaveiro.BuildConfig;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Photo;
@@ -110,6 +121,7 @@ import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
+import pi.ua.meetaveiro.others.MultiDrawable;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.receivers.GeofenceBroadcastReceiver;
@@ -120,7 +132,11 @@ import static pi.ua.meetaveiro.others.Constants.*;
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
         TextToSpeech.OnInitListener,
-        OnCompleteListener<Void> {
+        OnCompleteListener<Void>,
+        ClusterManager.OnClusterClickListener<Photo>,
+        ClusterManager.OnClusterInfoWindowClickListener<Photo>,
+        ClusterManager.OnClusterItemClickListener<Photo>,
+        ClusterManager.OnClusterItemInfoWindowClickListener<Photo>{
 
     //Constant used in the location settings dialog.
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -178,8 +194,6 @@ public class RouteActivity extends FragmentActivity implements
     //to keep track of the photoItem that is going to be updated
     private Photo photoToUpdate;
     List<Photo> photos;
-    //list of markers on map
-    List<Marker> markers;
 
     // Used for selecting the current place.
     private static final int M_MAX_ENTRIES = 10;
@@ -219,6 +233,7 @@ public class RouteActivity extends FragmentActivity implements
      */
     private boolean newRoute;
 
+    private ClusterManager<Photo> mClusterManager;
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -243,10 +258,10 @@ public class RouteActivity extends FragmentActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
+        photos = new ArrayList<>();
 
         locationsReceiver = new LocationsReceiver();
 
-        markers = new ArrayList<>();
         mRequestingLocationUpdates = false;
 
         // Empty list for storing geofences.
@@ -287,11 +302,11 @@ public class RouteActivity extends FragmentActivity implements
         buttonStopRoute = findViewById(R.id.stop);
 
         buttonAddPhoto.setOnClickListener(v -> {
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-            File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
-            startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
+            startCameraIntent();
         });
+        //just to make sure the buttons start correctly
+        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STOPPED);
+        updateRouteButtons(Utils.getRouteState(RouteActivity.this));
         if (isFollowingTour){
             //we are following a pre created route
             buttonStartRoute.setOnClickListener(v -> {
@@ -310,10 +325,8 @@ public class RouteActivity extends FragmentActivity implements
                                 case DialogInterface.BUTTON_POSITIVE:
                                     //clean all points and markers from previous tour
                                     //and add the lines in map
-                                    markers.clear();
                                     routePoints.clear();
                                     photos.clear();
-                                    markers.clear();
                                     line.remove();
                                     routePoints = routeToFollow.getRoutePoints();
                                     redrawLine();
@@ -358,10 +371,8 @@ public class RouteActivity extends FragmentActivity implements
                             switch (which) {
                                 case DialogInterface.BUTTON_POSITIVE:
                                     //clean all points and markers from previous tour
-                                    markers.clear();
                                     routePoints.clear();
                                     photos.clear();
-                                    markers.clear();
                                     mMap.clear();
                                     //now procede to the tour
                                     onRouteStateChanged(true);
@@ -436,15 +447,149 @@ public class RouteActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
 
 
-        Log.i("uncompletedcamerareques", String.valueOf(Utils.uncompletedCameraRequest) );
+        Log.i("uncompletedCameraRqst", String.valueOf(Utils.uncompletedCameraRequest) );
         if (Utils.uncompletedCameraRequest && getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)) {
             Utils.uncompletedCameraRequest = false;
-            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+            startCameraIntent();
         }
 
         //start text to speech
         tts = new TextToSpeech(getApplicationContext(), this);
+    }
+
+    /**
+     * Draws photos inside markers (using IconGenerator).
+     * When there are multiple people in the cluster, draw multiple photos (using MultiDrawable).
+     */
+    private class PhotoRenderer extends DefaultClusterRenderer<Photo> {
+        private final IconGenerator mIconGenerator = new IconGenerator(RouteActivity.this);
+        private final IconGenerator mClusterIconGenerator = new IconGenerator(RouteActivity.this);
+        private final ImageView mImageView;
+        private final ImageView mClusterImageView;
+        private final int mDimension;
+
+        public PhotoRenderer() {
+            super(RouteActivity.this, mMap, mClusterManager);
+
+            View multiProfile = getLayoutInflater().inflate(R.layout.multi_profile, null);
+            mClusterIconGenerator.setContentView(multiProfile);
+            mClusterImageView = multiProfile.findViewById(R.id.image);
+
+            mImageView = new ImageView(RouteActivity.this);
+            mDimension = (int) getResources().getDimension(R.dimen.custom_profile_image);
+            mImageView.setLayoutParams(new ViewGroup.LayoutParams(mDimension, mDimension));
+            int padding = (int) getResources().getDimension(R.dimen.custom_profile_padding);
+            mImageView.setPadding(padding, padding, padding, padding);
+            mIconGenerator.setContentView(mImageView);
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(Photo photo, MarkerOptions markerOptions) {
+            // Draw a single Photo.
+            // Set the info window to show their name.
+            mImageView.setImageBitmap(photo.getImgBitmap());
+            Bitmap icon = mIconGenerator.makeIcon();
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon)).title(photo.getConcept());
+        }
+
+        @Override
+        protected void onBeforeClusterRendered(Cluster<Photo> cluster, MarkerOptions markerOptions) {
+            // Draw multiple people.
+            // Note: this method runs on the UI thread. Don't spend too much time in here (like in this example).
+            List<Drawable> profilePhotos = new ArrayList<Drawable>(Math.min(4, cluster.getSize()));
+            int width = mDimension;
+            int height = mDimension;
+
+            for (Photo p : cluster.getItems()) {
+                // Draw 4 at most.
+                if (profilePhotos.size() == 4) break;
+                Drawable drawable = new BitmapDrawable(getResources(), p.getImgBitmap());
+                //Drawable drawable = getResources().getDrawable(p.profilePhoto);
+                drawable.setBounds(0, 0, width, height);
+                profilePhotos.add(drawable);
+            }
+            MultiDrawable multiDrawable = new MultiDrawable(profilePhotos);
+            multiDrawable.setBounds(0, 0, width, height);
+
+            mClusterImageView.setImageDrawable(multiDrawable);
+            Bitmap icon = mClusterIconGenerator.makeIcon(String.valueOf(cluster.getSize()));
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
+        }
+
+        @Override
+        protected boolean shouldRenderAsCluster(Cluster cluster) {
+            // Always render clusters.
+            return cluster.getSize() > 1;
+        }
+    }
+
+    @Override
+    public boolean onClusterClick(Cluster<Photo> cluster) {
+        // Show a toast with some info when the cluster is clicked.
+        String date = cluster.getItems().iterator().next().getDate();
+        //Toast.makeText(getContext(), cluster.getSize() + " (including photos taken at" + date + ")", Toast.LENGTH_SHORT).show();
+
+        // Zoom in the cluster. Need to create LatLngBounds and including all the cluster items
+        // inside of bounds, then animate to center of the bounds.
+
+        // Create the builder to collect all essential cluster items for the bounds.
+        LatLngBounds.Builder builder = LatLngBounds.builder();
+        for (ClusterItem item : cluster.getItems()) {
+            builder.include(item.getPosition());
+        }
+        // Get the LatLngBounds
+        final LatLngBounds bounds = builder.build();
+
+        // Animate camera to the bounds
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onClusterInfoWindowClick(Cluster<Photo> cluster) {
+        // Does nothing, but you could go to a list of the users.
+    }
+
+    @Override
+    public boolean onClusterItemClick(Photo item) {
+        createAndShowInfoDialog(item, false);
+        // Does nothing, but you could go into the user's profile page, for example.
+        return false;
+    }
+
+    @Override
+    public void onClusterItemInfoWindowClick(Photo item) {
+        // Does nothing, but you could go into the user's profile page, for example.
+    }
+
+    protected void startMarkerClusterer() {
+        mClusterManager = new ClusterManager<>(this, mMap);
+        mClusterManager.setRenderer(new RouteActivity.PhotoRenderer());
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mMap.setOnInfoWindowClickListener(mClusterManager);
+        mClusterManager.setOnClusterClickListener(this);
+        mClusterManager.setOnClusterInfoWindowClickListener(this);
+        mClusterManager.setOnClusterItemClickListener(this);
+        mClusterManager.setOnClusterItemInfoWindowClickListener(this);
+
+        addItems();
+        mClusterManager.cluster();
+        mClusterManager.setAnimation(true);
+    }
+
+    /**
+     * É suposto adicionar as fotos da storage ao cluster aqui
+     */
+    private void addItems() {
+        for (Photo photo : photos) {
+            mClusterManager.addItem(photo);
+        }
     }
 
     @Override
@@ -500,6 +645,21 @@ public class RouteActivity extends FragmentActivity implements
 
         MyApplication.getInstance().addToRequestQueue(request);
 
+    }
+
+    private void startCameraIntent(){
+        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+        File file = new File(Environment.getExternalStorageDirectory()+File.separator + "image.jpg");
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //bigger than api 24 needs this
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", file));
+        } else {
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+        }
+
+        startActivityForResult(intent, CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE);
     }
 
     //Called when Start/Stop route button is pressed
@@ -727,6 +887,7 @@ public class RouteActivity extends FragmentActivity implements
 
         //Initialize Preferences*
         prefs = getSharedPreferences("LatLng",MODE_PRIVATE);
+        startMarkerClusterer();
     }
 
     private void updateLocationUI() {
@@ -906,21 +1067,13 @@ public class RouteActivity extends FragmentActivity implements
                 photoToUpdate.getDate()+"\n" +description);
         photoToUpdate.setConceptId(conceptID);
         photoToUpdate.setId(id);
-        //create a marker and place it on map with all the info
-        Marker m = mMap.addMarker(new MarkerOptions()
-                .position(photoToUpdate.getLatLngLocation())
-                .title(photoToUpdate.getConcept())
-                .snippet(photoToUpdate.getDescription())
-                .icon(BitmapDescriptorFactory.fromBitmap(photoToUpdate.getImgBitmap())));
-        m.setTag(id);
         photos.add(photoToUpdate);
-        photoToUpdate = new Photo();
-        markers.add(m);
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
-        createAndShowInfoDialog(m, id, true);
-        addMarkerListener();
+        createAndShowInfoDialog(photoToUpdate, true);
+        photoToUpdate = new Photo();
         saveMarkersOnStorage();
+        startMarkerClusterer();
     }
 
     //each marker is populated from info inside a Photo object
@@ -934,13 +1087,6 @@ public class RouteActivity extends FragmentActivity implements
             }
         }
         return null;
-    }
-
-    private void addMarkerListener(){
-        mMap.setOnMarkerClickListener(m -> {
-            createAndShowInfoDialog(m, getPhotoItemFromMarker(m).getId(), false);
-            return true;
-        });
     }
 
     public void onFeedbackResponseReceived (Object result){
@@ -1018,36 +1164,33 @@ public class RouteActivity extends FragmentActivity implements
     }
 
 
-    private void createAndShowInfoDialog(Marker m, int id, boolean showFeedback){
-        String name = m.getTitle();
-        String conceptID = getPhotoItemFromMarker(m).getConceptId();
-        String description = m.getSnippet();
-        Photo photo = getPhotoItemFromMarker(m);
-        Log.d("photoItem", photo+"");
-        if (photo != null) {
-            //String date = convertTimeInMilisAndFormat(markerDate.get(m));
-            Drawable d = new BitmapDrawable(getResources(), photo.getImgBitmap());
-            //image was recognized
-            if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
-                //when the dialog with the description is closed, we show a feedback box;
-                //the user says if the app was able to identify the image succesfully, or close the dialog
-                //without providing an answer
-                Log.d("concept_id", conceptID + ", -" + name);
-                final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
-                        .setHeaderDrawable(d)
-                        .setIcon(R.drawable.ic_check_green_24dp)
-                        .withDialogAnimation(true)
-                        .setTitle(name)
-                        .setDescription(description)
-                        .setCancelable(false)
-                        .setPositiveText(getString(R.string.ok))
-                        .onPositive(
-                                (dialog12, which) -> {
-                                    dialog12.dismiss();
-                                    if (showFeedback)
-                                        showFeedbackDialogAndSend(name, id, d);
-                                }
-                        )
+    private void createAndShowInfoDialog(Photo p, boolean showFeedback){
+        String name = p.getConcept();
+        String conceptID = p.getConceptId();
+        String description = p.getDescription();
+        //String date = convertTimeInMilisAndFormat(markerDate.get(m));
+        Drawable d = new BitmapDrawable(getResources(), p.getImgBitmap());
+        //image was recognized
+        if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
+            //when the dialog with the description is closed, we show a feedback box;
+            //the user says if the app was able to identify the image succesfully, or close the dialog
+            //without providing an answer
+            Log.d("concept_id", conceptID + ", -" + name);
+            final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
+                    .setHeaderDrawable(d)
+                    .setIcon(R.drawable.ic_check_green_24dp)
+                    .withDialogAnimation(true)
+                    .setTitle(name)
+                    .setDescription(description)
+                    .setCancelable(false)
+                    .setPositiveText(getString(R.string.ok))
+                    .onPositive(
+                            (dialog12, which) -> {
+                                dialog12.dismiss();
+                                if (showFeedback)
+                                    showFeedbackDialogAndSend(name, p.getId(), d);
+                            }
+                    )
                         .onNeutral((dialog1, which) -> startActivity(new Intent(this, POIDetails.class)
                                 .putExtra("attraction", conceptID)))
                         .setNeutralText(getString(R.string.see_more_info));
@@ -1074,7 +1217,6 @@ public class RouteActivity extends FragmentActivity implements
             //Log.d("tts", name+". "+ description);
             speakOut(name);
         }
-    }
 
     private void showFeedbackDialogAndSend(String conceptName, int imageId, Drawable d){
         JSONObject jsonRequest = new JSONObject();
@@ -1459,18 +1601,17 @@ public class RouteActivity extends FragmentActivity implements
                 if (routePoints.isEmpty()){
                     Toast.makeText(this, getString(R.string.route_empty), Toast.LENGTH_SHORT).show();
                     photos.clear();
-                    markers.clear();
                     alertDialog.dismiss();
                 }
                 else {
                     // get user input and create a route object
                     Route route = new Route(routeTitleBox.getText().toString(), line,
                             routeDescriptionBox.getText().toString());
-                    Map <Marker, Bitmap> markerImages = new HashMap<>();
-                    for (Marker m : markers){
-                        markerImages.put(m, getPhotoItemFromMarker(m).getImgBitmap());
+                    List <Photo> photoItemsToSend = new ArrayList<>();
+                    for (Photo p : photos){
+                        photoItemsToSend.add(p);
                     }
-                    RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, markerImages);
+                    RouteInstance rt = new RouteInstance(new Date(begginingDate), new Date(), route, photoItemsToSend);
 
                     //Save to Storage and send to the server
                     saveRouteToFile(rt);
@@ -1484,7 +1625,7 @@ public class RouteActivity extends FragmentActivity implements
 
     private void askForRoutePrivacity(JSONObject json){
         final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
-                .setIcon(R.drawable.ic_sd_storage_black_24dp)//todo: change this header
+                .setIcon(R.drawable.ic_assistant_photo_black_24dp)
                 .withDialogAnimation(true)
                 .setTitle("Would you like to make this route public or private?")
                 .setDescription("If you choose this public, other users can see your route and follow it.")
@@ -1548,23 +1689,23 @@ public class RouteActivity extends FragmentActivity implements
         sb.append("\"EndDate\" : " + "\"" + routeInstance.getEndDate().toString() +"\",\n");
         sb.append("\"Markers\" : [\n");
         //Markers
-        Map<Marker,Bitmap> temp = routeInstance.getRouteMarkers();
+        List<Photo> temp = routeInstance.getBitmaps();
         int tmp = 0;
         List<LatLng> polyPoints  = routeInstance.getRoute().getRoutePath().getPoints();
 
-        for (Map.Entry<Marker, Bitmap> entry : temp.entrySet())
+        for (Photo p : temp)
         {
-            if (polyPoints.contains(entry.getKey().getPosition())){
+            if (polyPoints.contains(p.getLatLngLocation())){
                 //Marker number
                 if (tmp > 0)
                     sb.append(",\n");
                 sb.append("{");
                 //Marker information
-                sb.append("\"Titl\" : " + "\"" + entry.getKey().getTitle() + "\",\n");
-                sb.append("\"Snippet\" : " + "\"" + entry.getKey().getSnippet() + "\",\n");
-                sb.append("\"Latitude\" : " + "\"" + entry.getKey().getPosition().latitude + "\",\n");
-                sb.append("\"Longitude\" : " + "\"" + entry.getKey().getPosition().longitude + "\",\n");
-                String tmpo = bitMapToBase64(entry.getValue());
+                sb.append("\"Titl\" : " + "\"" + p.getConcept() + "\",\n");
+                sb.append("\"Snippet\" : " + "\"" + p.getDescription() + "\",\n");
+                sb.append("\"Latitude\" : " + "\"" + p.getLatLngLocation().latitude + "\",\n");
+                sb.append("\"Longitude\" : " + "\"" + p.getLatLngLocation().longitude + "\",\n");
+                String tmpo = bitMapToBase64(p.getImgBitmap());
                 String imageFix = tmpo.replaceAll("/","//");
                 sb.append("\"Icon\" : " + "\"" + imageFix + "\"");
                 //End marker

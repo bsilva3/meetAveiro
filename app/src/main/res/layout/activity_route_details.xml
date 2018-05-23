@@ -34,5 +34,28 @@
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_route_details" />
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/edit_tour"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:src="@drawable/ic_edit_black_24dp"
+        android:layout_gravity="bottom|left"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/change_privacy"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:src="@drawable/ic_assistant_photo_black_24dp"
+        android:layout_gravity="bottom|right"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/play_route"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:src="@drawable/ic_play_arrow_black_24dp"
+        android:layout_gravity="bottom|center"/>
 
 </android.support.design.widget.CoordinatorLayout>

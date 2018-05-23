@@ -65,7 +65,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="MissingConstraints" />
-
+        
         <android.support.v4.view.ViewPager
             android:id="@+id/view_images"
             android:layout_width="wrap_content"

@@ -22,7 +22,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -56,10 +62,12 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MapScrollWorkAround;
+import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
+import static pi.ua.meetaveiro.others.Constants.URL_SEND_ROUTE;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -571,6 +579,39 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             rearrangeJSONDataRoute(data);
         }
     }
+
+    //edit name privacy and description of route. 1 - public, 0 - private
+    private void changeRouteInfo(String title, String description, int privacy) {
+        JSONObject j = new JSONObject();
+        try {
+            j.put("title", title);
+            j.put("description", description);
+            j.put("privacy", privacy);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.PUT,
+                URL_SEND_ROUTE, j, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("res", response.toString());
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("ERROR", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
 
 
 }

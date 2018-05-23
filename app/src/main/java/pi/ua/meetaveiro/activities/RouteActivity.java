@@ -70,10 +70,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Dash;
+import com.google.android.gms.maps.model.Dot;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -104,6 +108,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -233,6 +238,21 @@ public class RouteActivity extends FragmentActivity implements
      */
     private boolean newRoute;
 
+    //costumize polyline
+    List<PatternItem> pattern;
+
+    private static final int POLYGON_STROKE_WIDTH_PX = 8;
+    private static final int PATTERN_DASH_LENGTH_PX = 20;
+    private static final int PATTERN_GAP_LENGTH_PX = 20;
+    private static final PatternItem DOT = new Dot();
+    private static final PatternItem DASH = new Dash(PATTERN_DASH_LENGTH_PX);
+    private static final PatternItem GAP = new Gap(PATTERN_GAP_LENGTH_PX);
+    // Create a stroke pattern of a gap followed by a dash.
+    private static final List<PatternItem> PATTERN_POLYGON_ALPHA = Arrays.asList(GAP, DASH);
+
+    private static final int COLOR_BLACK_ARGB = 0xff000000;
+    private static final int COLOR_RED_ARGB = 0xff3333;
+
     private ClusterManager<Photo> mClusterManager;
 
     // Monitors the state of the connection to the service.
@@ -259,6 +279,8 @@ public class RouteActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
         photos = new ArrayList<>();
+
+        pattern = PATTERN_POLYGON_ALPHA;
 
         locationsReceiver = new LocationsReceiver();
 
@@ -1543,7 +1565,8 @@ public class RouteActivity extends FragmentActivity implements
     private void redrawLine(){
         PolylineOptions options = new PolylineOptions()
                 .width(10)
-                .color(Color.BLUE)
+                .color(Color.RED)
+                .pattern(pattern)
                 .geodesic(true);
 
         for (int i = 0; i < routePoints.size(); i++) {

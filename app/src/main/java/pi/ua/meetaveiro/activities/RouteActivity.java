@@ -305,7 +305,6 @@ public class RouteActivity extends FragmentActivity implements
             startCameraIntent();
         });
         //just to make sure the buttons start correctly
-        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STOPPED);
         updateRouteButtons(Utils.getRouteState(RouteActivity.this));
         if (isFollowingTour){
             //we are following a pre created route

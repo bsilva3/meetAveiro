@@ -121,11 +121,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     LatLng larr;
 
 
-    //to keep track of the photoItem that is going to be updated
-    private Photo photoToUpdate;
-    List<Photo> photos;
-
-
     /**
      * To send here:
      * routeTitle: The title of the route (MANDATORY)
@@ -313,13 +308,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 String newIcon = icon.replaceAll("//", "/");
                 Bitmap image = Utils.StringToBitMap(newIcon);
                 images.add(image);
-
-
-                Bitmap smallMarker = createSmallMarker(image);
-
-
                 Marker m = mMap.addMarker(new MarkerOptions().position(markLar)
-                        .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                        .icon(BitmapDescriptorFactory.fromBitmap(image))
                         .title(title)
                         .snippet(snippet));
 
@@ -421,10 +411,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             if(description.length() > 300){
                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
                 params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }else{
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 600;
                 routeDescription.setLayoutParams(params);
             }
 
@@ -528,13 +514,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     Map.Entry<Bitmap, String> entry2 = iter.next();
                     if(entry2.getKey().equals(entry.getValue())) {
                         images.add(entry.getValue());
-
-                        //Create a smaller map
-                        Bitmap smallMarker = createSmallMarker(entry.getValue());
-
-
                         Marker m = mMap.addMarker(new MarkerOptions().position(entry.getKey())
-                                .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)).title(entry2.getValue())
+                                .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())).title(entry2.getValue())
                                 .snippet(entry2.getValue()));
                     }
                 }
@@ -637,37 +618,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             super.onPostExecute(aVoid);
             rearrangeJSONDataRoute(data);
         }
-    }
-    //edit name privacy and description of route. 1 - public, 0 - private
-    private void changeRouteInfo(String title, String description, int privacy) {
-        JSONObject j = new JSONObject();
-        try {
-            j.put("title", title);
-            j.put("description", description);
-            j.put("privacy", privacy);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.PUT,
-                URL_SEND_ROUTE, j, new Response.Listener<JSONObject>() {
-
-            @Override
-            public void onResponse(JSONObject response) {
-                Log.d("res", response.toString());
-
-            }
-        }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.d("ERROR", "Error: " + error.getMessage());
-                Toast.makeText(getApplicationContext(),
-                        error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Adding request to request queue
-        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
     }
 
 

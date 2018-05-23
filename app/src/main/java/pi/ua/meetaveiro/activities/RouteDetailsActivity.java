@@ -65,12 +65,14 @@ import java.util.Objects;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
+import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MapScrollWorkAround;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
+import static pi.ua.meetaveiro.others.Utils.createSmallMarker;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -106,6 +108,11 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     Map<Bitmap,String> mapBitDate = new HashMap<>();
     String dateT;
     LatLng larr;
+
+
+    //to keep track of the photoItem that is going to be updated
+    private Photo photoToUpdate;
+    List<Photo> photos;
 
 
     /**
@@ -295,8 +302,13 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 String newIcon = icon.replaceAll("//", "/");
                 Bitmap image = Utils.StringToBitMap(newIcon);
                 images.add(image);
+
+
+                Bitmap smallMarker = createSmallMarker(image);
+
+
                 Marker m = mMap.addMarker(new MarkerOptions().position(markLar)
-                        .icon(BitmapDescriptorFactory.fromBitmap(image))
+                        .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
                         .title(title)
                         .snippet(snippet));
 
@@ -398,6 +410,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             if(description.length() > 300){
                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
                 params.height = 1000;
+                routeDescription.setLayoutParams(params);
+            }else{
+                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
+                params.height = 600;
                 routeDescription.setLayoutParams(params);
             }
 
@@ -501,8 +517,13 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     Map.Entry<Bitmap, String> entry2 = iter.next();
                     if(entry2.getKey().equals(entry.getValue())) {
                         images.add(entry.getValue());
+
+                        //Create a smaller map
+                        Bitmap smallMarker = createSmallMarker(entry.getValue());
+
+
                         Marker m = mMap.addMarker(new MarkerOptions().position(entry.getKey())
-                                .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())).title(entry2.getValue())
+                                .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)).title(entry2.getValue())
                                 .snippet(entry2.getValue()));
                     }
                 }

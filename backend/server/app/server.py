@@ -32,8 +32,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 import flask
 
-#IMAGE_FOLDER = '../../../../treino'
-IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
+IMAGE_FOLDER = '../../../../treino'
+#IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
@@ -79,7 +79,8 @@ def signIn():
                 View('Requests', 'show_requests'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
-    except:
+    except Exception as e:
+        print(e)
         return jsonify({
             'url': ''
         })
@@ -614,8 +615,8 @@ def get_atraction(id):
     conceito = db.session.query(Conceito).get(id)
     temp = db.session.query(Fotografia).filter(Fotografia.nomeconc==id).all()
     fotos = []
-    fotos.append(random.choice(temp))
-    fotos.append(random.choice(temp))
+    fotos.append(temp[0])
+    fotos.append(temp[1])
     fotografias = []
     for f in fotos:
         try:

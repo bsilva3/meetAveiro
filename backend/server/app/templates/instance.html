@@ -55,7 +55,9 @@
               zoom: 17,
               center: { lat: {{ center['latitude']}}, lng: {{ center['longitude'] }} }
             });
-            
+
+            var infowindow = new google.maps.InfoWindow();
+
             for (i = 0; i < urls.length; i++) {
             
               var image = {
@@ -69,17 +71,19 @@
                       scaledSize: new google.maps.Size(50, 50)
                     };
             
-              var beachMarker = new google.maps.Marker({
+              var marker = new google.maps.Marker({
                 position: fotos_coords[i],
                 map: map,
                 icon: image
               });
-            
             }
-
-            var infowindow = new google.maps.InfoWindow({
-                content: fotos_desc[i]
-              });
+            
+            google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                return function() {
+                  infowindow.setContent(fotos_desc[i]);
+                  infowindow.open(map, marker);
+                }
+              })(marker, i));
 
               var flightPath = new google.maps.Polyline({
                     path: coord,

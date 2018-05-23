@@ -154,8 +154,7 @@ public class PhotoLogFragment extends Fragment implements
     //to keep track of the photoItem that is going to be updated
     private Photo photoToUpdate;
     List<Photo> photos;
-    //list of markers on map
-    List<Marker> markers;
+
 
     private FloatingActionButton buttonAddPhoto;
 
@@ -176,7 +175,6 @@ public class PhotoLogFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         photos = new ArrayList<>();
-        markers = new ArrayList<>();
         mRequestingLocationUpdates = false;
 
         // Construct a GeoDataClient.
@@ -293,7 +291,7 @@ public class PhotoLogFragment extends Fragment implements
         //JSONObject j = placeRoutesOnJson();
         //Log.d("sendRoute", j.toString());
         //new uploadFileToServerTask().execute(j.toString(), URL_SEND_ROUTE);
-        startDemo();
+        startMarkerClusterer();
     }
 
     /**
@@ -366,7 +364,7 @@ public class PhotoLogFragment extends Fragment implements
     public boolean onClusterClick(Cluster<Photo> cluster) {
         // Show a toast with some info when the cluster is clicked.
         String date = cluster.getItems().iterator().next().getDate();
-        Toast.makeText(getContext(), cluster.getSize() + " (including photos taken at" + date + ")", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getContext(), cluster.getSize() + " (including photos taken at" + date + ")", Toast.LENGTH_SHORT).show();
 
         // Zoom in the cluster. Need to create LatLngBounds and including all the cluster items
         // inside of bounds, then animate to center of the bounds.
@@ -396,7 +394,7 @@ public class PhotoLogFragment extends Fragment implements
 
     @Override
     public boolean onClusterItemClick(Photo item) {
-        //createAndShowInfoDialog(m, markerID.get(m), false);
+        createAndShowInfoDialog(item, false);
         // Does nothing, but you could go into the user's profile page, for example.
         return false;
     }
@@ -406,7 +404,7 @@ public class PhotoLogFragment extends Fragment implements
         // Does nothing, but you could go into the user's profile page, for example.
     }
 
-    protected void startDemo() {
+    protected void startMarkerClusterer() {
         mClusterManager = new ClusterManager<>(getContext(), mMap);
         mClusterManager.setRenderer(new PhotoRenderer());
         mMap.setOnCameraIdleListener(mClusterManager);
@@ -422,9 +420,6 @@ public class PhotoLogFragment extends Fragment implements
         mClusterManager.setAnimation(true);
     }
 
-    /**
-     * É suposto adicionar as fotos da storage ao cluster aqui
-     */
     private void addItems() {
         for (Photo photo : photos) {
             mClusterManager.addItem(photo);
@@ -434,7 +429,6 @@ public class PhotoLogFragment extends Fragment implements
     public void getMarkersFromStorage(){
         //Initialize Preferences*
         photos.clear();
-        markers.clear();
         if (mMap != null) {
             prefs = getActivity().getSharedPreferences("LatLng", MODE_PRIVATE);
         /*While we have markers stored iterate trough.
@@ -462,14 +456,6 @@ public class PhotoLogFragment extends Fragment implements
                     }
                     Bitmap img = Utils.StringToBitMap(btm);
                     try {
-                        Marker m = mMap.addMarker(new MarkerOptions().position(l)
-                                .icon(BitmapDescriptorFactory.fromBitmap(img))
-                                .title(titl)
-                                .snippet(getContext().getString(R.string.unknown_photo_dialog_description)+
-                                        date+"\n"+snip));
-                        m.setTag(id);
-                        markers.add(m);
-                        m.remove();
                         photos.add(new Photo(titl, snip, date, l, id, conceptID, img));
                         Log.d("load", "ids load: " + id);
                         //setClickListenersOnMap(id);
@@ -687,13 +673,6 @@ public class PhotoLogFragment extends Fragment implements
         }
     }
 
-    public String bitMapToBase64 (Bitmap image){
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream .toByteArray();
-        return Base64.encodeToString(byteArray, Base64.DEFAULT);
-    }
-
     @Override
     public void onImageResponseReceived(Object result) {
         JSONObject json = null;
@@ -736,34 +715,15 @@ public class PhotoLogFragment extends Fragment implements
         photoToUpdate.setConceptId(conceptID);
         photoToUpdate.setId(id);
         //create a marker and place it on map with all the info
-        Marker m = mMap.addMarker(new MarkerOptions()
-                .position(photoToUpdate.getLatLngLocation())
-                .title(photoToUpdate.getConcept())
-                .snippet(photoToUpdate.getDescription())
-                .icon(BitmapDescriptorFactory.fromBitmap(photoToUpdate.getImgBitmap())));
-        m.setTag(id);
+
         photos.add(photoToUpdate);
-        markers.add(m);
-        m.remove();
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
-        createAndShowInfoDialog(photoToUpdate, id, true);
+        createAndShowInfoDialog(photoToUpdate, true);
         photoToUpdate = new Photo();
         //addMarkerListener();
         saveMarkersOnStorage();
-        startDemo();
-    }
-    //each marker is populated from info inside a Photo object
-    //however, we cant get access to all info inside marker, such as the icon (photo)
-    //this method returns the Photo object that has the info for a given marker
-    private Photo getPhotoItemFromMarker(Marker m){
-        Integer i = (Integer) m.getTag();
-        for (Photo photo : photos){
-            if (photo.getId() == i.intValue()){
-                return photo;
-            }
-        }
-        return null;
+        startMarkerClusterer();
     }
 
     //when we send feedback
@@ -782,58 +742,58 @@ public class PhotoLogFragment extends Fragment implements
     }
 
 
-    private void createAndShowInfoDialog(Photo p, int id, boolean showFeedback){
+    private void createAndShowInfoDialog(Photo p, boolean showFeedback){
         String name = p.getConcept();
         String conceptID = p.getConceptId();
         String description = p.getDescription();
-            //String date = convertTimeInMilisAndFormat(markerDate.get(m));
-            Drawable d = new BitmapDrawable(getResources(), p.getImgBitmap());
-            //image was recognized
-            if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
-                //when the dialog with the description is closed, we show a feedback box;
-                //the user says if the app was able to identify the image succesfully, or close the dialog
-                //without providing an answer
-                Log.d("concept_id", conceptID + ", -" + name);
-                final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
-                        .setHeaderDrawable(d)
-                        .setIcon(R.drawable.ic_check_green_24dp)
-                        .withDialogAnimation(true)
-                        .setTitle(name)
-                        .setDescription(description)
-                        .setCancelable(false)
-                        .setPositiveText(getContext().getString(R.string.ok))
-                        .onPositive(
-                                (dialog12, which) -> {
-                                    dialog12.dismiss();
-                                    if (showFeedback)
-                                        showFeedbackDialogAndSend(name, id, d);
-                                }
-                        )
-                        .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
-                                .putExtra("attraction", conceptID)))
-                        .setNeutralText(getContext().getString(R.string.see_more_info));
-                dialog.setScrollable(true, 5);
-                dialog.show();
-            } else {
-                final MaterialStyledDialog dialog = new MaterialStyledDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AppTheme))
-                        .setHeaderDrawable(d)
-                        .setIcon(R.drawable.ic_clear_red_24dp)
-                        .withDialogAnimation(true)
-                        .setTitle(name)
-                        .setDescription(getContext().getString(R.string.image_rec_fail))
-                        .setCancelable(false)
-                        .setPositiveText(getContext().getString(R.string.ok))
-                        .onPositive(
-                                (dialog12, which) -> {
-                                    dialog12.dismiss();
-                                }
-                        ).setScrollable(true, 5).build();
+        //String date = convertTimeInMilisAndFormat(markerDate.get(m));
+        Drawable d = new BitmapDrawable(getResources(), p.getImgBitmap());
+        //image was recognized
+        if (!name.toLowerCase().equals("desconhecido") && !name.toLowerCase().equals("unknown") && !name.equals("")) {
+            //when the dialog with the description is closed, we show a feedback box;
+            //the user says if the app was able to identify the image succesfully, or close the dialog
+            //without providing an answer
+            Log.d("concept_id", conceptID + ", -" + name);
+            final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(getContext())
+                    .setHeaderDrawable(d)
+                    .setIcon(R.drawable.ic_check_green_24dp)
+                    .withDialogAnimation(true)
+                    .setTitle(name)
+                    .setDescription(description)
+                    .setCancelable(false)
+                    .setPositiveText(getContext().getString(R.string.ok))
+                    .onPositive(
+                            (dialog12, which) -> {
+                                dialog12.dismiss();
+                                if (showFeedback)
+                                    showFeedbackDialogAndSend(name, p.getId(), d);
+                            }
+                    )
+                    .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
+                            .putExtra("attraction", conceptID)))
+                    .setNeutralText(getContext().getString(R.string.see_more_info));
+            dialog.setScrollable(true, 5);
+            dialog.show();
+        } else {
+            final MaterialStyledDialog dialog = new MaterialStyledDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AppTheme))
+                    .setHeaderDrawable(d)
+                    .setIcon(R.drawable.ic_clear_red_24dp)
+                    .withDialogAnimation(true)
+                    .setTitle(name)
+                    .setDescription(getContext().getString(R.string.image_rec_fail))
+                    .setCancelable(false)
+                    .setPositiveText(getContext().getString(R.string.ok))
+                    .onPositive(
+                            (dialog12, which) -> {
+                                dialog12.dismiss();
+                            }
+                    ).setScrollable(true, 5).build();
 
-                dialog.show();
+            dialog.show();
 
-            }
-            //Log.d("tts", name+". "+ description);
-            speakOut(name);
+        }
+        //Log.d("tts", name+". "+ description);
+        speakOut(name);
     }
 
     private void showFeedbackDialogAndSend(String conceptName, int imageId, Drawable d){
@@ -925,15 +885,6 @@ public class PhotoLogFragment extends Fragment implements
         return temp;
     }
 
-    /**
-     * @param encodedString
-     * @return bitmap (from given string)
-     */
-    public Bitmap StringToBitMap(String encodedString){
-        byte[] decodedString = Base64.decode(encodedString, Base64.DEFAULT);
-        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-        return decodedByte;
-    }
 
     @Override
     public void onInit(int status) {
@@ -1118,7 +1069,6 @@ public class PhotoLogFragment extends Fragment implements
         });
 
     }
-
 
     /**
      * Displays a form allowing the user to select a place from a list of likely places.

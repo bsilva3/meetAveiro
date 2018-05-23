@@ -54,7 +54,7 @@
     <string name="fill_out">Por favor preencha isto!</string>
     <string name="feedback_success">A sua resposta foi registada. Obrigado!</string>
     <string name="feedback_fail">Ocorreu um problema e não foi possível registar a sua resposta</string>
-    <string name="image_rec_fail">Infelizmente não fomos capaz de identificar o conteúdo desta imagem. Tentar tirar outra fotografia de um ângulo diferente e certifique-se de que há luz suficiente na fotografia.</string>
+    <string name="image_rec_fail">Infelizmente não fomos capaz de identificar o conteúdo desta imagem. Tente tirar outra fotografia de um ângulo diferente e certifique-se de que há luz suficiente na fotografia.</string>
     <string name="dont_answer">Não responder</string>
     <string name="procede">continuar</string>
     <string name="edit_tour_name">Editar titulo/descrição do passeio</string>
@@ -96,4 +96,12 @@
     <string name="share">Partilhar</string>
     <string name="close">Fechar</string>
     <string name="routes_in_attr">Rotas que passam nesta atração</string>
+    <string name="hint_new_email">Novo email</string>
+    <string name="btn_change">Mudar</string>
+    <string name="btn_send">Enviar</string>
+    <string name="btn_remove">Remover</string>
+    <string name="route_privacy">Gostaria de tornar este passeio público ou privado?</string>
+    <string name="route_privacy_details">Se optar por tornar este passeio pública, outros utilizadores podem ver o passeio e segui-lo</string>
+    <string name="make_public">Tornar publico</string>
+    <string name="make_private">Tornar privado</string>
 </resources>

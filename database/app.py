@@ -252,13 +252,16 @@ def queriesChico():
 
 @app.route('/')
 def index():
-    addInfoExemplo()
+    #addInfoExemplo()
     #addUsers()
    
     # queriesExemplo()
     #queriesChico()
-    print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
-    print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
+    #print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
+    #print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
+    print(nDesconhConhe())
+    print(fotosPorConceito())
+    print(conc())
     return render_template('index.html',
                            totalusers = nTotalUsers(),
                            #totalAdmin = nTotalTipoUser('Administrador'),

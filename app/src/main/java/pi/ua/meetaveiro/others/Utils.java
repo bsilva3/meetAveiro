@@ -141,6 +141,14 @@ public class Utils {
     }
 
 
+    public static Bitmap createSmallMarker(Bitmap image){
+        int height = 132;
+        int width = 132;
+        return Bitmap.createScaledBitmap(image, width, height, false);
+    }
+
+
+
     public static InputStream getHttpConnection(String urlString) throws IOException {
 
         InputStream stream = null;

@@ -181,6 +181,10 @@
     <string name="title_top_rated">Top Rated</string>
     <string name="title_most_traveled">Most Traveled</string>
 
+    <string name="route_privacy">Would you like to make this route public or private?</string>
+    <string name="route_privacy_details">If you choose to make this route public, other users can see your route and follow it.</string>
+    <string name="make_public">Make it public</string>
+    <string name="make_private">Make it private</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

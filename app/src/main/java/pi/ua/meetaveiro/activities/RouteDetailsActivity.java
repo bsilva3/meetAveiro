@@ -177,10 +177,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     photosCardView.setVisibility(View.GONE);
                     dateCardView.setVisibility(View.GONE);
 
-                    ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                    params.height = 1000;
-                    routeDescription.setLayoutParams(params);
-
 
                     new fetchDataAsRoute().execute();
                 } else {
@@ -242,11 +238,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             TextView txt = findViewById(R.id.PercursoTextoData);
             txt.setText(routeDesc);
 
-            if(r.getRouteDescription().length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
 
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
@@ -376,11 +367,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             String description = b.getString("routeDescription");
 
-            if(description.length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
+
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -421,11 +408,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             routeTitle = json.getString("title");
             String description = json.getString("description");
 
-             if(description.length() > 300){
-                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                 params.height = 1000;
-                 routeDescription.setLayoutParams(params);
-             }
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -482,8 +464,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     Map.Entry<Bitmap, String> entry2 = iter.next();
                     if(entry2.getKey().equals(entry.getValue())) {
                         images.add(entry.getValue());
+
+                        Bitmap img = Utils.createSmallMarker(entry.getValue());
                         Marker m = mMap.addMarker(new MarkerOptions().position(entry.getKey())
-                                .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())).title(entry2.getValue())
+                                .icon(BitmapDescriptorFactory.fromBitmap(img)).title(entry2.getValue())
                                 .snippet(entry2.getValue()));
                     }
                 }

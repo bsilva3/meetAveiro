@@ -865,7 +865,8 @@ public class PhotoLogFragment extends Fragment implements
             prefs.edit().putString("conceptID"+i, String.valueOf(photo.getConceptId())).apply();
             Log.d("num", "saveID: "+photo.getId()+"");
             prefs.edit().putInt("ID"+i,Integer.valueOf(photo.getId())).apply();
-            prefs.edit().putString("bmp"+i,  Utils.convertBitmapToByteArrayUncompressed(photo.getImgBitmap())).apply();
+            Log.d("bit", photo.getImgBitmap()+"");
+            prefs.edit().putString("bmp"+i,  Utils.bitMapToBase64(photo.getImgBitmap())).apply();
             i++;
 
         }

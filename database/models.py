@@ -437,4 +437,51 @@ def getConceptRoutes(nomeConceito):
         concs.append((row[0], row[1], row[2], row[3]))
     return concs
 
+def fotosPorConceito():
+    sql = text('SELECT count(fotografia.nomeconceito)'
+                   ' FROM conceito'
+                   ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
+                   ' GROUP BY conceito.nomeconceito'
+                   ' ORDER BY count(fotografia.nomeconceito);')
+    result = db.engine.execute(sql)
 
+    ntot = int(nTotalFotos())
+
+    values = []
+
+    for row in result:
+        values += [(int(row[0])/ntot)*100]
+    return values
+
+def conc():
+    sql = text('SELECT conceito.nomeconceito, count(fotografia.nomeconceito)'
+                   ' FROM conceito'
+                   ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
+                   ' GROUP BY conceito.nomeconceito'
+                   ' ORDER BY count(fotografia.nomeconceito);')
+    result = db.engine.execute(sql)
+
+
+    values = []
+
+    for row in result:
+        values += [row[0]]
+    return values
+
+def nDesconhConhe():
+    sql = text('SELECT count(fotografia.nomeconceito), conceito.nomeconceito'
+                   ' FROM conceito'
+                   ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
+                   ' where conceito.nomeconceito=\'desconhecido\''
+                   ' GROUP BY conceito.nomeconceito'
+                   ' ORDER BY count(fotografia.nomeconceito);')
+    result = db.engine.execute(sql)
+
+    ntot = int(nTotalFotos())
+
+    values = []
+
+    for row in result:
+        values += [(int(row[0])/ntot)*100]                  # desc
+        values += [((ntot-int(row[0]))/ntot)*100]       # conh
+    return values

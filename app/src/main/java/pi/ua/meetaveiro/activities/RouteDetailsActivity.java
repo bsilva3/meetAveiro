@@ -2,6 +2,7 @@ package pi.ua.meetaveiro.activities;
 
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.Bitmap;
 
 import android.graphics.BitmapFactory;
@@ -11,8 +12,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
@@ -36,6 +39,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 
@@ -78,6 +82,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     private String routeTitle = "";
     private String value = "";
     private TextView routeDescription, routeDate;
+    private FloatingActionButton editTour;
+    private FloatingActionButton changePrivacy;
+    private FloatingActionButton playRoute;
     //Map
     private GoogleMap mMap;
 
@@ -88,6 +95,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     private String routeInstanceID;
     //RouteID
     private String routeID;
+
+    private Route route;
 
     //Boolean to check if it is an instance or a Route
     private Boolean isRoute;
@@ -127,6 +136,17 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         //Initialize the TextViews
         routeDescription = findViewById(R.id.descriptRoute);
         routeDate = findViewById(R.id.DateRoute);
+        editTour = (FloatingActionButton) findViewById(R.id.edit_tour);
+        changePrivacy = (FloatingActionButton) findViewById(R.id.change_privacy);
+        playRoute = (FloatingActionButton) findViewById(R.id.play_route);
+
+        playRoute.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RouteActivity.class);
+            //only the route points and id is necessary
+            intent.putExtra("route", (Parcelable) route);
+            if (route != null)
+                startActivity(intent);
+        });
 
 
         //Verify if it comes from the server or it is local
@@ -233,6 +253,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
         Route r;
         Map<Marker, Bitmap> tempMap = new HashMap<>();
+
         try {
 
             JSONObject json = new JSONObject(datax.toString());
@@ -243,14 +264,14 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             //Get Route Description
             r.setRouteDescription(json.get("Description").toString());
             String routeDesc = json.get("Description").toString();
+            TextView txt = (TextView) findViewById(R.id.PercursoTextoData);
+            txt.setText(routeDesc);
 
             if(r.getRouteDescription().length() > 300){
                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
                 params.height = 1000;
                 routeDescription.setLayoutParams(params);
             }
-
-
 
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
@@ -305,8 +326,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             Log.d("latLong", lat+", "+longt);
             //center the map in the route
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, longt), 18.0f));
-            mMap.addPolyline(options);
-
+            Polyline p = mMap.addPolyline(options);
+            route = new Route();
+            route.setId(Integer.parseInt(routeID));
+            route.setRoutePath(p);
             //Set the route Description if there is any
             if (routeDesc != "" || routeDesc != null)
                 routeDescription.setText(routeDesc);
@@ -393,7 +416,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             }
 
             try {
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 10);
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 18);
                 mMap.animateCamera(cameraUpdate);
 
             }catch (Exception e){}
@@ -451,7 +474,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                 options.add(l);
             }
             try {
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 10);
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(l, 18);
                 mMap.animateCamera(cameraUpdate);
 
             }catch (Exception e){}

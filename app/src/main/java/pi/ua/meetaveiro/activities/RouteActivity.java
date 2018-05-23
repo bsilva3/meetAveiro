@@ -304,6 +304,9 @@ public class RouteActivity extends FragmentActivity implements
         buttonAddPhoto.setOnClickListener(v -> {
             startCameraIntent();
         });
+        //just to make sure the buttons start correctly
+        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STOPPED);
+        updateRouteButtons(Utils.getRouteState(RouteActivity.this));
         if (isFollowingTour){
             //we are following a pre created route
             buttonStartRoute.setOnClickListener(v -> {
@@ -1065,10 +1068,10 @@ public class RouteActivity extends FragmentActivity implements
         photoToUpdate.setConceptId(conceptID);
         photoToUpdate.setId(id);
         photos.add(photoToUpdate);
-        photoToUpdate = new Photo();
         // show a prompt for user feedback on the first dialog is closed
         //we only show the feedack prompt when the image is recognized
         createAndShowInfoDialog(photoToUpdate, true);
+        photoToUpdate = new Photo();
         saveMarkersOnStorage();
         startMarkerClusterer();
     }
@@ -1622,7 +1625,7 @@ public class RouteActivity extends FragmentActivity implements
 
     private void askForRoutePrivacity(JSONObject json){
         final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
-                .setIcon(R.drawable.ic_sd_storage_black_24dp)//todo: change this header
+                .setIcon(R.drawable.ic_assistant_photo_black_24dp)
                 .withDialogAnimation(true)
                 .setTitle("Would you like to make this route public or private?")
                 .setDescription("If you choose this public, other users can see your route and follow it.")

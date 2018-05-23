@@ -19,6 +19,7 @@ public class Route implements Parcelable, Serializable {
     private String routeTitle = "Unnamed"; //default
     private String routeDescription = ""; //default
     private String Type  ="";  //To be used to split into ROUTE or ROUTE INSTANCE (To see the ROUTES WITHOUT MARKERS)
+    private int routeId;
 
     public Route(String routeTitle, Polyline routePath, String routeDescription) {
         this.routeTitle = routeTitle;
@@ -77,6 +78,14 @@ public class Route implements Parcelable, Serializable {
     @Override
     public String toString() {
         return routeTitle + (routeDescription == null ? "" : routeDescription);
+    }
+
+    public int getRouteId() {
+        return routeId;
+    }
+
+    public void setRouteId(int routeId) {
+        this.routeId = routeId;
     }
 
     @Override

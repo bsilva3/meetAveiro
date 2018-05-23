@@ -172,7 +172,10 @@ def show_stats():
                            totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),
                            percursos = infoPercursos(),
-                           totalfotos = nTotalFotos())
+                           totalfotos = nTotalFotos(),
+                           fotosPorConceito = fotosPorConceito(),
+                           conc = conc(),
+                           descConh = nDesconhConhe())
 
 @app.route('/sendimage/<string:topic>/<string:filename>')
 def send_image(filename, topic):
@@ -205,10 +208,14 @@ def delete_image():
 def upload(topic):
     folder = os.path.join(IMAGE_FOLDER, topic)
     for file in request.files.getlist("file"):
-        filename = file.filename
+        files_folder = os.listdir(folder)
+        filename = str(len(files_folder)) + '.jpg'
         destination = os.path.join(folder, filename)
         # print(destination)
         file.save(destination)
+        if 'uid' in session:
+            conceito = db.session.query(Conceito).get(topic)
+            addFotografia(None, topic, session['email'],  conceito.latitude, conceito.longitude, destination, None, datetime.datetime.now(), 4.5, 'Aprovada', 0.98, 0.123)
     return redirect(url_for('show_gallery', query=topic))
 
 @app.route('/resources/topics', methods=['POST'])
@@ -342,8 +349,9 @@ def classify_image():
         os.makedirs(folder)
     files = os.listdir(folder)
     print("Folder created")
-    file_id = str(len(files)) + '.jpg'
+    file_id = str(len(files)+1) + '.jpg'
     filename = os.path.join(folder, file_id)
+    print("Filename: " + filename)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
 

@@ -305,7 +305,6 @@ public class RouteActivity extends FragmentActivity implements
             startCameraIntent();
         });
         //just to make sure the buttons start correctly
-        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STOPPED);
         updateRouteButtons(Utils.getRouteState(RouteActivity.this));
         if (isFollowingTour){
             //we are following a pre created route
@@ -642,7 +641,6 @@ public class RouteActivity extends FragmentActivity implements
                     Log.e(TAG, "Error: " + error.getMessage());
                 }
         );
-
         MyApplication.getInstance().addToRequestQueue(request);
 
     }
@@ -982,10 +980,8 @@ public class RouteActivity extends FragmentActivity implements
                     Bitmap photoThumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
                             THUMBSIZE, THUMBSIZE);
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ByteArrayOutputStream bosThumb = new ByteArrayOutputStream();
 
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 70, bos);
-                    photoThumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bosThumb);
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
 
@@ -1015,7 +1011,6 @@ public class RouteActivity extends FragmentActivity implements
                     }
                 }
                 else if (resultCode == Activity.RESULT_CANCELED){
-                    Toast.makeText(this, getString(R.string.foto_intent_fail), Toast.LENGTH_SHORT).show();
                 }
                 Utils.uncompletedCameraRequest = true;
                 break;
@@ -1537,7 +1532,7 @@ public class RouteActivity extends FragmentActivity implements
             prefs.edit().putString("conceptID"+i, String.valueOf(photo.getConceptId())).apply();
             Log.d("num", "saveID: "+photo.getId()+"");
             prefs.edit().putInt("ID"+i,Integer.valueOf(photo.getId())).apply();
-            prefs.edit().putString("bmp"+i, Utils.BitMapToString(photo.getImgBitmap())).apply();
+            prefs.edit().putString("bmp"+i, Utils.convertBitmapToByteArrayUncompressed(photo.getImgBitmap())).apply();
             i++;
 
         }
@@ -1627,8 +1622,8 @@ public class RouteActivity extends FragmentActivity implements
         final MaterialStyledDialog.Builder dialog = new MaterialStyledDialog.Builder(this)
                 .setIcon(R.drawable.ic_assistant_photo_black_24dp)
                 .withDialogAnimation(true)
-                .setTitle("Would you like to make this route public or private?")
-                .setDescription("If you choose this public, other users can see your route and follow it.")
+                .setTitle(getString(R.string.route_privacy))
+                .setDescription(getString(R.string.route_privacy_details))
                 .setCancelable(false)
                 .setPositiveText("Make it public")//public
                 .onPositive(
@@ -1656,8 +1651,7 @@ public class RouteActivity extends FragmentActivity implements
         dialog.show();
 
     }
-//editar route um put, msm json com put, title, description,
-//enviar route state (1 - publico, 0 - privado)
+
 
     /**
      * Saving in JSON format:

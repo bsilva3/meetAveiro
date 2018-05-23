@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -139,6 +140,14 @@ public class Utils {
         }
         return bitmap;
     }
+
+
+    public static Bitmap createSmallMarker(Bitmap image){
+        int height = 132;
+        int width = 132;
+        return Bitmap.createScaledBitmap(image, width, height, false);
+    }
+
 
 
     public static InputStream getHttpConnection(String urlString) throws IOException {
@@ -254,6 +263,19 @@ public class Utils {
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(path, options);
+    }
+
+    /**
+     * Converts bitmap to the byte array without compression
+     * @param bitmap source bitmap
+     * @return result byte array
+     */
+    public static String convertBitmapToByteArrayUncompressed(Bitmap bitmap){
+        ByteBuffer byteBuffer = ByteBuffer.allocate(bitmap.getByteCount());
+        bitmap.copyPixelsToBuffer(byteBuffer);
+        byteBuffer.rewind();
+        String temp=Base64.encodeToString(byteBuffer.array(), Base64.DEFAULT);
+        return temp;
     }
 
 }

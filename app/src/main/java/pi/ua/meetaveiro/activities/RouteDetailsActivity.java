@@ -1,33 +1,26 @@
 package pi.ua.meetaveiro.activities;
 
 
-import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 
 import android.os.Parcelable;
-import android.support.annotation.RequiresApi;
 import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -48,18 +41,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -82,9 +71,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
     private String routeTitle = "";
     private String value = "";
     private TextView routeDescription, routeDate;
-    private FloatingActionButton editTour;
-    private FloatingActionButton changePrivacy;
-    private FloatingActionButton playRoute;
     //Map
     private GoogleMap mMap;
 
@@ -100,6 +86,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
     //Boolean to check if it is an instance or a Route
     private Boolean isRoute;
+
+    private CardView dateCardView;
+    private CardView photosCardView;
 
     //Variables to be used only
     Map<LatLng,Bitmap> mapBit = new HashMap<>();
@@ -120,8 +109,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route_details);
 
-        Toolbar mTopToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mTopToolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         //Get the title
         Bundle b = getIntent().getExtras();
@@ -136,18 +126,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         //Initialize the TextViews
         routeDescription = findViewById(R.id.descriptRoute);
         routeDate = findViewById(R.id.DateRoute);
-        editTour = (FloatingActionButton) findViewById(R.id.edit_tour);
-        changePrivacy = (FloatingActionButton) findViewById(R.id.change_privacy);
-        playRoute = (FloatingActionButton) findViewById(R.id.play_route);
-
-        playRoute.setOnClickListener(v -> {
-            Intent intent = new Intent(this, RouteActivity.class);
-            //only the route points and id is necessary
-            intent.putExtra("route", (Parcelable) route);
-            if (route != null)
-                startActivity(intent);
-        });
-
+        photosCardView = findViewById(R.id.photos_cardview);
+        dateCardView = findViewById(R.id.date_cardview);
 
         //Verify if it comes from the server or it is local
         if (Objects.equals(b.getString("RouteInstanceID"), "noNumber") || b.getString("RouteInstanceID") == null) {
@@ -161,7 +141,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         }
 
 
-        NestedScrollView mScrollView = (NestedScrollView) findViewById(R.id.route_details_scroll);
+        NestedScrollView mScrollView = findViewById(R.id.route_details_scroll);
         //fix for google maps scroll inside a nested scroll (a tap is required sometimes...)
         ((MapScrollWorkAround) getSupportFragmentManager().findFragmentById(R.id.map_route_details)).setListener(new MapScrollWorkAround.OnTouchListener() {
             @Override
@@ -170,7 +150,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             }
         });
     }
-
 
 
 
@@ -195,16 +174,8 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             } else {
                 if (b.getString("Type").equals("Route")) {
                     //Do as it is a Route
-                    viewPager.setVisibility(View.GONE);
-                    TextView txt = (TextView) findViewById(R.id.PercursoTextoData);
-                    TextView txtImg = (TextView) findViewById(R.id.ImagemTexto);
-                    txtImg.setVisibility(View.GONE);
-                    txt.setVisibility(View.GONE);
-
-
-                    ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                    params.height = 1000;
-                    routeDescription.setLayoutParams(params);
+                    photosCardView.setVisibility(View.GONE);
+                    dateCardView.setVisibility(View.GONE);
 
 
                     new fetchDataAsRoute().execute();
@@ -264,14 +235,9 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             //Get Route Description
             r.setRouteDescription(json.get("Description").toString());
             String routeDesc = json.get("Description").toString();
-            TextView txt = (TextView) findViewById(R.id.PercursoTextoData);
+            TextView txt = findViewById(R.id.PercursoTextoData);
             txt.setText(routeDesc);
 
-            if(r.getRouteDescription().length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
 
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
@@ -363,8 +329,14 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.go_back) {
-            finish();
+        if (id == R.id.start_route) {
+            Intent intent = new Intent(this, RouteActivity.class);
+            //only the route points and id is necessary
+            intent.putExtra("route", (Parcelable) route);
+            if (route != null)
+                startActivity(intent);
+        } else if (id == R.id.edit_route) {
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -395,11 +367,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             String description = b.getString("routeDescription");
 
-            if(description.length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
+
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -440,11 +408,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             routeTitle = json.getString("title");
             String description = json.getString("description");
 
-             if(description.length() > 300){
-                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                 params.height = 1000;
-                 routeDescription.setLayoutParams(params);
-             }
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -501,8 +464,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     Map.Entry<Bitmap, String> entry2 = iter.next();
                     if(entry2.getKey().equals(entry.getValue())) {
                         images.add(entry.getValue());
+
+                        Bitmap img = Utils.createSmallMarker(entry.getValue());
                         Marker m = mMap.addMarker(new MarkerOptions().position(entry.getKey())
-                                .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())).title(entry2.getValue())
+                                .icon(BitmapDescriptorFactory.fromBitmap(img)).title(entry2.getValue())
                                 .snippet(entry2.getValue()));
                     }
                 }

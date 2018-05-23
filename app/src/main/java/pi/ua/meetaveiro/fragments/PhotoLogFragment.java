@@ -82,6 +82,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -99,6 +100,7 @@ import pi.ua.meetaveiro.others.Utils;
 
 import static android.content.Context.MODE_PRIVATE;
 import static pi.ua.meetaveiro.others.Constants.*;
+import static pi.ua.meetaveiro.others.Utils.convertBitmapToByteArrayUncompressed;
 
 /**
  * Photo logging  {@link Fragment} subclass.
@@ -622,13 +624,10 @@ public class PhotoLogFragment extends Fragment implements
                     Bitmap photoThumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
                             THUMBSIZE, THUMBSIZE);
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ByteArrayOutputStream bosThumb = new ByteArrayOutputStream();
 
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
-                    photoThumbnail.compress(Bitmap.CompressFormat.PNG, 100, bosThumb);
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
-
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
@@ -645,13 +644,11 @@ public class PhotoLogFragment extends Fragment implements
                         //create a new photo object with info to be completed by the server's response
                         photoToUpdate = new Photo(getContext().getString(R.string.unknown_string),
                                 getContext().getString(R.string.unknown_string) , new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
-                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoHighQuality);
+                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoThumbnail);
                         //send a base 64 encoded photo to server
                         Log.d("req", jsonRequest.toString()+"");
                         new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
                     }else {
-                        //Report error to user
-                        Toast.makeText(getContext(), "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
                     }
 
 
@@ -772,23 +769,22 @@ public class PhotoLogFragment extends Fragment implements
                     .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)
                             .putExtra("attraction", conceptID)))
                     .setNeutralText(getContext().getString(R.string.see_more_info));
-            dialog.setScrollable(true, 5);
+            dialog.setScrollable(true, 6);
             dialog.show();
-        } else {
+        } else { //image not recognized
             final MaterialStyledDialog dialog = new MaterialStyledDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AppTheme))
                     .setHeaderDrawable(d)
                     .setIcon(R.drawable.ic_clear_red_24dp)
                     .withDialogAnimation(true)
                     .setTitle(name)
-                    .setDescription(getContext().getString(R.string.image_rec_fail))
+                    .setDescription(description+getContext().getString(R.string.image_rec_fail))
                     .setCancelable(false)
                     .setPositiveText(getContext().getString(R.string.ok))
                     .onPositive(
                             (dialog12, which) -> {
                                 dialog12.dismiss();
                             }
-                    ).setScrollable(true, 5).build();
-
+                    ).setScrollable(true, 6).build();
             dialog.show();
 
         }
@@ -826,7 +822,7 @@ public class PhotoLogFragment extends Fragment implements
                 .setNegativeText(getContext().getString(R.string.no))
                 .onNegative(
                         (dialog12, which) -> {
-                            //Yes button clicked
+                            //no button clicked
                             try {
                                 jsonRequest.put("answer", 0);
                                 new uploadFileToServerTask().execute(jsonRequest.toString(), FEEDBACK_URL);
@@ -869,21 +865,13 @@ public class PhotoLogFragment extends Fragment implements
             prefs.edit().putString("conceptID"+i, String.valueOf(photo.getConceptId())).apply();
             Log.d("num", "saveID: "+photo.getId()+"");
             prefs.edit().putInt("ID"+i,Integer.valueOf(photo.getId())).apply();
-            prefs.edit().putString("bmp"+i, BitMapToString(photo.getImgBitmap())).apply();
+            prefs.edit().putString("bmp"+i,  Utils.convertBitmapToByteArrayUncompressed(photo.getImgBitmap())).apply();
             i++;
 
         }
         //saveMarkersOnStorage(FILENAME, imageMarkers);
     }
 
-    /*Encodes the Image to a string*/
-    public String BitMapToString(Bitmap bitmap){
-        ByteArrayOutputStream baos=new  ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG,100, baos);
-        byte [] b=baos.toByteArray();
-        String temp=Base64.encodeToString(b, Base64.DEFAULT);
-        return temp;
-    }
 
 
     @Override

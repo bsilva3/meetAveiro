@@ -69,10 +69,10 @@ public class Constants {
     public static final String EXTRA_LOCATION = SERVICES_PACKAGE_NAME + ".location";
     public static final String NEW_ROUTE_EXTRA = SERVICES_PACKAGE_NAME + ".new_route";
     //for image size when photo is taken
-    public final static int DEFAULT_WIDTH = 1280;
-    public final static int DEFAULT_HEIGHT = 720;
+    public final static int DEFAULT_WIDTH = 1000;
+    public final static int DEFAULT_HEIGHT = 1000;
     //image width and height of images in markers
-    public final static  int THUMBSIZE = 150;
+    public final static  int THUMBSIZE = 200;
 
     public enum ROUTE_STATE{
         STARTED, PAUSED, STOPPED;

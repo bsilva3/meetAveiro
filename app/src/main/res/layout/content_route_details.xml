@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/route_details_scroll"
@@ -9,108 +10,220 @@
     tools:context="pi.ua.meetaveiro.activities.RouteDetailsActivity"
     tools:showIn="@layout/activity_route_details">
 
-    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:verticalScrollbarPosition="left">
+        android:orientation="vertical">
 
-        <TextView
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/data_do_percurso"
-            android:id="@+id/PercursoTextoData"
-            android:textColor="@color/bg_login"
-            android:textSize="20sp"
-            android:layout_marginStart="3dp"
-            app:layout_constraintBottom_toTopOf="@+id/DateRoute"/>
-
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/descri_o"
-            android:id="@+id/DescricaoTexto"
-            android:textColor="@color/bg_login"
-            android:textSize="20sp"
-            android:layout_marginStart="3dp"
-            app:layout_constraintBottom_toTopOf="@+id/descriptRoute"
-            app:layout_constraintTop_toBottomOf="@id/DateRoute"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/fotos"
-            android:id="@+id/ImagemTexto"
-            android:textColor="@color/bg_login"
-            android:textSize="20sp"
-            android:layout_marginStart="3dp"
-            app:layout_constraintBottom_toTopOf="@+id/view_images"
-            app:layout_constraintTop_toBottomOf="@id/descriptRoute"/>
-
-        <TextView
-            android:id="@+id/descriptRoute"
-            android:layout_width="366dp"
-            android:layout_height="114dp"
-            android:layout_margin="@dimen/text_margin"
-            android:layout_marginBottom="3dp"
-            android:layout_marginEnd="2dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="32dp"
-            android:textSize="16sp"
-            android:textColor="#161616"
-            app:layout_constraintBottom_toBottomOf="@+id/DateRoute"
-            app:layout_constraintBottom_toTopOf="@+id/view_images"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="MissingConstraints" />
-        
-        <android.support.v4.view.ViewPager
-            android:id="@+id/view_images"
-            android:layout_width="wrap_content"
-            android:layout_height="207dp"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/routeDescriptionOpened"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="10dp"
-            app:layout_anchor="@+id/routeTitleOpened"
-            app:layout_constraintBottom_toTopOf="@+id/map"
-            app:layout_constraintStart_toStartOf="@+id/map"
-            app:layout_constraintTop_toBottomOf="@+id/descriptRoute"
-            tools:ignore="UnknownId">
-
-        </android.support.v4.view.ViewPager>
-
-
-        <fragment
-            android:id="@+id/map_route_details"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
-            android:layout_width="0dp"
-            android:layout_height="300dp"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/view_images"
-            android:layout_marginTop="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_images"
-            tools:context="pi.ua.meetaveiro.activities.RouteDetailsActivity"
-            class="pi.ua.meetaveiro.others.MapScrollWorkAround"/>
-
-        <TextView
-            android:id="@+id/DateRoute"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="4dp"
-            android:text=""
-            android:textSize="16sp"
-            android:textColor="#161616"
-            app:layout_constraintBottom_toTopOf="@+id/descriptRoute"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="MissingConstraints" />
+            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginRight="@dimen/card_margin">
 
-    </android.support.constraint.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_navigation_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="3"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp">
+
+                    <TextView
+                        android:text="@string/route_description"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray"/>
+
+                    <TextView
+                        android:id="@+id/descriptRoute"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/date_cardview"
+            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginRight="@dimen/card_margin">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/ic_event_available_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="3"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/PercursoTextoData"
+                        android:text="@string/route_date"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray"/>
+
+                    <TextView
+                        android:id="@+id/DateRoute"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+        <android.support.v7.widget.CardView
+            android:id="@+id/photos_cardview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginRight="@dimen/card_margin">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/ic_photo_camera_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="3"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/photos"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray"/>
+
+                    <android.support.v4.view.ViewPager
+                        android:id="@+id/view_images"
+                        android:layout_width="wrap_content"
+                        android:layout_height="207dp"
+                        app:layout_anchor="@+id/routeTitleOpened"
+                        tools:ignore="UnknownId">
+
+                    </android.support.v4.view.ViewPager>
+
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginRight="@dimen/card_margin">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/ic_map_black_24dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="3"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/path"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title"  />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray"/>
+
+                    <fragment
+                        android:id="@+id/map_route_details"
+                        android:name="com.google.android.gms.maps.SupportMapFragment"
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp"
+                        android:layout_marginTop="2dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/view_images"
+                        tools:context="pi.ua.meetaveiro.activities.RouteDetailsActivity"
+                        class="pi.ua.meetaveiro.others.MapScrollWorkAround"/>
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+    </LinearLayout>
 </android.support.v4.widget.NestedScrollView>

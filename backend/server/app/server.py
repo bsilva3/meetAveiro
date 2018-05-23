@@ -738,7 +738,7 @@ def get_photo_history():
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)
-    return jsonify(fotografias)
+    return jsonify(fotografias[::-1])
 
 
 @app.route('/resources/routes/search', methods=['POST'])

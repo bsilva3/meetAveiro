@@ -305,7 +305,6 @@ public class RouteActivity extends FragmentActivity implements
             startCameraIntent();
         });
         //just to make sure the buttons start correctly
-        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STOPPED);
         updateRouteButtons(Utils.getRouteState(RouteActivity.this));
         if (isFollowingTour){
             //we are following a pre created route
@@ -1533,7 +1532,7 @@ public class RouteActivity extends FragmentActivity implements
             prefs.edit().putString("conceptID"+i, String.valueOf(photo.getConceptId())).apply();
             Log.d("num", "saveID: "+photo.getId()+"");
             prefs.edit().putInt("ID"+i,Integer.valueOf(photo.getId())).apply();
-            prefs.edit().putString("bmp"+i, Utils.BitMapToString(photo.getImgBitmap())).apply();
+            prefs.edit().putString("bmp"+i, Utils.convertBitmapToByteArrayUncompressed(photo.getImgBitmap())).apply();
             i++;
 
         }

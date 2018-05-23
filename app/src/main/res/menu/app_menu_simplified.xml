@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/go_back"
-        android:title="@string/go_back"
-        android:icon="@drawable/ic_arrow_back_black_24dp"/>
+        android:id="@+id/start_route"
+        android:title="@string/start_route"
+        android:icon="@drawable/ic_play_arrow_black_24dp"/>
+
+    <item
+        android:id="@+id/edit_route"
+        android:title="@string/edit_route"
+        android:icon="@drawable/ic_edit_black_24dp"/>
 
 </menu>

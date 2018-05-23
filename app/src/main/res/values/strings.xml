@@ -308,4 +308,10 @@
     <string name="data_do_percurso"><u><b>Data do percurso</b></u></string>
     <string name="descri_o"><u><b>Descrição</b></u></string>
     <string name="fotos"><u><b>Fotos</b></u></string>
+    <string name="start_route">Start Route</string>
+    <string name="edit_route">Edit Route</string>
+    <string name="path">Path</string>
+    <string name="route_date">Route Date</string>
+    <string name="photos">Photos</string>
+    <string name="route_description">Route Description</string>
 </resources>

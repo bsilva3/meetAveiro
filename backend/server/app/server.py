@@ -472,6 +472,8 @@ def receive_routes():
         'inst': instancia.id
     })
 
+# /resources/users/register
+# {"email": ...}
 
 @app.route('/resources/routes/byuser', methods=['POST'])
 def get_routes():

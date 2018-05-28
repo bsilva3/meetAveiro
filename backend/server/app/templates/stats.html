@@ -65,8 +65,33 @@
             <div id="highcharts-c835d7eb-88bd-4b7b-9984-2717d5a20b52"></div>
         </div><br/>
 
-
-
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <!--<div id="highcharts-fb27a28b-6696-4a97-aef8-c6a7594cfc0c"></div>-->
+                <h3>Informações gerais</h3>
+                <div>
+                    <table id="grid-data3" class="table table-condensed table-hover table-striped" data-ajax="true"
+                           data-url="/api/data/basic">
+                        <thead>
+                        <tr>
+                            <th>Percentagem de conceitos desconhecidos</th>
+                            <th>Percentagem de conceitos conhecidos</th>
+                            <th>Percentagem fotografias com feedback</th>
+                            <th>Média do feedback</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>{{descConh[0]}}</td>
+                            <td>{{descConh[1]}}</td>
+                            <td>{{percFeedback[0]}}</td>
+                            <td>{{percFeedback[1]}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <di>
             <br><br><h3></h3>
@@ -203,14 +228,22 @@
             [{% for item in conc %}
                   "{{item}}",
               {% endfor %}] }],
-        // "xAxis": [{"categories":{{conc}}}],
         "series":[{"name":"Percentagem de fotografias","turboThreshold":0,"_colorIndex":0, "data": {{fotosPorConceito}} }],
-        //"series":[{"name":"Percentagem de fotografias","turboThreshold":0,"_colorIndex":0, "data":{{fotosPorConceito}}}],
         "plotOptions":{"series":{"animation":false}},
         "yAxis":[{"title":{"text":"Percentagem de fotografias"}}],"credits":{"enabled":false}};
         new Highcharts.Chart("highcharts-c835d7eb-88bd-4b7b-9984-2717d5a20b52", options);}}})();
         // Fim Número de fotografias por conceito
 
+        // Conceitos conhecidos vs desconhecidos
+        /*(function(){ var files = ["https://code.highcharts.com/stock/highstock.js","https://code.highcharts.com/highcharts-more.js","https://code.highcharts.com/highcharts-3d.js","https://code.highcharts.com/modules/data.js","https://code.highcharts.com/modules/exporting.js","http://code.highcharts.com/modules/funnel.js","http://code.highcharts.com/modules/solid-gauge.js"],loaded = 0; if (typeof window["HighchartsEditor"] === "undefined") {window.HighchartsEditor = {ondone: [cl],hasWrapped: false,hasLoaded: false};include(files[0]);} else {if (window.HighchartsEditor.hasLoaded) {cl();} else {window.HighchartsEditor.ondone.push(cl);}}function isScriptAlreadyIncluded(src){var scripts = document.getElementsByTagName("script");for (var i = 0; i < scripts.length; i++) {if (scripts[i].hasAttribute("src")) {if ((scripts[i].getAttribute("src") || "").indexOf(src) >= 0 || (scripts[i].getAttribute("src") === "http://code.highcharts.com/highcharts.js" && src === "https://code.highcharts.com/stock/highstock.js")) {return true;}}}return false;}function check() {if (loaded === files.length) {for (var i = 0; i < window.HighchartsEditor.ondone.length; i++) {try {window.HighchartsEditor.ondone[i]();} catch(e) {console.error(e);}}window.HighchartsEditor.hasLoaded = true;}}function include(script) {function next() {++loaded;if (loaded < files.length) {include(files[loaded]);}check();}if (isScriptAlreadyIncluded(script)) {return next();}var sc=document.createElement("script");sc.src = script;sc.type="text/javascript";sc.onload=function() { next(); };document.head.appendChild(sc);}function each(a, fn){if (typeof a.forEach !== "undefined"){a.forEach(fn);}else{for (var i = 0; i < a.length; i++){if (fn) {fn(a[i]);}}}}var inc = {},incl=[]; each(document.querySelectorAll("script"), function(t) {inc[t.src.substr(0, t.src.indexOf("?"))] = 1; }); function cl() {if(typeof window["Highcharts"] !== "undefined"){
+        var options={"chart":{"type":"pie","polar":false},
+        "plotOptions":{"pie":{"allowPointSelect":true,"cursor":true,"innerSize":"60%","dataLabels":{"enabled":true}},
+        "series":{"animation":false}},"title":{"text":"Percentagem de imagens conhecidas vs desconhecidas"},
+        "subtitle":{"text":""},"exporting":{},
+        "series":[{"name":"Percentagem","turboThreshold":0,"data":{{descConh}} }],
+        "yAxis":[{"title":{}}],"credits":{"enabled":false}};c0c", options);}}})();
+        new Highcharts.Chart("highcharts-fb27a28b-6696-4a97-aef8-c6a7594cf*/
+        // Fim Conceitos conhecidos vs desconhecidos
 
         // Table
         var grid = $("#grid-command-buttons").bootgrid({ajax: true,post: function (){return {id: "b0df282a-0d67-40e5-8558-c9e93b7befed"};},url: "/api/data/basic",formatters: {"commands": function(column, row){return "<button type=\"button\" class=\"btn btn-xs btn-default command-edit\" data-row-id=\"" + row.id + "\"><span class=\"fa fa-pencil\"></span></button> " + "<button type=\"button\" class=\"btn btn-xs btn-default command-delete\" data-row-id=\"" + row.id + "\"><span class=\"fa fa-trash-o\"></span></button>";}}}).on("loaded.rs.jquery.bootgrid", function(){/* Executes after data is loaded and rendered */grid.find(".command-edit").on("click", function(e){alert("You pressed edit on row: " + $(this).data("row-id"));}).end().find(".command-delete").on("click", function(e){alert("You pressed delete on row: " + $(this).data("row-id"));});});

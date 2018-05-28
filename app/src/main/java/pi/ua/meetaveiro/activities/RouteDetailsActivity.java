@@ -22,7 +22,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -56,10 +62,12 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteHistoryDetailAdapter;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MapScrollWorkAround;
+import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.INSTANCE_BY_ID;
 import static pi.ua.meetaveiro.others.Constants.ROUTE_BY_ID;
+import static pi.ua.meetaveiro.others.Constants.URL_SEND_ROUTE;
 
 public class RouteDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -177,10 +185,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     photosCardView.setVisibility(View.GONE);
                     dateCardView.setVisibility(View.GONE);
 
-                    ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                    params.height = 1000;
-                    routeDescription.setLayoutParams(params);
-
 
                     new fetchDataAsRoute().execute();
                 } else {
@@ -242,11 +246,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             TextView txt = findViewById(R.id.PercursoTextoData);
             txt.setText(routeDesc);
 
-            if(r.getRouteDescription().length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
 
             //Get the dates and set them in the view date
             Date startDate = new Date(json.get("StartDate").toString());
@@ -376,11 +375,7 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
 
             String description = b.getString("routeDescription");
 
-            if(description.length() > 300){
-                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                params.height = 1000;
-                routeDescription.setLayoutParams(params);
-            }
+
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -421,11 +416,6 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             routeTitle = json.getString("title");
             String description = json.getString("description");
 
-             if(description.length() > 300){
-                 ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) routeDescription.getLayoutParams();
-                 params.height = 1000;
-                 routeDescription.setLayoutParams(params);
-             }
 
             routeDescription.setText(description);
             getSupportActionBar().setTitle(routeTitle);
@@ -482,8 +472,10 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
                     Map.Entry<Bitmap, String> entry2 = iter.next();
                     if(entry2.getKey().equals(entry.getValue())) {
                         images.add(entry.getValue());
+
+                        Bitmap img = Utils.createSmallMarker(entry.getValue());
                         Marker m = mMap.addMarker(new MarkerOptions().position(entry.getKey())
-                                .icon(BitmapDescriptorFactory.fromBitmap(entry.getValue())).title(entry2.getValue())
+                                .icon(BitmapDescriptorFactory.fromBitmap(img)).title(entry2.getValue())
                                 .snippet(entry2.getValue()));
                     }
                 }
@@ -587,6 +579,39 @@ public class RouteDetailsActivity extends AppCompatActivity implements OnMapRead
             rearrangeJSONDataRoute(data);
         }
     }
+
+    //edit name privacy and description of route. 1 - public, 0 - private
+    private void changeRouteInfo(String title, String description, int privacy) {
+        JSONObject j = new JSONObject();
+        try {
+            j.put("title", title);
+            j.put("description", description);
+            j.put("privacy", privacy);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.PUT,
+                URL_SEND_ROUTE, j, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("res", response.toString());
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("ERROR", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
 
 
 }

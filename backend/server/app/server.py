@@ -175,7 +175,8 @@ def show_stats():
                            totalfotos = nTotalFotos(),
                            fotosPorConceito = fotosPorConceito(),
                            conc = conc(),
-                           descConh = nDesconhConhe())
+                           descConh = nDesconhConhe(),
+                           percFeedback = percFeedback())
 
 @app.route('/sendimage/<string:topic>/<string:filename>')
 def send_image(filename, topic):

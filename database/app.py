@@ -262,6 +262,7 @@ def index():
     print(nDesconhConhe())
     print(fotosPorConceito())
     print(conc())
+    print(percFeedback())
     return render_template('index.html',
                            totalusers = nTotalUsers(),
                            #totalAdmin = nTotalTipoUser('Administrador'),

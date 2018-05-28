@@ -485,3 +485,19 @@ def nDesconhConhe():
         values += [(int(row[0])/ntot)*100]                  # desc
         values += [((ntot-int(row[0]))/ntot)*100]       # conh
     return values
+
+def percFeedback():
+    sql1 = text('SELECT count(fotografia.feedback), avg(fotografia.feedback) FROM fotografia where fotografia.nomeconceito <> \'desconhecido\';')
+    sql2 = text('SELECT count(fotografia.nomeconceito) FROM fotografia where fotografia.nomeconceito <> \'desconhecido\';')
+
+    result1 = db.engine.execute(sql1) # nº de fotos com feedback e a média do feedback
+    result2 = db.engine.execute(sql2) # nº de fotos
+
+    for row in result1:
+        fcf = row[0]
+        med = row[1]
+
+    for row in result2:
+        totf = row[0]
+
+    return ((fcf/totf*100), med)

@@ -316,6 +316,18 @@ def manage_requests():
 #######################################################
 #######################################################
 
+# /resources/users/register
+# {"email": ...}
+@app.route('/resources/users/register', methods=['POST'])
+def register_user():
+    req = request.get_json(force=True)
+    email = req['email']
+    user = addUtilizador(email, 2)
+    return jsonify({
+        'user': user
+    })
+
+
 @app.route('/search', methods=['POST'])
 def classify_image():
     res = request.get_json(force=True)
@@ -473,8 +485,7 @@ def receive_routes():
         'inst': instancia.id
     })
 
-# /resources/users/register
-# {"email": ...}
+
 
 @app.route('/resources/routes/byuser', methods=['POST'])
 def get_routes():

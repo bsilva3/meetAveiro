@@ -8,6 +8,13 @@ from sqlalchemy.exc import IntegrityError
 db = SQLAlchemy()
 
 class Tipo(db.Model):
+""" Represents the table: Tipo
+    
+    Attributes:
+        id: integer, is the primary key of the table Tipo.
+        nome: string, corresponds to the Tipo name, for example: 'Turista' or 'Administrador'.
+
+    """
     __tablename__ = 'tipo'
     id = db.Column('id', db.Integer, primary_key=True)
     nome = db.Column('nome', db.String(80), unique=True, nullable=False)
@@ -16,9 +23,20 @@ class Tipo(db.Model):
     user = db.relationship('Utilizador',back_populates="tipo")
 
     def __init__(self, nome):
+		"""Inits Tipo with nome."""
         self.nome = nome
 
 class Utilizador(db.Model):
+""" Represents the table: Utilizador
+    
+    Attributes:
+        email: string, user email is the primary key of the table Utilizador.
+        tipoid: integer, is foreign key of table Utilizador.
+        conc: Object of the class Conceito, because the user's email is the foreign key of the class Conceito.
+        inst: Object of the class InstanciaPercurso, because the user's email is the foreign key of the class InstanciaPercurso.
+        foto: Object of the class Fotografia, because the user's email is the foreign key of the class Fotografia.
+
+    """
     __tablename__ = 'utilizador'
     email = db.Column('email', db.String(80), primary_key=True)
 
@@ -38,10 +56,25 @@ class Utilizador(db.Model):
     foto = db.relationship('Fotografia', back_populates="emailcriador")
 
     def __init__(self, email, tipoid):
+		"""Inits Utilizador with email and tipoid."""
         self.email = email
         self.tipoid = tipoid
 
 class Conceito(db.Model):
+""" Represents the table: Conceito
+
+    Attributes:
+        nomeconceito: string, concept nomeconceito is the primary key of the table Utilizador, corresponding to the name of the folders.
+        emailc: string, user's email is the foreign key of the class Conceito.
+        latitude: double, the latitude field is the latitude where the concept is located.
+        longitude: double, the longitude field is the longitude where the concept is located.
+        raio: double, the raio field is the radius from the location of the concept of where it is visible.
+        descricao: string, the descricao field contains information about the concept.
+        nome: string, is the name of the concept that is presented to the user.
+        classificacao: integer, this field is the classification of the concept from 1 to 5.
+        conc: Object of the class Fotografia, because the concept's nomeconceito is the foreign key of the class Fotografia.
+
+    """
     __tablename__ = 'conceito'
     nomeconceito = db.Column('nomeconceito', db.String(80), primary_key=True)
 
@@ -60,6 +93,7 @@ class Conceito(db.Model):
 
     def __init__(self, nomeconceito, emailc, latitude=None, longitude=None,
                  raio=None, descricao=None, nome=None, classificacao=None):
+		"""Inits Conceito with nomeconceito, emailc, latitude, longitude, raio, descricao, nome and classificacao."""
         self.nomeconceito = nomeconceito
         self.emailc = emailc
         self.latitude = latitude
@@ -70,6 +104,21 @@ class Conceito(db.Model):
         self.classificacao = classificacao
 
 class Percurso(db.Model):
+""" Represents the table: Percurso
+
+    Attributes:
+		id: integer, is the primary key of the table Percurso.
+		emailc: string, user's email is the foreign key of the class Percurso.
+		titulo: string, is the title of the route assigned by the user.
+		descricao: string, the descricao field contains information about the route.
+		estado: string, a route can have one of three states:
+			Validated: Path created by an administrator or even though it was not, it was a public path and an administrator validated it.
+			Audience: A user created it and gave them permissions to be public, however, it is not yet visible to other users.
+			Private: A user has created it and has not given permission for this to be public, so it is not visible to other users, can only be made public.
+		conc: Object of the class Ponto, because the route's id is the foreign key of the class Ponto.
+		concc: Object of the class InstanciaPercurso, because the route's id is the foreign key of the class InstanciaPercurso.
+
+    """
     __tablename__ = 'percurso'
     id = db.Column('id', db.Integer, primary_key=True)
 
@@ -90,12 +139,22 @@ class Percurso(db.Model):
 
 
     def __init__(self, emailc, titulo, estado, descricao=None):
+		"""Inits Percurso with emailc, titulo, estado and descricao."""
         self.emailc=emailc
         self.titulo=titulo
         self.descricao=descricao
         self.estado=estado
 
 class Ponto(db.Model):
+""" Represents the table: Ponto
+
+    Attributes:
+		idponto: integer, is the primary key of the table Ponto.
+		latitude: double, the latitude field is the latitude where the point is located.
+        longitude: double, the longitude field is the longitude where the point is located.
+		idperc: integer, is foreign key of table Ponto.
+
+    """
     __tablename__ = 'ponto'
     idponto = db.Column('idponto', db.Integer, primary_key=True)
     latitude = db.Column('latitude', db.Float, nullable=False)
@@ -106,11 +165,24 @@ class Ponto(db.Model):
     idpercurso = relationship('Percurso')
 
     def __init__(self, latitude, longitude, idperc):
+		"""Inits Ponto with latitude, longitude and idperc."""
         self.latitude=latitude
         self.longitude=longitude
         self.idperc=idperc
 
 class InstanciaPercurso(db.Model):
+""" Represents the table: InstanciaPercurso
+
+    Attributes:
+		id: integer, is the primary key of the table InstanciaPercurso.
+		emailc: string, user's email is the foreign key of the class Percurso.
+		idperc: integer, is foreign key of table InstanciaPercurso.
+		datainicio: date, is the start date of the route
+		datafim:date, is the end date of the course.
+		classificacao: integer, this field is the classification of the concept from 1 to 5.
+		instid: Object of the class InstanciaPercurso, because the route's id is the foreign key of the class InstanciaPercurso.
+
+    """
     __tablename__ = 'instanciapercurso'
 
     id = db.Column('id', db.Integer, primary_key=True)
@@ -131,13 +203,38 @@ class InstanciaPercurso(db.Model):
     instid = db.relationship('Fotografia', back_populates="idinstpercurso")
 
     def __init__(self, emailc, idperc, datainicio, datafim, classificacao=None):
+		"""Inits InstanciaPercurso with emailc, idperc, datainicio, datafim and classificacao."""
         self.emailc=emailc
         self.idperc=idperc
         self.datafim=datafim
         self.classificacao=classificacao
         self.datainicio=datainicio
 
-class Fotografia(db.Model):
+class Fotografia(db.Model):	# ACABAR
+""" Represents the table: Fotografia
+
+    Attributes:
+		id: integer, is the primary key of the table Fotografia.
+		nomeconc: string, is foreign key of table Conceito.
+		emailinst: string, user's email is the foreign key of the class Fotografia.
+		latitude: double, the latitude field is the latitude where the photograph was taken.
+        longitude: double, the longitude field is the longitude where the photograph was taken.
+		path: string,is where the photo is stored on the server.
+		idinstperc: integer, 
+		datafoto: date
+		feedback: integer
+		estado:
+		classificacaotensorflow:
+		tempotensorflow:
+
+		emailc: string, user's email is the foreign key of the class Percurso.
+		idperc: integer, is foreign key of table InstanciaPercurso.
+		datainicio: date, is the start date of the route
+		datafim:date, is the end date of the course.
+		classificacao: integer, this field is the classification of the concept from 1 to 5.
+
+    """
+
     __tablename__ = 'fotografia'
     id = db.Column('idfoto', db.Integer, primary_key=True, autoincrement=True)
 

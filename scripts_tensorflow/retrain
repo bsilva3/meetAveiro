@@ -8,7 +8,7 @@ WD=$(pwd)
 cd "tensorflow-for-poets-2"
 
 #cd "${HOME_DIR}"tensorflow-for-poets-2   
-. ~/tensorflow/bin/activate 
+. ~/../franciscomatos/tensorflow/bin/activate 
 #source activate tensorflow   
 
 

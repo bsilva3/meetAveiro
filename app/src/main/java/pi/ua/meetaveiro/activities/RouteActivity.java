@@ -432,7 +432,7 @@ public class RouteActivity extends FragmentActivity implements
         }
         //back button (with image)
         ImageButton back = findViewById(R.id.back_image_btn);
-        back.setOnClickListener(v -> {
+        /*back.setOnClickListener(v -> {
             if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
                 DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
@@ -457,6 +457,9 @@ public class RouteActivity extends FragmentActivity implements
                 onBackPressed();
             }
 
+        });*/
+        back.setOnClickListener(v -> {
+            onBackPressed();
         });
 
         updateValuesFromBundle(savedInstanceState);
@@ -636,7 +639,8 @@ public class RouteActivity extends FragmentActivity implements
                         new IntentFilter(ACTION_BROADCAST)
                 );
         Log.i("intent_photo",  String.valueOf(getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)));
-        getCurrentPath();
+        if (!Utils.getRouteState(this).equals(ROUTE_STATE.STOPPED))
+            getCurrentPath();
     }
 
     /**
@@ -1293,6 +1297,8 @@ public class RouteActivity extends FragmentActivity implements
     public void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(locationsReceiver);
+        if (!routePoints.isEmpty())
+            saveCurrentPath();
     }
 
     @Override
@@ -1305,7 +1311,6 @@ public class RouteActivity extends FragmentActivity implements
             mBound = false;
         }
         super.onStop();
-        saveCurrentPath();
     }
 
     @Override
@@ -1622,6 +1627,7 @@ public class RouteActivity extends FragmentActivity implements
                     Toast.makeText(this, getString(R.string.route_empty), Toast.LENGTH_SHORT).show();
                     photos.clear();
                     alertDialog.dismiss();
+                    deleteAllTempPointsInPrefs();
                 }
                 else {
                     // get user input and create a route object
@@ -1639,7 +1645,8 @@ public class RouteActivity extends FragmentActivity implements
                     alertDialog.dismiss();
                     askForRoutePrivacity(jsonT);
                     //delete route data
-                    getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().commit();
+                    deleteAllTempPointsInPrefs();
+                    //getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().apply();
                 }
             }
         });
@@ -1768,37 +1775,14 @@ public class RouteActivity extends FragmentActivity implements
 
 
     private void saveCurrentPath(){
-        //Poly routePoints
-        StringBuilder sb = new StringBuilder();
         prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
-        //sb.append("{\n");
-        //sb.append("\"Markers\" : [\n");
         int tmp = 0;
-        //Gson gson = new Gson();
-        tmp = 0;
         for (LatLng l : routePoints){
             prefs.edit().putString("Lat"+tmp, String.valueOf(l.latitude)).apply();
             prefs.edit().putString("Lng"+tmp, String.valueOf(l.longitude)).apply();
-            /*sb.append("{");
-            sb.append("\"Longitude\" : " + "\"" +l.longitude + "\", ");
-            sb.append("\"Latitude\" : " + "\"" +l.latitude + "\"");
-            sb.append("}");
-            if (tmp < routePoints.size()-1){
-                sb.append(",\n");
-            }*/
             tmp++;
         }
-        //sb.append("]\n");
-        //sb.append("\n}");
-
-        /*FileOutputStream outputStream;
-        try {
-            outputStream = this.openFileOutput(TEMP_ROUTE_POINTS_FILE, Context.MODE_PRIVATE);
-            outputStream.write(sb.toString().getBytes());
-            outputStream.close();
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }*/
+        routePoints.clear();
     }
 
     private void getCurrentPath() {
@@ -1810,6 +1794,7 @@ public class RouteActivity extends FragmentActivity implements
             if (prefs.contains("Lat" + tmp)) {
                 String lat = prefs.getString("Lat" + tmp, "");
                 String lng = prefs.getString("Lng" + tmp, "");
+                Log.d("load", lat+", "+lng);
                 LatLng l = null;
                 try {
                     l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
@@ -1820,6 +1805,23 @@ public class RouteActivity extends FragmentActivity implements
                     tmp++;
                     continue;
                 }
+                tmp++;
+            } else {
+                stop = true;
+            }
+        }
+    }
+
+    private void deleteAllTempPointsInPrefs() {
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        boolean stop = false;
+        int tmp = 0;
+        while (!stop) {
+            if (prefs.contains("Lat" + tmp)) {
+                prefs.edit().remove("Lat" + tmp).apply();
+                prefs.edit().remove("Lng" + tmp).apply();
+                Log.d("remove", "removed");
+                LatLng l = null;
                 tmp++;
             } else {
                 stop = true;

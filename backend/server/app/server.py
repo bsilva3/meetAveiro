@@ -352,8 +352,9 @@ def classify_image():
     conc_lat = conceito.latitude
     conc_long = conceito.longitude
     
-    if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.3:
-        img_name = 'desconhecido'
+    if conc_lat is not None and conc_long is not None:
+        if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.3:
+            img_name = 'desconhecido'
 
     
     print(img_name, score)

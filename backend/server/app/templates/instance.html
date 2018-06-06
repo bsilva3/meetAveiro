@@ -76,14 +76,15 @@
                 map: map,
                 icon: image
               });
-            }
-            
-            google.maps.event.addListener(marker, 'click', (function(marker, i) {
+              google.maps.event.addListener(marker, 'click', (function(marker, i) {
                 return function() {
                   infowindow.setContent(fotos_desc[i]);
                   infowindow.open(map, marker);
                 }
               })(marker, i));
+            }
+            
+            
 
               var flightPath = new google.maps.Polyline({
                     path: coord,

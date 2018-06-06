@@ -316,6 +316,18 @@ def manage_requests():
 #######################################################
 #######################################################
 
+# /resources/users/register
+# {"email": ...}
+@app.route('/resources/users/register', methods=['POST'])
+def register_user():
+    req = request.get_json(force=True)
+    email = req['email']
+    user = addUtilizador(email, 2)
+    return jsonify({
+        'user': user
+    })
+
+
 @app.route('/search', methods=['POST'])
 def classify_image():
     res = request.get_json(force=True)
@@ -332,16 +344,17 @@ def classify_image():
     img_name = img_name.replace(' ', '_')
     print('Conceito: ' + img_name)
     conceito = db.session.query(Conceito).get(img_name)
-    score = classification[1]
+    score = float(classification[1])
 
-    if float(score) < 0.8:
+    if float(score) < 0.7:
         img_name = 'desconhecido'
 
     conc_lat = conceito.latitude
     conc_long = conceito.longitude
     
-    if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.1:
-        img_name = 'desconhecido'
+    if conc_lat is not None and conc_long is not None:
+        if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.3:
+            img_name = 'desconhecido'
 
     
     print(img_name, score)
@@ -472,6 +485,7 @@ def receive_routes():
         'route': percurso.id,
         'inst': instancia.id
     })
+
 
 
 @app.route('/resources/routes/byuser', methods=['POST'])

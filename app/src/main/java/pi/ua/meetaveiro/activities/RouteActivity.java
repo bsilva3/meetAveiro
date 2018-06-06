@@ -152,6 +152,7 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
     private static final String TAG = "ERROR";
+    private static final String TEMP_ROUTE_POINTS_FILE = "";
 
     //Current start/pause/stop buttons state
     private FloatingActionButton buttonStopRoute;
@@ -635,7 +636,7 @@ public class RouteActivity extends FragmentActivity implements
                         new IntentFilter(ACTION_BROADCAST)
                 );
         Log.i("intent_photo",  String.valueOf(getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)));
-
+        getCurrentPath();
     }
 
     /**
@@ -1304,6 +1305,7 @@ public class RouteActivity extends FragmentActivity implements
             mBound = false;
         }
         super.onStop();
+        saveCurrentPath();
     }
 
     @Override
@@ -1636,6 +1638,8 @@ public class RouteActivity extends FragmentActivity implements
                     JSONObject jsonT = placeRoutesOnJson(rt);//
                     alertDialog.dismiss();
                     askForRoutePrivacity(jsonT);
+                    //delete route data
+                    getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().commit();
                 }
             }
         });
@@ -1759,6 +1763,67 @@ public class RouteActivity extends FragmentActivity implements
             outputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
+        }
+    }
+
+
+    private void saveCurrentPath(){
+        //Poly routePoints
+        StringBuilder sb = new StringBuilder();
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        //sb.append("{\n");
+        //sb.append("\"Markers\" : [\n");
+        int tmp = 0;
+        //Gson gson = new Gson();
+        tmp = 0;
+        for (LatLng l : routePoints){
+            prefs.edit().putString("Lat"+tmp, String.valueOf(l.latitude)).apply();
+            prefs.edit().putString("Lng"+tmp, String.valueOf(l.longitude)).apply();
+            /*sb.append("{");
+            sb.append("\"Longitude\" : " + "\"" +l.longitude + "\", ");
+            sb.append("\"Latitude\" : " + "\"" +l.latitude + "\"");
+            sb.append("}");
+            if (tmp < routePoints.size()-1){
+                sb.append(",\n");
+            }*/
+            tmp++;
+        }
+        //sb.append("]\n");
+        //sb.append("\n}");
+
+        /*FileOutputStream outputStream;
+        try {
+            outputStream = this.openFileOutput(TEMP_ROUTE_POINTS_FILE, Context.MODE_PRIVATE);
+            outputStream.write(sb.toString().getBytes());
+            outputStream.close();
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }*/
+    }
+
+    private void getCurrentPath() {
+        routePoints = new ArrayList<>();
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        boolean stop = false;
+        int tmp = 0;
+        while (!stop) {
+            if (prefs.contains("Lat" + tmp)) {
+                String lat = prefs.getString("Lat" + tmp, "");
+                String lng = prefs.getString("Lng" + tmp, "");
+                LatLng l = null;
+                try {
+                    l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+                    routePoints.add(l);
+                } catch (NumberFormatException e) {
+                    //there were no double parselable coordinates found, marker will not be placed
+                    Log.e("ERROR", e.toString());
+                    tmp++;
+                    continue;
+                }
+                tmp++;
+            } else {
+                stop = true;
+            }
         }
     }
 

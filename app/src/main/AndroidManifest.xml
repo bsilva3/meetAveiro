@@ -82,6 +82,7 @@
         <activity
             android:name=".activities.RouteActivity"
             android:parentActivityName=".activities.NavigationDrawerActivity"
+            android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_route">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

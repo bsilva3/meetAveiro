@@ -5,17 +5,33 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.others.MyApplication;
+
+import static pi.ua.meetaveiro.others.Constants.URL_REGISTER_USER;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -104,5 +120,39 @@ public class SignupActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         progressBar.setVisibility(View.GONE);
+    }
+
+    private void logUser(String email, String password) {
+        JSONObject loginRequest = new JSONObject();
+        try {
+            loginRequest.put("email", email);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                URL_REGISTER_USER, loginRequest, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("res", response.toString());
+
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("ERROR", "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error+"", Toast.LENGTH_SHORT).show();
+                // hide the progress dialog
+            }
+        });
+
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(jsonObjReq);
     }
 }

@@ -40,6 +40,8 @@ public class Constants {
     public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";
+    //url to send a user's email when registered
+    public static final String URL_REGISTER_USER = API_URL + "/resources/users/register";
 
     //Rota por id (NO MARKERS)
     public static final String ROUTE_BY_ID = API_URL + "/resources/routes/"; //+id

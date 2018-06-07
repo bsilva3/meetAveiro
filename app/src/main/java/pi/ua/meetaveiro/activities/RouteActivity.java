@@ -152,6 +152,7 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
     private static final String TAG = "ERROR";
+    private static final String TEMP_ROUTE_POINTS_FILE = "";
 
     //Current start/pause/stop buttons state
     private FloatingActionButton buttonStopRoute;
@@ -431,7 +432,7 @@ public class RouteActivity extends FragmentActivity implements
         }
         //back button (with image)
         ImageButton back = findViewById(R.id.back_image_btn);
-        back.setOnClickListener(v -> {
+        /*back.setOnClickListener(v -> {
             if (Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.STARTED) || Utils.getRouteState(RouteActivity.this).equals(ROUTE_STATE.PAUSED)){
                 DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
@@ -456,6 +457,9 @@ public class RouteActivity extends FragmentActivity implements
                 onBackPressed();
             }
 
+        });*/
+        back.setOnClickListener(v -> {
+            onBackPressed();
         });
 
         updateValuesFromBundle(savedInstanceState);
@@ -635,7 +639,8 @@ public class RouteActivity extends FragmentActivity implements
                         new IntentFilter(ACTION_BROADCAST)
                 );
         Log.i("intent_photo",  String.valueOf(getIntent().getBooleanExtra(EXTRA_TAKE_PHOTO, false)));
-
+        if (!Utils.getRouteState(this).equals(ROUTE_STATE.STOPPED))
+            getCurrentPath();
     }
 
     /**
@@ -1292,6 +1297,8 @@ public class RouteActivity extends FragmentActivity implements
     public void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(locationsReceiver);
+        if (!routePoints.isEmpty())
+            saveCurrentPath();
     }
 
     @Override
@@ -1620,6 +1627,7 @@ public class RouteActivity extends FragmentActivity implements
                     Toast.makeText(this, getString(R.string.route_empty), Toast.LENGTH_SHORT).show();
                     photos.clear();
                     alertDialog.dismiss();
+                    deleteAllTempPointsInPrefs();
                 }
                 else {
                     // get user input and create a route object
@@ -1636,6 +1644,9 @@ public class RouteActivity extends FragmentActivity implements
                     JSONObject jsonT = placeRoutesOnJson(rt);//
                     alertDialog.dismiss();
                     askForRoutePrivacity(jsonT);
+                    //delete route data
+                    deleteAllTempPointsInPrefs();
+                    //getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().apply();
                 }
             }
         });
@@ -1759,6 +1770,62 @@ public class RouteActivity extends FragmentActivity implements
             outputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
+        }
+    }
+
+
+    private void saveCurrentPath(){
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        int tmp = 0;
+        for (LatLng l : routePoints){
+            prefs.edit().putString("Lat"+tmp, String.valueOf(l.latitude)).apply();
+            prefs.edit().putString("Lng"+tmp, String.valueOf(l.longitude)).apply();
+            tmp++;
+        }
+        routePoints.clear();
+    }
+
+    private void getCurrentPath() {
+        routePoints = new ArrayList<>();
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        boolean stop = false;
+        int tmp = 0;
+        while (!stop) {
+            if (prefs.contains("Lat" + tmp)) {
+                String lat = prefs.getString("Lat" + tmp, "");
+                String lng = prefs.getString("Lng" + tmp, "");
+                Log.d("load", lat+", "+lng);
+                LatLng l = null;
+                try {
+                    l = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+                    routePoints.add(l);
+                } catch (NumberFormatException e) {
+                    //there were no double parselable coordinates found, marker will not be placed
+                    Log.e("ERROR", e.toString());
+                    tmp++;
+                    continue;
+                }
+                tmp++;
+            } else {
+                stop = true;
+            }
+        }
+    }
+
+    private void deleteAllTempPointsInPrefs() {
+        prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
+        boolean stop = false;
+        int tmp = 0;
+        while (!stop) {
+            if (prefs.contains("Lat" + tmp)) {
+                prefs.edit().remove("Lat" + tmp).apply();
+                prefs.edit().remove("Lng" + tmp).apply();
+                Log.d("remove", "removed");
+                LatLng l = null;
+                tmp++;
+            } else {
+                stop = true;
+            }
         }
     }
 

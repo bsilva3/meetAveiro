@@ -23,7 +23,7 @@ class Tipo(db.Model):
     user = db.relationship('Utilizador',back_populates="tipo")
 
     def __init__(self, nome):
-	"""Inits Tipo with nome."""
+        """Inits Tipo with nome."""
         self.nome = nome
 
 class Utilizador(db.Model):
@@ -56,7 +56,7 @@ class Utilizador(db.Model):
     foto = db.relationship('Fotografia', back_populates="emailcriador")
 
     def __init__(self, email, tipoid):
-	"""Inits Utilizador with email and tipoid."""
+        """Inits Utilizador with email and tipoid."""
         self.email = email
         self.tipoid = tipoid
 
@@ -93,7 +93,7 @@ class Conceito(db.Model):
 
     def __init__(self, nomeconceito, emailc, latitude=None, longitude=None,
                  raio=None, descricao=None, nome=None, classificacao=None):
-    """Inits Conceito with nomeconceito, emailc, latitude, longitude, raio, descricao, nome and classificacao."""
+        """Inits Conceito with nomeconceito, emailc, latitude, longitude, raio, descricao, nome and classificacao."""
         self.nomeconceito = nomeconceito
         self.emailc = emailc
         self.latitude = latitude
@@ -139,7 +139,7 @@ class Percurso(db.Model):
 
 
     def __init__(self, emailc, titulo, estado, descricao=None):
-	"""Inits Percurso with emailc, titulo, estado and descricao."""
+        """Inits Percurso with emailc, titulo, estado and descricao."""
         self.emailc=emailc
         self.titulo=titulo
         self.descricao=descricao
@@ -165,7 +165,7 @@ class Ponto(db.Model):
     idpercurso = relationship('Percurso')
 
     def __init__(self, latitude, longitude, idperc):
-		"""Inits Ponto with latitude, longitude and idperc."""
+        """Inits Ponto with latitude, longitude and idperc."""
         self.latitude=latitude
         self.longitude=longitude
         self.idperc=idperc

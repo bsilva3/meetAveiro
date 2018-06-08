@@ -79,16 +79,22 @@ def signIn():
                 View('Requests', 'show_requests'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
+            return jsonify({
+                'url': url_for('index')
+            })
+        if utilizador.tipoid == 2:
+            mynav = Navbar('MeetAveiro',
+                View('MyGallery', 'user_gallery'))
+            nav.register_element('mynavbar', mynav)
+            return jsonify({
+                'url': url_for('user_gallery')
+            })
     except Exception as e:
         print(e)
         return jsonify({
             'url': ''
         })
-    
-    return jsonify({
-        'url': url_for('index')
-    })
-
+  
 @app.route('/signOut', methods=['GET'])
 def signOut():
     if 'uid' in session:
@@ -159,6 +165,14 @@ def show_gallery(query):
     folder = os.path.join(IMAGE_FOLDER, query)
     images = os.listdir(folder)
     return render_template('gallery.html', topic=images, path=query)
+
+
+@app.route('/user_gallery', methods=['GET'])
+def user_gallery():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
+    images = getPathFotosUser(session['email']) # função com a lista dos paths
+    return render_template('user_gallery.html', topic=images)
 
 @app.route('/stats', methods=['GET'])
 def show_stats():

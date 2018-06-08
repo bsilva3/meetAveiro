@@ -91,7 +91,8 @@ def signIn():
         if utilizador.tipoid == 2:
             print(4)
             mynav = Navbar('MeetAveiro',
-                View('MyGallery', 'user_gallery'), 
+                View('As minhas fotografias', 'user_gallery'),
+                View('Os meus percursos', 'user_instance'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
             return jsonify({
@@ -874,6 +875,64 @@ def share_map(id):
     center['longitude'] = longitudes/len(pnts) 
 
     return render_template('instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo, desc=route.descricao)
+
+
+@app.route('/resources/routes/user_instances/17/myinstances', methods=['GET'])
+def share_map_2(id):
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return '<h1>Not Found</h1>'
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc == id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            foto['concept'] = f.nomeconc
+            conceito = db.session.query(Conceito).get(f.nomeconc)
+            foto['description'] = conceito.descricao
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['path'] = '/sendimage/pending/' + str(temp[0] + ':' + temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['path'] = '/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    center = {}
+
+    latitudes = 0
+    longitudes = 0
+    for p in pnts:
+        latitudes += p['latitude']
+        longitudes += p['longitude']
+
+    center['latitude'] = latitudes / len(pnts)
+    center['longitude'] = longitudes / len(pnts)
+
+    return render_template('user_instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo,
+                           desc=route.descricao)
+
 
 # Background tasks
 scheduler = BackgroundScheduler()

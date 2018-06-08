@@ -1,0 +1,104 @@
+
+{% block styles %}
+<style>
+    /* Always set the map height explicitly to define the size of the div   
+    * element that contains the map. */
+    #map {
+        height: 70%;
+        margin: 20px 20px 20px 20px;
+    }
+    /* Optional: Makes the sample page fill the window. */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+</style>
+    
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+{% endblock %}
+
+
+
+{% block content %}
+    <h1>{{ title }}</h1>
+    
+    <h3>{{ desc }}</h3>
+    <div id="map"></div><br/>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+<script>
+    function initMap() {
+         
+        var coord = []
+
+        {% for p in points %}
+            coord.push({lat: {{p['latitude']}}, lng: {{p['longitude']}}});
+        {% endfor %}
+
+        var urls = []
+        var fotos_coords = []
+        var fotos_desc = []
+    
+        {% for f in fotos %}
+            urls.push("{{f['path']}}");
+            fotos_coords.push({lat: {{f['latitude']}}, lng: {{f['longitude']}}});
+            fotos_desc.push("{{ f.description }}");
+        {% endfor %}
+
+        
+            var map = new google.maps.Map(document.getElementById('map'), {
+              zoom: 17,
+              center: { lat: {{ center['latitude']}}, lng: {{ center['longitude'] }} }
+            });
+
+            var infowindow = new google.maps.InfoWindow();
+
+            for (i = 0; i < urls.length; i++) {
+            
+              var image = {
+                      url: urls[i],
+                      // This marker is 20 pixels wide by 32 pixels high.
+                      size: new google.maps.Size(200, 200),
+                      // The origin for this image is (0, 0).
+                      origin: new google.maps.Point(0, 0),
+                      // The anchor for this image is the base of the flagpole at (0, 32).
+                      anchor: new google.maps.Point(0, 0),
+                      scaledSize: new google.maps.Size(50, 50)
+                    };
+            
+              var marker = new google.maps.Marker({
+                position: fotos_coords[i],
+                map: map,
+                icon: image
+              });
+              google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                return function() {
+                  infowindow.setContent(fotos_desc[i]);
+                  infowindow.open(map, marker);
+                }
+              })(marker, i));
+            }
+            
+            
+
+              var flightPath = new google.maps.Polyline({
+                    path: coord,
+                    geodesic: true,
+                    strokeColor: '#FE2E2E',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 6
+                  });
+  
+            flightPath.setMap(map);
+            
+  
+          }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJyCibWzjYod4AYXXIgJXhFyf6f1v7fvc&callback=initMap" async defer></script>
+
+{% endblock %}

@@ -321,8 +321,16 @@ def change_request():
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
     files = os.listdir(dest_folder)
-    new_file = str(len(files)) + '.' + file_desc[1]
+    file_id = len(files)+1 
+    new_file = str(file_id) + '.' + file_desc[1]
     new_path = os.path.join(dest_folder, new_file)
+    while True:
+        if os.path.exists(new_path):
+            file_id += 1
+            new_file = str(file_id) + '.' + file_desc[1]
+            new_path = os.path.join(dest_folder, new_file)
+        else:
+            break
     os.rename(req_folder, new_path)
 
     updateFotoByPath(req_folder, new_path)
@@ -344,8 +352,16 @@ def manage_requests():
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
         files = os.listdir(dest_folder)
-        new_file = str(len(files)) + '.' + file_desc[1]
+        file_id = len(files)+1 
+        new_file = str(file_id) + '.' + file_desc[1]
         new_path = os.path.join(dest_folder, new_file)
+        while True:
+            if os.path.exists(new_path):
+                file_id += 1
+                new_file = str(file_id) + '.' + file_desc[1]
+                new_path = os.path.join(dest_folder, new_file)
+            else:
+                break
         os.rename(req_folder, new_path)
         updateFotoByPath(req_folder, new_path)
     elif method == 'DELETE':
@@ -407,8 +423,16 @@ def classify_image():
         os.makedirs(folder)
     files = os.listdir(folder)
     print("Folder created")
-    file_id = str(len(files)+2) + '.jpg'
-    filename = os.path.join(folder, file_id)
+    file_id = len(files)+1 
+    filename = os.path.join(folder, str(file_id) + '.jpg')
+
+    while True:
+        if os.path.exists(filename):
+            file_id += 1
+            filename = os.path.join(folder, str(file_id) + '.jpg')
+        else:
+            break
+
     print("Filename: " + filename)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")

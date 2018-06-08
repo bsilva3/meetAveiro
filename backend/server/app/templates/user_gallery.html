@@ -11,7 +11,7 @@
                 <div class="card-header">
                     <h3 class="card-title">{{ key }}</h3>
                 </div>
-                <img src=" {{ url_for('send_image', topic=path, filename=image) }} "  class="img-thumbnail"
+                <img src=" {{ url_for('send_image_2', topic=path, filename=image) }} "  class="img-thumbnail"
                  style="height:15em;width:100%;">
                 <div class="card-body">
                     <button class="btn btn-danger" onclick="delElement('{{ path }}', '{{ image }}')">Delete</button>

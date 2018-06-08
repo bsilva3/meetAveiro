@@ -447,6 +447,17 @@ def getTodasInstPercursoUser(em):
         inst.append((row[0], row[1], row[2], row[3], row[4], row[5]))
     return inst
 
+def getTodasInstPercursoUser_2(em):
+    sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id \
+        from instanciapercurso \
+        join percurso on instanciapercurso.idpercurso = percurso.id \
+        where instanciapercurso.emailuser=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    inst = []
+    for row in result:
+        inst.append((row[0], row[1], row[2], row[3]))
+    return inst
+
 def reconstruirPontosPercurso(id):
     sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
         join percurso on ponto.idpercurso = percurso.id \
@@ -598,3 +609,13 @@ def percFeedback():
         totf = row[0]
 
     return ((fcf/totf*100), med)
+
+def getPathFotosUser(em):
+    #sql = text('select path from fotografia where emailcriador=\'' + em + '\'')
+    #result = db.engine.execute(sql)
+    #fotos = []
+    #for row in result:
+    #    fotos.append(row[0])
+    fotos = db.session.query(Fotografia).filter(Fotografia.emailinst==em).order_by(Fotografia.nomeconc).all()
+    return fotos
+    

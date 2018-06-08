@@ -1,6 +1,6 @@
 #!/bin/bash
 IMAGE_SIZE=224
-ARCHITECTURE="mobilenet_0.50_${IMAGE_SIZE}"
+ARCHITECTURE="mobilenet_1.0_${IMAGE_SIZE}"
 HOME_DIR="../../"
 
 cd "${HOME_DIR}"

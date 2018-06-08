@@ -66,12 +66,18 @@ def signIn():
     email = req['user']
     passwd = req['password']
     try:
+        print(email)
+        email = email.strip()
+        print(email)
         user = auth.sign_in_with_email_and_password(email, passwd)
         session_id = user['idToken']
         session['uid'] = str(session_id)
         session['email'] = email
+        print(1)
         utilizador = db.session.query(Utilizador).get(email)
+        print(2)
         session['type'] = utilizador.tipoid
+        print(3)
         if utilizador.tipoid == 1:
             mynav = Navbar('MeetAveiro', 
                 View('Home', 'index'),
@@ -79,15 +85,28 @@ def signIn():
                 View('Requests', 'show_requests'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
+            return jsonify({
+                'url': url_for('index')
+            })
+        if utilizador.tipoid == 2:
+            print(4)
+            mynav = Navbar('MeetAveiro',
+                View('As minhas fotografias', 'user_gallery'),
+                View('Os meus percursos', 'escInstPercurso'),
+                View('Logout', 'signOut'))
+            nav.register_element('mynavbar', mynav)
+            return jsonify({
+                'url': url_for('user_gallery')
+            })
     except Exception as e:
         print(e)
         return jsonify({
             'url': ''
         })
-    
-    return jsonify({
-        'url': url_for('index')
-    })
+
+@app.route('/routes', methods=['GET'])
+def escInstPercurso():
+    return render_template('user_routes.html', routes=getTodasInstPercursoUser_2(session['email']))
 
 @app.route('/signOut', methods=['GET'])
 def signOut():
@@ -160,6 +179,24 @@ def show_gallery(query):
     images = os.listdir(folder)
     return render_template('gallery.html', topic=images, path=query)
 
+
+@app.route('/user_gallery', methods=['GET'])
+def user_gallery():
+    if 'uid' not in session:
+        return render_template('signIn.html', message='You have to log in first.')
+    fotos = getPathFotosUser(session['email']) # função com a lista dos paths
+    to_send = []
+    for f in fotos:
+        if 'static' in f.path:
+            name = f.path.split('/')[-1]
+            concept = f.nomeconc
+            to_send.append(('pending', concept + ':' + name))
+        else:
+            name = f.path.split('/')[-1]
+            to_send.append((f.nomeconc, name))
+
+    return render_template('user_gallery.html', images=to_send)
+
 @app.route('/stats', methods=['GET'])
 def show_stats():
     if 'uid' not in session:
@@ -187,6 +224,17 @@ def send_image(filename, topic):
         folder = os.path.join('./static/img', names[0])
         filename = names[1]
     return send_from_directory(folder,filename)
+
+@app.route('/sendimage2/<string:filename>')
+def send_image_2(filename):
+    temp = filename.split("/")
+    name = temp[-1]
+    for i in range(0, len(temp)-2):
+        if(i!=len(temp)-3):
+            folder = temp[i] + '/'
+        else:
+            folder = temp[i]
+    return send_from_directory(folder,name)
 
 @app.route('/search/<string:query>', methods=['GET'])
 def do_search(query):
@@ -277,8 +325,15 @@ def change_request():
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
     files = os.listdir(dest_folder)
-    new_file = str(len(files)) + '.' + file_desc[1]
+    file_id = len(files)+1 
+    new_file = str(file_id) + '.' + file_desc[1]
     new_path = os.path.join(dest_folder, new_file)
+    while True:
+        if os.path.exists(new_path):
+            new_file = str(file_id) + '1' + '.' + file_desc[1]
+            new_path = os.path.join(dest_folder, new_file)
+        else:
+            break
     os.rename(req_folder, new_path)
 
     updateFotoByPath(req_folder, new_path)
@@ -300,8 +355,15 @@ def manage_requests():
         if not os.path.exists(dest_folder):
             os.makedirs(dest_folder)
         files = os.listdir(dest_folder)
-        new_file = str(len(files)) + '.' + file_desc[1]
+        file_id = len(files)+1 
+        new_file = str(file_id) + '.' + file_desc[1]
         new_path = os.path.join(dest_folder, new_file)
+        while True:
+            if os.path.exists(new_path):
+                new_file = str(file_id) + '1' + '.' + file_desc[1]
+                new_path = os.path.join(dest_folder, new_file)
+            else:
+                break
         os.rename(req_folder, new_path)
         updateFotoByPath(req_folder, new_path)
     elif method == 'DELETE':
@@ -363,8 +425,15 @@ def classify_image():
         os.makedirs(folder)
     files = os.listdir(folder)
     print("Folder created")
-    file_id = str(len(files)+1) + '.jpg'
-    filename = os.path.join(folder, file_id)
+    file_id = len(files)+1 
+    filename = os.path.join(folder, str(file_id) + '.jpg')
+
+    while True:
+        if os.path.exists(filename):
+            filename = os.path.join(folder, str(file_id) + '1' + '.jpg')
+        else:
+            break
+
     print("Filename: " + filename)
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
@@ -697,7 +766,7 @@ def get_atractions():
                     temp['city'] = location[3]
                 else:
                     temp['city'] = ''
-        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
+        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito).all()
         path = ''
         for f in fotos:
             foto = {}
@@ -831,6 +900,64 @@ def share_map(id):
     center['longitude'] = longitudes/len(pnts) 
 
     return render_template('instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo, desc=route.descricao)
+
+
+@app.route('/resources/routes/user_instances/<int:id>/myinstances', methods=['GET'])
+def share_map_2(id):
+    instance = db.session.query(InstanciaPercurso).get(id)
+    if instance is None:
+        return '<h1>Not Found</h1>'
+    route = db.session.query(Percurso).get(instance.idperc)
+
+    fotos = db.session.query(Fotografia).filter(Fotografia.idinstperc == id).all()
+
+    fotografias = []
+    for f in fotos:
+        try:
+            foto = {}
+            foto['img'] = readImage(f.path)
+            foto['latitude'] = f.latitude
+            foto['longitude'] = f.longitude
+            foto['id'] = f.id
+            foto['date'] = f.datafoto
+            foto['concept'] = f.nomeconc
+            conceito = db.session.query(Conceito).get(f.nomeconc)
+            foto['description'] = conceito.descricao
+            if './static' in f.path:
+                temp = f.path.replace('./static/img/', '')
+                temp = temp.split('/')
+                foto['path'] = '/sendimage/pending/' + str(temp[0] + ':' + temp[1])
+            else:
+                temp = f.path.replace('../', '')
+                temp = temp.replace('treino/', '')
+                foto['path'] = '/sendimage/' + temp
+            fotografias.append(foto)
+        except:
+            print('Could not find: ' + f.path)
+
+    pontos = db.session.query(Ponto).filter(Ponto.idperc == route.id).all()
+
+    pnts = []
+    for p in pontos:
+        temp = {}
+        temp['latitude'] = p.latitude
+        temp['longitude'] = p.longitude
+        pnts.append(temp)
+
+    center = {}
+
+    latitudes = 0
+    longitudes = 0
+    for p in pnts:
+        latitudes += p['latitude']
+        longitudes += p['longitude']
+
+    center['latitude'] = latitudes / len(pnts)
+    center['longitude'] = longitudes / len(pnts)
+
+    return render_template('user_instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo,
+                           desc=route.descricao)
+
 
 # Background tasks
 scheduler = BackgroundScheduler()

@@ -6,18 +6,20 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-4">
-              <div class="form-row">
-                <div class="form-group col-md-10">
+              <div class="form-group">
+                <div class="col-md-10">
                     <!--
                     select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id
                     -->
                   <select id="inputState" class="form-control">
                       {% for r in routes %}
-                      <option><a href="http://192.168.160.192:8080/resources/routes/user_instances/{{r[3]}}/myinstances">{{r[0]}} [{{r[2]}}]</a></option>
+                      <option value="{{r[3]}}">{{r[0]}} [{{r[2]}}]</option>
                       {% endfor %}
                   </select>
                 </div>
-                <div class="col-md-2"><button type="submit" class="btn btn-primary">Escolher</button></div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary" onclick="share_map_2()">Escolher</button>
+                </div>
               </div>
         </div>
         <div class="col-sm-4"></div>

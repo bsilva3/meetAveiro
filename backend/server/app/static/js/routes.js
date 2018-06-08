@@ -1,4 +1,4 @@
-function getConcept() {
+function share_map_2() {
     var e = document.getElementById("routeslist");
     var concept = e.options[e.selectedIndex].value;
     var xhr = new XMLHttpRequest();

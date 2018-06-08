@@ -259,10 +259,13 @@ def index():
     #queriesChico()
     #print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
     #print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
-    print(nDesconhConhe())
-    print(fotosPorConceito())
-    print(conc())
-    print(percFeedback())
+    #print(nDesconhConhe())
+    #print(fotosPorConceito())
+    #print(conc())
+    #print(percFeedback())
+
+    print(getPathFotosUser("joana@ua.pt"))
+
     return render_template('index.html',
                            totalusers = nTotalUsers(),
                            #totalAdmin = nTotalTipoUser('Administrador'),

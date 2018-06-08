@@ -32,14 +32,6 @@
 {% endblock %}
 
 {% block scripts %}
-<!--<script src="{{url_for('.static', filename='js/routes.js')}}"></script>-->
-<script>
-    function share_map_2() {
-        var e = document.getElementById("routeslist");
-        var perc = e.options[e.selectedIndex].value;
-        window.open("{{url_for('share_map_2', id=perc)}}");
-    }
-    
-</script>
+<script src="{{url_for('.static', filename='js/routes.js')}}"></script>
 {{super()}}
 {% endblock %}

@@ -901,6 +901,13 @@ def share_map(id):
 
     return render_template('instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo, desc=route.descricao)
 
+@app.route('/resources/routes/user_instances', methods=['POST'])
+def get_user_route():
+    req = request.get_json(force=True)
+    perc = req['id']
+    return jsonify({
+        'url': url_for('share_map_2', id=perc)
+    })
 
 @app.route('/resources/routes/user_instances/<int:id>/myinstances', methods=['GET'])
 def share_map_2(id):

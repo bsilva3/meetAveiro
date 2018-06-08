@@ -104,6 +104,10 @@ def signIn():
             'url': ''
         })
 
+@app.route('/routes', methods=['GET'])
+def escInstPercurso():
+    render_template('user_routes.html', routes=getTodasInstPercursoUser(session['email']))
+
 @app.route('/signOut', methods=['GET'])
 def signOut():
     if 'uid' in session:

@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -36,6 +37,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.util.Util;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -617,12 +619,15 @@ public class PhotoLogFragment extends Fragment implements
                 break;
             case CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE:
                 if (resultCode == Activity.RESULT_OK) {
-                    File file = new File(Environment.getExternalStorageDirectory()+File.separator +
-                            "image.jpg");
+                    String photoPathHQ = Environment.getExternalStorageDirectory()+File.separator +
+                            "image.jpg";
+                    File file = new File(photoPathHQ);
                     Log.d("file", file.getAbsolutePath());
                     Bitmap photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
                     Bitmap photoThumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
                             THUMBSIZE, THUMBSIZE);
+                    photoHighQuality = correctOrientation(photoHighQuality, photoPathHQ);
+                    photoThumbnail = correctOrientation(photoThumbnail, file.getAbsolutePath());
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
                     photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
@@ -659,6 +664,38 @@ public class PhotoLogFragment extends Fragment implements
                 Utils.uncompletedCameraRequest = false;
                 break;
         }
+    }
+
+    private Bitmap correctOrientation(Bitmap bitmap, String photoPath) {
+        ExifInterface ei = null;
+        try {
+            ei = new ExifInterface(photoPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_UNDEFINED);
+
+        Bitmap rotatedBitmap = null;
+        switch(orientation) {
+
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                rotatedBitmap = Utils.rotateImage(bitmap, 90);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                rotatedBitmap = Utils.rotateImage(bitmap, 180);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                rotatedBitmap = Utils.rotateImage(bitmap, 270);
+                break;
+
+            case ExifInterface.ORIENTATION_NORMAL:
+            default:
+                rotatedBitmap = bitmap;
+        }
+        return rotatedBitmap;
     }
 
     @Override

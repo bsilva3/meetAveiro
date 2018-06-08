@@ -92,7 +92,7 @@ def signIn():
             print(4)
             mynav = Navbar('MeetAveiro',
                 View('As minhas fotografias', 'user_gallery'),
-                View('Os meus percursos', 'user_instance'),
+                View('Os meus percursos', 'share_map_2(17)'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
             return jsonify({
@@ -877,7 +877,7 @@ def share_map(id):
     return render_template('instance.html', center=center, points=pnts, fotos=fotografias, title=route.titulo, desc=route.descricao)
 
 
-@app.route('/resources/routes/user_instances/17/myinstances', methods=['GET'])
+@app.route('/resources/routes/user_instances/<int:id>/myinstances', methods=['GET'])
 def share_map_2(id):
     instance = db.session.query(InstanciaPercurso).get(id)
     if instance is None:

@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 db = SQLAlchemy()
 
 class Tipo(db.Model):
-""" Represents the table: Tipo
+    """ Represents the table: Tipo
     
     Attributes:
         id: integer, is the primary key of the table Tipo.
@@ -23,11 +23,11 @@ class Tipo(db.Model):
     user = db.relationship('Utilizador',back_populates="tipo")
 
     def __init__(self, nome):
-		"""Inits Tipo with nome."""
+        """Inits Tipo with nome."""
         self.nome = nome
 
 class Utilizador(db.Model):
-""" Represents the table: Utilizador
+    """ Represents the table: Utilizador
     
     Attributes:
         email: string, user email is the primary key of the table Utilizador.
@@ -56,12 +56,12 @@ class Utilizador(db.Model):
     foto = db.relationship('Fotografia', back_populates="emailcriador")
 
     def __init__(self, email, tipoid):
-		"""Inits Utilizador with email and tipoid."""
+        """Inits Utilizador with email and tipoid."""
         self.email = email
         self.tipoid = tipoid
 
 class Conceito(db.Model):
-""" Represents the table: Conceito
+    """ Represents the table: Conceito
 
     Attributes:
         nomeconceito: string, concept nomeconceito is the primary key of the table Utilizador, corresponding to the name of the folders.
@@ -93,7 +93,7 @@ class Conceito(db.Model):
 
     def __init__(self, nomeconceito, emailc, latitude=None, longitude=None,
                  raio=None, descricao=None, nome=None, classificacao=None):
-		"""Inits Conceito with nomeconceito, emailc, latitude, longitude, raio, descricao, nome and classificacao."""
+        """Inits Conceito with nomeconceito, emailc, latitude, longitude, raio, descricao, nome and classificacao."""
         self.nomeconceito = nomeconceito
         self.emailc = emailc
         self.latitude = latitude
@@ -104,7 +104,7 @@ class Conceito(db.Model):
         self.classificacao = classificacao
 
 class Percurso(db.Model):
-""" Represents the table: Percurso
+    """ Represents the table: Percurso
 
     Attributes:
 		id: integer, is the primary key of the table Percurso.
@@ -139,14 +139,14 @@ class Percurso(db.Model):
 
 
     def __init__(self, emailc, titulo, estado, descricao=None):
-		"""Inits Percurso with emailc, titulo, estado and descricao."""
+        """Inits Percurso with emailc, titulo, estado and descricao."""
         self.emailc=emailc
         self.titulo=titulo
         self.descricao=descricao
         self.estado=estado
 
 class Ponto(db.Model):
-""" Represents the table: Ponto
+    """ Represents the table: Ponto
 
     Attributes:
 		idponto: integer, is the primary key of the table Ponto.
@@ -165,13 +165,13 @@ class Ponto(db.Model):
     idpercurso = relationship('Percurso')
 
     def __init__(self, latitude, longitude, idperc):
-		"""Inits Ponto with latitude, longitude and idperc."""
+        """Inits Ponto with latitude, longitude and idperc."""
         self.latitude=latitude
         self.longitude=longitude
         self.idperc=idperc
 
 class InstanciaPercurso(db.Model):
-""" Represents the table: InstanciaPercurso
+    """ Represents the table: InstanciaPercurso
 
     Attributes:
 		id: integer, is the primary key of the table InstanciaPercurso.
@@ -203,7 +203,7 @@ class InstanciaPercurso(db.Model):
     instid = db.relationship('Fotografia', back_populates="idinstpercurso")
 
     def __init__(self, emailc, idperc, datainicio, datafim, classificacao=None):
-		"""Inits InstanciaPercurso with emailc, idperc, datainicio, datafim and classificacao."""
+        """Inits InstanciaPercurso with emailc, idperc, datainicio, datafim and classificacao."""
         self.emailc=emailc
         self.idperc=idperc
         self.datafim=datafim
@@ -211,7 +211,7 @@ class InstanciaPercurso(db.Model):
         self.datainicio=datainicio
 
 class Fotografia(db.Model):	# ACABAR
-""" Represents the table: Fotografia
+    """ Represents the table: Fotografia
 
     Attributes:
 		id: integer, is the primary key of the table Fotografia.

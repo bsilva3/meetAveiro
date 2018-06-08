@@ -598,3 +598,11 @@ def percFeedback():
         totf = row[0]
 
     return ((fcf/totf*100), med)
+
+def getPathFotosUser(em):
+    sql = text('select path from fotografia where emailcriador=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    fotos = []
+    for row in result:
+        fotos.append(row[0])
+    return fotos

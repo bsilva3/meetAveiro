@@ -66,12 +66,18 @@ def signIn():
     email = req['user']
     passwd = req['password']
     try:
+        print(email)
+        email = email.strip()
+        print(email)
         user = auth.sign_in_with_email_and_password(email, passwd)
         session_id = user['idToken']
         session['uid'] = str(session_id)
         session['email'] = email
+        print(1)
         utilizador = db.session.query(Utilizador).get(email)
+        print(2)
         session['type'] = utilizador.tipoid
+        print(3)
         if utilizador.tipoid == 1:
             mynav = Navbar('MeetAveiro', 
                 View('Home', 'index'),
@@ -83,6 +89,7 @@ def signIn():
                 'url': url_for('index')
             })
         if utilizador.tipoid == 2:
+            print(4)
             mynav = Navbar('MeetAveiro',
                 View('MyGallery', 'user_gallery'))
             nav.register_element('mynavbar', mynav)
@@ -94,7 +101,7 @@ def signIn():
         return jsonify({
             'url': ''
         })
-  
+
 @app.route('/signOut', methods=['GET'])
 def signOut():
     if 'uid' in session:

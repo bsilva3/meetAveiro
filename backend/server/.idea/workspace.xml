@@ -15,8 +15,16 @@
         <entry file="file://$PROJECT_DIR$/app/server.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="179">
-              <caret line="904" column="65" lean-forward="false" selection-start-line="904" selection-start-column="12" selection-end-line="904" selection-end-column="65" />
-              <folding />
+              <caret line="913" column="65" lean-forward="false" selection-start-line="913" selection-start-column="12" selection-end-line="913" selection-end-column="65" />
+              <folding>
+                <marker date="1528500829823" expanded="true" signature="29966:31798" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="30272:31154" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="30285:31091" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="30702:30884" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="30902:31054" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="31267:31389" ph="..." />
+                <marker date="1528500829823" expanded="true" signature="31463:31535" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -24,18 +32,28 @@
       <file leaf-file-name="user_routes.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/templates/user_routes.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="20" column="86" lean-forward="false" selection-start-line="20" selection-start-column="75" selection-end-line="20" selection-end-column="86" />
+            <state relative-caret-position="331">
+              <caret line="23" column="14" lean-forward="true" selection-start-line="23" selection-start-column="14" selection-end-line="23" selection-end-column="14" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="routes.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="stats.html" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/templates/stats.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="360">
+              <caret line="216" column="108" lean-forward="false" selection-start-line="216" selection-start-column="108" selection-end-line="216" selection-end-column="108" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="routes.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/static/js/routes.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="1" lean-forward="true" selection-start-line="19" selection-start-column="1" selection-end-line="19" selection-end-column="1" />
+            <state relative-caret-position="315">
+              <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -65,6 +83,7 @@
         <option value="$PROJECT_DIR$/app/templates/user_instance.html" />
         <option value="$PROJECT_DIR$/app/templates/user_routes.html" />
         <option value="$PROJECT_DIR$/app/static/js/routes.js" />
+        <option value="$PROJECT_DIR$/app/templates/stats.html" />
       </list>
     </option>
   </component>
@@ -129,7 +148,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.Python" />
+    <property name="settings.editor.selected.configurable" value="vcs.Subversion.SSH" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -175,6 +194,9 @@
   <component name="ShelveChangesManager" show_recycled="false">
     <option name="remove_strategy" value="false" />
   </component>
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="34a0c0a1-2810-4453-97ef-8e8cdfba5c88" name="Default" comment="" />
@@ -212,6 +234,13 @@
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="PERFORM_UPDATE_IN_BACKGROUND" value="false" />
+    <option name="PERFORM_COMMIT_IN_BACKGROUND" value="false" />
+    <option name="PERFORM_EDIT_IN_BACKGROUND" value="false" />
+    <option name="PERFORM_CHECKOUT_IN_BACKGROUND" value="false" />
+    <option name="PERFORM_ADD_REMOVE_IN_BACKGROUND" value="false" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -264,14 +293,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="377">
           <caret line="31" column="0" lean-forward="true" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/templates/stats.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -329,23 +350,39 @@
     <entry file="file://$PROJECT_DIR$/app/server.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="179">
-          <caret line="904" column="65" lean-forward="false" selection-start-line="904" selection-start-column="12" selection-end-line="904" selection-end-column="65" />
+          <caret line="913" column="65" lean-forward="false" selection-start-line="913" selection-start-column="12" selection-end-line="913" selection-end-column="65" />
+          <folding>
+            <marker date="1528500829823" expanded="true" signature="29966:31798" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="30272:31154" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="30285:31091" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="30702:30884" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="30902:31054" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="31267:31389" ph="..." />
+            <marker date="1528500829823" expanded="true" signature="31463:31535" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/static/js/routes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/templates/user_routes.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="86" lean-forward="false" selection-start-line="20" selection-start-column="75" selection-end-line="20" selection-end-column="86" />
+        <state relative-caret-position="331">
+          <caret line="23" column="14" lean-forward="true" selection-start-line="23" selection-start-column="14" selection-end-line="23" selection-end-column="14" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/static/js/routes.js">
+    <entry file="file://$PROJECT_DIR$/app/templates/stats.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="1" lean-forward="true" selection-start-line="19" selection-start-column="1" selection-end-line="19" selection-end-column="1" />
+        <state relative-caret-position="360">
+          <caret line="216" column="108" lean-forward="false" selection-start-line="216" selection-start-column="108" selection-end-line="216" selection-end-column="108" />
           <folding />
         </state>
       </provider>

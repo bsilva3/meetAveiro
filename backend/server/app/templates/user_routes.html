@@ -9,13 +9,11 @@
               <div class="form-row">
                 <div class="form-group col-md-10">
                     <!--
-                    percurso.titulo, percurso.id, instanciapercurso.datainicio,
-                    instanciapercurso.datafim, instanciapercurso.classificacao,
-                    percurso.estado
+                    select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id
                     -->
                   <select id="inputState" class="form-control">
                       {% for r in routes %}
-                        <option>{{r[0]}} [{{r[2]}}]</option>
+                      <option><a href="http://192.168.160.192:8080/resources/routes/user_instances/{{r[3]}}/myinstances">{{r[0]}} [{{r[2]}}]</a></option>
                       {% endfor %}
                   </select>
                 </div>

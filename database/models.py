@@ -447,6 +447,17 @@ def getTodasInstPercursoUser(em):
         inst.append((row[0], row[1], row[2], row[3], row[4], row[5]))
     return inst
 
+def getTodasInstPercursoUser_2(em):
+    sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id \
+        from instanciapercurso \
+        join percurso on instanciapercurso.idpercurso = percurso.id \
+        where instanciapercurso.emailuser=\'' + em + '\'')
+    result = db.engine.execute(sql)
+    inst = []
+    for row in result:
+        inst.append((row[0], row[1], row[2], row[3]))
+    return inst
+
 def reconstruirPontosPercurso(id):
     sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
         join percurso on ponto.idpercurso = percurso.id \

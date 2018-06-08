@@ -106,7 +106,7 @@ def signIn():
 
 @app.route('/routes', methods=['GET'])
 def escInstPercurso():
-    return render_template('user_routes.html', routes=getTodasInstPercursoUser(session['email']))
+    return render_template('user_routes.html', routes=getTodasInstPercursoUser_2(session['email']))
 
 @app.route('/signOut', methods=['GET'])
 def signOut():

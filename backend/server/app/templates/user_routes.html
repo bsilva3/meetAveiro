@@ -5,7 +5,6 @@
 
 <div class="container">
     <div class="row">
-        {% for r in routes %}
         <div class="col-sm-4">
               <div class="form-row">
                 <div class="form-group col-md-4">
@@ -15,7 +14,9 @@
                     percurso.estado
                     -->
                   <select id="inputState" class="form-control">
-                    <option>r[0]</option>
+                      {% for r in routes %}
+                    <option>r(0)</option>
+                      {% endfor %}
                   </select>
                 </div>
                 <div class="col-md-2"><button type="submit" class="btn btn-primary">Escolher</button></div>
@@ -24,7 +25,7 @@
         </div>
         <div class="col-sm-4"></div>
         <div class="col-sm-4"></div>
-        {% endfor %}
+
     </div>
 </div>
 

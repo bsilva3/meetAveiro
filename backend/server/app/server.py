@@ -406,7 +406,7 @@ def classify_image():
         os.makedirs(folder)
     files = os.listdir(folder)
     print("Folder created")
-    file_id = str(len(files)+1) + '.jpg'
+    file_id = str(len(files)+2) + '.jpg'
     filename = os.path.join(folder, file_id)
     print("Filename: " + filename)
     os.rename('./temp.jpg', filename)

@@ -903,8 +903,10 @@ def share_map(id):
 
 @app.route('/resources/routes/user_instances', methods=['POST'])
 def get_user_route():
+    print('HELLO')
     req = request.get_json(force=True)
     perc = req['id']
+    print(jsonify({ 'url': url_for('share_map_2', id=perc)}))
     return jsonify({
         'url': url_for('share_map_2', id=perc)
     })

@@ -209,6 +209,17 @@ def send_image(filename, topic):
         filename = names[1]
     return send_from_directory(folder,filename)
 
+@app.route('/sendimage2/<string:filename>')
+def send_image_2(filename):
+    temp = filename.split("/")
+    name = temp[-1]
+    for i in range(0, len(temp)-2):
+        if(i!=len(temp)-3):
+            folder = temp[i] + '/'
+        else:
+            folder = temp[i]
+    return send_from_directory(folder,name)
+
 @app.route('/search/<string:query>', methods=['GET'])
 def do_search(query):
     message = process_image_search(query)

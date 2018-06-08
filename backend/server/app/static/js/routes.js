@@ -1,8 +1,8 @@
 function share_map_2() {
     var e = document.getElementById("routeslist");
-    var concept = e.options[e.selectedIndex].value;
+    var id = e.options[e.selectedIndex].value;
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", '/resources/routes/user_instances/' + e + '/myinstances', true);
+    xhr.open("POST", '/resources/routes/user_instances/' + id + '/myinstances', true);
 
     //Send the proper header information along with the request
     xhr.setRequestHeader("Content-type", "application/json");

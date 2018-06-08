@@ -92,7 +92,7 @@ def signIn():
             print(4)
             mynav = Navbar('MeetAveiro',
                 View('As minhas fotografias', 'user_gallery'),
-                View('Os meus percursos', 'share_map_2(17)'),
+                View('Os meus percursos', 'escInstPercurso'),
                 View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
             return jsonify({

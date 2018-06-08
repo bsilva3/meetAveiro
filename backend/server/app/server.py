@@ -91,7 +91,8 @@ def signIn():
         if utilizador.tipoid == 2:
             print(4)
             mynav = Navbar('MeetAveiro',
-                View('MyGallery', 'user_gallery'))
+                View('MyGallery', 'user_gallery'), 
+                View('Logout', 'signOut')))
             nav.register_element('mynavbar', mynav)
             return jsonify({
                 'url': url_for('user_gallery')

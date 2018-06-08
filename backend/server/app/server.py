@@ -326,8 +326,7 @@ def change_request():
     new_path = os.path.join(dest_folder, new_file)
     while True:
         if os.path.exists(new_path):
-            file_id += 1
-            new_file = str(file_id) + '.' + file_desc[1]
+            new_file = str(file_id) + '1' + '.' + file_desc[1]
             new_path = os.path.join(dest_folder, new_file)
         else:
             break
@@ -357,8 +356,7 @@ def manage_requests():
         new_path = os.path.join(dest_folder, new_file)
         while True:
             if os.path.exists(new_path):
-                file_id += 1
-                new_file = str(file_id) + '.' + file_desc[1]
+                new_file = str(file_id) + '1' + '.' + file_desc[1]
                 new_path = os.path.join(dest_folder, new_file)
             else:
                 break
@@ -428,8 +426,7 @@ def classify_image():
 
     while True:
         if os.path.exists(filename):
-            file_id += 1
-            filename = os.path.join(folder, str(file_id) + '.jpg')
+            filename = os.path.join(folder, str(file_id) + '1' + '.jpg')
         else:
             break
 

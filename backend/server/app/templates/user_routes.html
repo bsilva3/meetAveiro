@@ -11,7 +11,7 @@
                     <!--
                     select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id
                     -->
-                  <select id="inputState" class="form-control">
+                  <select id="routeslist" class="form-control">
                       {% for r in routes %}
                       <option value="{{r[3]}}">{{r[0]}} [{{r[2]}}]</option>
                       {% endfor %}

@@ -600,9 +600,11 @@ def percFeedback():
     return ((fcf/totf*100), med)
 
 def getPathFotosUser(em):
-    sql = text('select path from fotografia where emailcriador=\'' + em + '\'')
-    result = db.engine.execute(sql)
-    fotos = []
-    for row in result:
-        fotos.append(row[0])
+    #sql = text('select path from fotografia where emailcriador=\'' + em + '\'')
+    #result = db.engine.execute(sql)
+    #fotos = []
+    #for row in result:
+    #    fotos.append(row[0])
+    fotos = db.session.query(Fotografia).filter(Fotografia.emailinst==em).order_by(Fotografia.nomeconc).all()
     return fotos
+    

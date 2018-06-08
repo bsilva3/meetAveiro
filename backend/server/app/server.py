@@ -92,7 +92,7 @@ def signIn():
             print(4)
             mynav = Navbar('MeetAveiro',
                 View('MyGallery', 'user_gallery'), 
-                View('Logout', 'signOut')))
+                View('Logout', 'signOut'))
             nav.register_element('mynavbar', mynav)
             return jsonify({
                 'url': url_for('user_gallery')
@@ -179,8 +179,18 @@ def show_gallery(query):
 def user_gallery():
     if 'uid' not in session:
         return render_template('signIn.html', message='You have to log in first.')
-    images = getPathFotosUser(session['email']) # função com a lista dos paths
-    return render_template('user_gallery.html', topic=images)
+    fotos = getPathFotosUser(session['email']) # função com a lista dos paths
+    to_send = []
+    for f in fotos:
+        if 'static' in f.path:
+            name = f.path.split('/')[-1]
+            concept = f.nomeconc
+            to_send.append(('pending', concept + ':' + name))
+        else:
+            name = f.path.split('/')[-1]
+            to_send.append((f.nomeconc, name))
+
+    return render_template('user_gallery.html', images=to_send)
 
 @app.route('/stats', methods=['GET'])
 def show_stats():
@@ -730,7 +740,7 @@ def get_atractions():
                     temp['city'] = location[3]
                 else:
                     temp['city'] = ''
-        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito)
+        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito).all()
         path = ''
         for f in fotos:
             foto = {}

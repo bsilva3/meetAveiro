@@ -5,13 +5,13 @@
 
 <div class="container">
     <div class="row">
-        {% for image in topic %}
+        {% for image in images %}
         <div class="col-sm-4">
             <div class="card" style="width: 100%;">
                 <div class="card-header">
                     <h3 class="card-title">{{ key }}</h3>
                 </div>
-                <img src=" {{ url_for('send_image_2', filename=image) }} "  class="img-thumbnail"
+                <img src=" {{ url_for('send_image', topic=image[0], filename=image[1]) }} "  class="img-thumbnail"
                  style="height:15em;width:100%;">
                 <div class="card-body">
                     <button class="btn btn-danger" onclick="delElement('{{ path }}', '{{ image }}')">Delete</button>

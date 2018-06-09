@@ -382,37 +382,37 @@ public class RouteActivity extends FragmentActivity implements
         else {
             //we are creating a new tour, and drawing the line as the user moves
             buttonStartRoute.setOnClickListener(v -> {
-                if (routePoints.isEmpty()) {
+                if (routePoints.isEmpty() || Utils.getRouteState(this).equals(ROUTE_STATE.PAUSED)) {
                     onRouteStateChanged(true);
                     Utils.setRouteState(this, ROUTE_STATE.STARTED);
                     updateRouteButtons(Utils.getRouteState(this));//we can procede to the tour
                 } else {
-                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                case DialogInterface.BUTTON_POSITIVE:
-                                    //clean all points and markers from previous tour
-                                    routePoints.clear();
-                                    photos.clear();
-                                    mMap.clear();
-                                    //now procede to the tour
-                                    onRouteStateChanged(true);
-                                    Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
-                                    updateRouteButtons(Utils.getRouteState(RouteActivity.this));
-                                    break;
+                        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case DialogInterface.BUTTON_POSITIVE:
+                                        //clean all points and markers from previous tour
+                                        routePoints.clear();
+                                        photos.clear();
+                                        mMap.clear();
+                                        //now procede to the tour
+                                        onRouteStateChanged(true);
+                                        Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
+                                        updateRouteButtons(Utils.getRouteState(RouteActivity.this));
+                                        break;
 
-                                case DialogInterface.BUTTON_NEGATIVE:
-                                    //tour wont start
-                                    dialog.dismiss();
-                                    break;
+                                    case DialogInterface.BUTTON_NEGATIVE:
+                                        //tour wont start
+                                        dialog.dismiss();
+                                        break;
+                                }
                             }
-                        }
-                    };
+                        };
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
-                    builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
-                            .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(RouteActivity.this);
+                        builder.setMessage(getString(R.string.start_tour_confirmation)).setPositiveButton(getString(R.string.procede), dialogClickListener)
+                                .setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
                 }
             });
 

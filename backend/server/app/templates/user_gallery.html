@@ -13,9 +13,6 @@
                 </div>
                 <img src=" {{ url_for('send_image', topic=image[0], filename=image[1]) }} "  class="img-thumbnail"
                  style="height:15em;width:100%;">
-                <div class="card-body">
-                    <button class="btn btn-danger" onclick="delElement('{{ path }}', '{{ image }}')">Delete</button>
-                </div>
             </div>
             
         </div>

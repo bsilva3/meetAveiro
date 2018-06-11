@@ -187,13 +187,17 @@ def user_gallery():
     fotos = getPathFotosUser(session['email']) # função com a lista dos paths
     to_send = []
     for f in fotos:
-        if 'static' in f.path:
-            name = f.path.split('/')[-1]
-            concept = f.nomeconc
-            to_send.append(('pending', concept + ':' + name))
-        else:
-            name = f.path.split('/')[-1]
-            to_send.append((f.nomeconc, name))
+        try:
+            readImage(f.path)
+            if 'static' in f.path:
+                name = f.path.split('/')[-1]
+                concept = f.nomeconc
+                to_send.append(('pending', concept + ':' + name))
+            else:
+                name = f.path.split('/')[-1]
+                to_send.append((f.nomeconc, name))
+        except:
+            continue
 
     return render_template('user_gallery.html', images=to_send)
 

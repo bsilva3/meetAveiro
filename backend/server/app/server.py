@@ -189,13 +189,16 @@ def user_gallery():
     for f in fotos:
         try:
             readImage(f.path)
+            print(f.path)
             if 'static' in f.path:
                 name = f.path.split('/')[-1]
                 concept = f.nomeconc
                 to_send.append(('pending', concept + ':' + name))
+                print(concept + ':' + name)
             else:
                 name = f.path.split('/')[-1]
                 to_send.append((f.nomeconc, name))
+                print(f.nomeconc, name)
         except:
             continue
 
@@ -422,7 +425,6 @@ def classify_image():
         if distance.distance((lat, lon), (conc_lat, conc_long)).km > 0.3:
             img_name = 'desconhecido'
 
-    
     print(img_name, score)
     folder = os.path.join('./static/img', img_name)
     if not os.path.exists(folder):

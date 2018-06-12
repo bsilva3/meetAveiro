@@ -27,6 +27,9 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.Utils;
@@ -107,11 +110,18 @@ public class LocationUpdatesService extends Service {
      */
     private Location mLocation;
 
+
+    /**
+     * List of stored locations
+     */
+    private List<Location> locationList;
+
     public LocationUpdatesService() {
     }
 
     @Override
     public void onCreate() {
+        locationList = new ArrayList<>();
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         mLocationCallback = new LocationCallback() {

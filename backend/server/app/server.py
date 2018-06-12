@@ -466,7 +466,6 @@ def classify_image():
     user_email = res['user']
     lat = res['lat']
     lon = res['long']
-    # data = res['date']
     print("Request received")
     writeImage(image)
     print("Calling tensorflow.....")
@@ -506,14 +505,14 @@ def classify_image():
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
 
-    while(True):
-        print("Looping...")
-        foto = addFotografia(None, img_name, user_email, lat, lon, filename,
-                        None, datetime.datetime.now(), None, 'pending', score, None)
-        if foto is None:
-            continue
-        else:
-            break
+    #while(True):
+    #    print("Looping...")
+    #    foto = addFotografia(None, img_name, user_email, lat, lon, filename,
+    #                    None, datetime.datetime.now(), None, 'pending', score, None)
+    #    if foto is None:
+    #        continue
+    #    else:
+    #        break
     print("Enviando resposta...")
     if img_name != 'desconhecido':
         return jsonify({

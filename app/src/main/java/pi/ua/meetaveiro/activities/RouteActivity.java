@@ -23,6 +23,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -31,7 +32,6 @@ import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.view.ContextThemeWrapper;
@@ -105,17 +105,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import pi.ua.meetaveiro.BuildConfig;
 import pi.ua.meetaveiro.R;
@@ -123,7 +122,6 @@ import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
-import pi.ua.meetaveiro.fragments.PhotoLogFragment;
 import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.GeofenceErrorMessages;
 import pi.ua.meetaveiro.others.MultiDrawable;
@@ -132,7 +130,18 @@ import pi.ua.meetaveiro.others.Utils;
 import pi.ua.meetaveiro.receivers.GeofenceBroadcastReceiver;
 import pi.ua.meetaveiro.services.LocationUpdatesService;
 
-import static pi.ua.meetaveiro.others.Constants.*;
+import static pi.ua.meetaveiro.others.Constants.ACTION_BROADCAST;
+import static pi.ua.meetaveiro.others.Constants.DEFAULT_HEIGHT;
+import static pi.ua.meetaveiro.others.Constants.DEFAULT_WIDTH;
+import static pi.ua.meetaveiro.others.Constants.EXTRA_LOCATION;
+import static pi.ua.meetaveiro.others.Constants.EXTRA_TAKE_PHOTO;
+import static pi.ua.meetaveiro.others.Constants.FEEDBACK_URL;
+import static pi.ua.meetaveiro.others.Constants.IMAGE_SCAN_URL;
+import static pi.ua.meetaveiro.others.Constants.NEW_ROUTE_EXTRA;
+import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
+import static pi.ua.meetaveiro.others.Constants.THUMBSIZE;
+import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTIONS;
+import static pi.ua.meetaveiro.others.Constants.URL_SEND_ROUTE;
 
 public class RouteActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -1000,46 +1009,63 @@ public class RouteActivity extends FragmentActivity implements
                 break;
             case CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE:
                 if (resultCode == Activity.RESULT_OK) {
-                    File file = new File(Environment.getExternalStorageDirectory() + File.separator +
-                            "image.jpg");
+                    String photoPathHQ = Environment.getExternalStorageDirectory() + File.separator +
+                            "image.jpg";
+                    File file = new File(photoPathHQ);
                     Log.d("file", file.getAbsolutePath());
-                    Bitmap photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
-                    Bitmap photoThumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
-                            THUMBSIZE, THUMBSIZE);
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    Bitmap photoThumbnail;
+                    Bitmap photoHighQuality;
+                    try {
+                        photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                        photoThumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
+                                THUMBSIZE, THUMBSIZE);
+                        photoHighQuality = Utils.correctOrientation(photoHighQuality, photoPathHQ);
+                        photoThumbnail = Utils.correctOrientation(photoThumbnail, file.getAbsolutePath());
 
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 70, bos);
+                        photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
 
+                    } catch (NullPointerException ex){
+                        Log.e("ERROR", ex.getMessage());
+                        Toast.makeText(this, "An error occurred. Please try to take another photo", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
-
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
-                    try {
-                        jsonRequest.put("date", date);
-                        jsonRequest.put("image", base64Photo);
-                        jsonRequest.put("lat", mLastKnownLocation.getLatitude());
-                        jsonRequest.put("long", mLastKnownLocation.getLongitude());
-                        jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
-                    } catch (JSONException e) {
-                        Log.e(TAG, e.getMessage());
-                    }
-                    if (mLastKnownLocation != null) {
-                        //create a new photo object with info to be completed by the server's response
-                        photoToUpdate = new Photo(getString(R.string.unknown_string),
-                                getString(R.string.unknown_string), new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
-                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoThumbnail);
-                        //send a base 64 encoded photo to server
-                        Log.d("req", jsonRequest.toString() + "");
-                        new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                    final Bitmap finalPhotoThumb = photoThumbnail;
+                    if (mMap != null) {
+                        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                            public void onMapLoaded() {
+                                try {
+                                    jsonRequest.put("date", date);
+                                    jsonRequest.put("image", base64Photo);
+                                    jsonRequest.put("lat", mLastKnownLocation.getLatitude());
+                                    jsonRequest.put("long", mLastKnownLocation.getLongitude());
+                                    jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
+                                } catch (JSONException e) {
+                                    Log.e(TAG, e.getMessage());
+                                }
+                                if (mLastKnownLocation != null) {
+                                    //create a new photo object with info to be completed by the server's response
+                                    photoToUpdate = new Photo(getString(R.string.unknown_string),
+                                            getString(R.string.unknown_string), new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
+                                            Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), finalPhotoThumb);
+                                    //send a base 64 encoded photo to server
+                                    Log.d("req", jsonRequest.toString() + "");
+                                    new UploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                                } else {
+                                    //Report error to user
+                                    Toast.makeText(RouteActivity.this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
                     } else {
-                        //Report error to user
-                        Toast.makeText(this, "Location not known. Check your location settings.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "An error occurred. Please, take another photo", Toast.LENGTH_SHORT).show();
                     }
                 }
-                else if (resultCode == Activity.RESULT_CANCELED){
-                }
-                Utils.uncompletedCameraRequest = true;
+                Utils.uncompletedCameraRequest = false;
                 break;
         }
     }
@@ -1095,7 +1121,8 @@ public class RouteActivity extends FragmentActivity implements
         createAndShowInfoDialog(photoToUpdate, true);
         photoToUpdate = new Photo();
         saveMarkersOnStorage();
-        startMarkerClusterer();
+        if (mMap != null)
+            startMarkerClusterer();
     }
 
     //each marker is populated from info inside a Photo object
@@ -1777,6 +1804,9 @@ public class RouteActivity extends FragmentActivity implements
     private void saveCurrentPath(){
         prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
         int tmp = 0;
+        Gson gson = new Gson();
+        String markers = gson.toJson(photos);
+        prefs.edit().putString("markers", markers).apply();
         for (LatLng l : routePoints){
             prefs.edit().putString("Lat"+tmp, String.valueOf(l.latitude)).apply();
             prefs.edit().putString("Lng"+tmp, String.valueOf(l.longitude)).apply();
@@ -1787,9 +1817,16 @@ public class RouteActivity extends FragmentActivity implements
 
     private void getCurrentPath() {
         routePoints = new ArrayList<>();
+        photos = new ArrayList<>();
         prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
         boolean stop = false;
         int tmp = 0;
+        Gson gson = new Gson();
+        if (prefs.contains("markers" )) {
+            String json = prefs.getString("markers", "");
+            Type listType = new TypeToken<ArrayList<Photo>>(){}.getType();
+            photos = gson.fromJson(json, listType);
+        }
         while (!stop) {
             if (prefs.contains("Lat" + tmp)) {
                 String lat = prefs.getString("Lat" + tmp, "");
@@ -1810,12 +1847,18 @@ public class RouteActivity extends FragmentActivity implements
                 stop = true;
             }
         }
+        Log.d("gson", photos.size()+"");
+        if (mMap != null)
+            startMarkerClusterer();
     }
 
     private void deleteAllTempPointsInPrefs() {
         prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE);
         boolean stop = false;
         int tmp = 0;
+        if (prefs.contains("markers")){
+            prefs.edit().remove("markers").apply();
+        }
         while (!stop) {
             if (prefs.contains("Lat" + tmp)) {
                 prefs.edit().remove("Lat" + tmp).apply();

@@ -6,18 +6,13 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.location.Location;
+import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
-
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
-import com.google.android.gms.maps.model.Marker;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -31,15 +26,8 @@ import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
-import pi.ua.meetaveiro.R;
-import pi.ua.meetaveiro.activities.NavigationDrawerActivity;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class Utils {
 
@@ -291,6 +279,38 @@ public class Utils {
         image.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
+    public static Bitmap correctOrientation(Bitmap bitmap, String photoPath) {
+        ExifInterface ei = null;
+        try {
+            ei = new ExifInterface(photoPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_UNDEFINED);
+
+        Bitmap rotatedBitmap = null;
+        switch(orientation) {
+
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                rotatedBitmap = Utils.rotateImage(bitmap, 90);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                rotatedBitmap = Utils.rotateImage(bitmap, 180);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                rotatedBitmap = Utils.rotateImage(bitmap, 270);
+                break;
+
+            case ExifInterface.ORIENTATION_NORMAL:
+            default:
+                rotatedBitmap = bitmap;
+        }
+        return rotatedBitmap;
     }
 
 }

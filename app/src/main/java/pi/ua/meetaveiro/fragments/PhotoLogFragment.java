@@ -13,7 +13,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -37,7 +36,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.bumptech.glide.util.Util;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -84,7 +82,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -93,16 +90,19 @@ import java.util.Locale;
 import java.util.Map;
 
 import pi.ua.meetaveiro.BuildConfig;
-import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.R;
+import pi.ua.meetaveiro.activities.POIDetails;
 import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.interfaces.ImageDataReceiver;
 import pi.ua.meetaveiro.others.MultiDrawable;
 import pi.ua.meetaveiro.others.Utils;
 
 import static android.content.Context.MODE_PRIVATE;
-import static pi.ua.meetaveiro.others.Constants.*;
-import static pi.ua.meetaveiro.others.Utils.convertBitmapToByteArrayUncompressed;
+import static pi.ua.meetaveiro.others.Constants.DEFAULT_HEIGHT;
+import static pi.ua.meetaveiro.others.Constants.DEFAULT_WIDTH;
+import static pi.ua.meetaveiro.others.Constants.FEEDBACK_URL;
+import static pi.ua.meetaveiro.others.Constants.IMAGE_SCAN_URL;
+import static pi.ua.meetaveiro.others.Constants.THUMBSIZE;
 
 /**
  * Photo logging  {@link Fragment} subclass.
@@ -619,84 +619,66 @@ public class PhotoLogFragment extends Fragment implements
                 break;
             case CAPTURE_IMAGE_FULLSIZE_ACTIVITY_REQUEST_CODE:
                 if (resultCode == Activity.RESULT_OK) {
-                    String photoPathHQ = Environment.getExternalStorageDirectory()+File.separator +
+                    String photoPathHQ = Environment.getExternalStorageDirectory() + File.separator +
                             "image.jpg";
                     File file = new File(photoPathHQ);
                     Log.d("file", file.getAbsolutePath());
-                    Bitmap photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
-                    Bitmap photoThumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
-                            THUMBSIZE, THUMBSIZE);
-                    photoHighQuality = correctOrientation(photoHighQuality, photoPathHQ);
-                    photoThumbnail = correctOrientation(photoThumbnail, file.getAbsolutePath());
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    Bitmap photoThumbnail;
+                    Bitmap photoHighQuality;
+                    try {
+                        photoHighQuality = Utils.decodeSampledBitmapFromFile(file.getAbsolutePath(), DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                        photoThumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()),
+                                THUMBSIZE, THUMBSIZE);
+                        photoHighQuality = Utils.correctOrientation(photoHighQuality, photoPathHQ);
+                        photoThumbnail = Utils.correctOrientation(photoThumbnail, file.getAbsolutePath());
 
-                    photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
+                        photoHighQuality.compress(Bitmap.CompressFormat.JPEG, 60, bos);
+
+                    } catch (NullPointerException ex) {
+                        Log.e("ERROR", ex.getMessage());
+                        Toast.makeText(getContext(), "An error occurred. We could not access your photo. Check Your permissions for this app", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
                     String base64Photo = Base64.encodeToString(bos.toByteArray(), Base64.DEFAULT);
                     //create json with server request, and add the photo base 64 encoded
                     JSONObject jsonRequest = new JSONObject();
                     long date = Calendar.getInstance().getTimeInMillis();
-                    try {
-                        jsonRequest.put("date", date);
-                        jsonRequest.put("image", base64Photo);
-                        jsonRequest.put("lat", mLastKnownLocation.getLatitude());
-                        jsonRequest.put("long", mLastKnownLocation.getLongitude());
-                        jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
-                    } catch (JSONException e) {
-                        Log.e(TAG, e.getMessage());
-                    }
-                    if (mLastKnownLocation!=null ) {
-                        //create a new photo object with info to be completed by the server's response
-                        photoToUpdate = new Photo(getContext().getString(R.string.unknown_string),
-                                getContext().getString(R.string.unknown_string) , new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
-                                Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), photoThumbnail);
-                        //send a base 64 encoded photo to server
-                        Log.d("req", jsonRequest.toString()+"");
-                        new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
-                    }else {
-                    }
+                    final Bitmap finalPhotoThumb = photoThumbnail;
+                    if (mMap != null) {
+                        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                            public void onMapLoaded() {
+                                try {
 
-
-                }
-                else if (resultCode == Activity.RESULT_CANCELED){
-                    Toast.makeText(getContext(), getString(R.string.foto_intent_fail), Toast.LENGTH_SHORT).show();
+                                    jsonRequest.put("date", date);
+                                    jsonRequest.put("image", base64Photo);
+                                    jsonRequest.put("lat", mLastKnownLocation.getLatitude());
+                                    jsonRequest.put("long", mLastKnownLocation.getLongitude());
+                                    jsonRequest.put("user", FirebaseAuth.getInstance().getCurrentUser().getEmail());
+                                } catch (JSONException e) {
+                                    Log.e(TAG, e.getMessage());
+                                }
+                                if (mLastKnownLocation != null) {
+                                    //create a new photo object with info to be completed by the server's response
+                                    photoToUpdate = new Photo(getContext().getString(R.string.unknown_string),
+                                            getContext().getString(R.string.unknown_string), new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
+                                            Utils.convertTimeInMilisAndFormat(Calendar.getInstance().getTimeInMillis()), finalPhotoThumb);
+                                    //send a base 64 encoded photo to server
+                                    Log.d("req", jsonRequest.toString() + "");
+                                    new uploadFileToServerTask().execute(jsonRequest.toString(), IMAGE_SCAN_URL);
+                                }
+                            }
+                        });
+                    } else {
+                        Toast.makeText(getContext(), "An error occurred. Please, take another photo", Toast.LENGTH_SHORT).show();
+                    }
                 }
                 Utils.uncompletedCameraRequest = false;
                 break;
         }
     }
 
-    private Bitmap correctOrientation(Bitmap bitmap, String photoPath) {
-        ExifInterface ei = null;
-        try {
-            ei = new ExifInterface(photoPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_UNDEFINED);
-
-        Bitmap rotatedBitmap = null;
-        switch(orientation) {
-
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                rotatedBitmap = Utils.rotateImage(bitmap, 90);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                rotatedBitmap = Utils.rotateImage(bitmap, 180);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                rotatedBitmap = Utils.rotateImage(bitmap, 270);
-                break;
-
-            case ExifInterface.ORIENTATION_NORMAL:
-            default:
-                rotatedBitmap = bitmap;
-        }
-        return rotatedBitmap;
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {

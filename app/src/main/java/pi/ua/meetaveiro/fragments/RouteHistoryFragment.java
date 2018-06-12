@@ -88,7 +88,6 @@ public class RouteHistoryFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
     }
 
     @Override
@@ -134,6 +133,7 @@ public class RouteHistoryFragment extends Fragment implements
         mShimmerViewContainer.startShimmerAnimation();
 
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
+        Log.i("conection", "doneeee");
 
         return view;
     }
@@ -171,14 +171,6 @@ public class RouteHistoryFragment extends Fragment implements
         }
 
         new uploadFileToServerTask().execute(jsonRequest.toString(), INSTANCE_BY_USER);
-
-        // refreshing recycler view
-        mAdapter.notifyDataSetChanged();
-        // stop animating Shimmer and hide the layout
-        mShimmerViewContainer.stopShimmerAnimation();
-        mShimmerViewContainer.setVisibility(View.GONE);
-        // stopping swipe refresh
-        swipeRefreshLayout.setRefreshing(false);
 
     }
 
@@ -292,6 +284,7 @@ public class RouteHistoryFragment extends Fragment implements
      */
     @Override
     public void onProcessFinished(boolean hasNetworkConnection) {
+        Log.i("conection", String.valueOf(hasNetworkConnection));
         if (hasNetworkConnection) {
             fetchAllInstances();
         }else {
@@ -407,7 +400,13 @@ public class RouteHistoryFragment extends Fragment implements
                     // adding contacts to contacts list
                     routeList.clear();
                     routeList.addAll(items);
-
+                    // refreshing recycler view
+                    mAdapter.notifyDataSetChanged();
+                    // stop animating Shimmer and hide the layout
+                    mShimmerViewContainer.stopShimmerAnimation();
+                    mShimmerViewContainer.setVisibility(View.GONE);
+                    // stopping swipe refresh
+                    swipeRefreshLayout.setRefreshing(false);
                 }
 
             } catch (Exception e) {

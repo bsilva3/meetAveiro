@@ -35,6 +35,7 @@ import flask
 IMAGE_FOLDER = '../../../../treino'
 #IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+ATRACTIONS = []
 
 app = Flask(__name__)
 app.config.from_object('_config')
@@ -55,6 +56,67 @@ config = {
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
+
+def get_all_atractions():
+    conceitos = Conceito.query.all()
+    res = []
+
+    for c in conceitos:
+        temp = {}
+        if c.nomeconceito == 'desconhecido':
+            continue
+        temp['id'] = c.nomeconceito
+        temp['name'] = c.nome
+        temp['latitude'] = c.latitude
+        temp['longitude'] = c.longitude
+        temp['description'] = c.descricao
+        if c.latitude is None:
+            temp['city'] = ''
+        elif c.latitude is not None:
+            geolocator = Nominatim()
+            print(str(c.latitude) + ', ' + str(c.longitude))
+            location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
+            if location is None:
+                temp['city'] = ''
+            else:
+                location = location.address.split(',')
+                if len(location) <= 9 and len(location) > 1:
+                    temp['city'] = location[2]
+                elif len(location) >= 10:
+                    temp['city'] = location[3]
+                else:
+                    temp['city'] = ''
+        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito).all()
+        path = ''
+        for f in fotos:
+            foto = {}
+            
+            try:
+            
+                readImage(f.path)
+                if f.nomeconc == 'desconhecido':
+                    foto['concept'] = ''
+                else:
+                    foto['concept'] = f.nomeconc
+                if './static' in f.path:
+                    temp1 = f.path.replace('./static/img/', '')
+                    temp1 = temp1.split('/')
+                    path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
+                else:
+                    temp1 = f.path.replace('../', '')
+                    temp1 = temp1.replace('treino/', '')
+                    path = 'http://192.168.160.192:8080/sendimage/' + temp1
+                break
+            except:
+                print('Could not find: ' + f.path)
+        temp['imgName'] = path
+        res.append(temp)
+    return res
+
+@app.before_first_request
+def startup():
+    global ATRACTIONS
+    ATRACTIONS = get_all_atractions()
 
 @app.route('/', methods=['GET'])
 def welcome():
@@ -743,61 +805,7 @@ def get_atraction(id):
 
 @app.route('/resources/atractions', methods=['GET'])
 def get_atractions():
-    conceitos = Conceito.query.all()
-    res = []
-
-    for c in conceitos:
-        temp = {}
-        if c.nomeconceito == 'desconhecido':
-            continue
-        temp['id'] = c.nomeconceito
-        temp['name'] = c.nome
-        temp['latitude'] = c.latitude
-        temp['longitude'] = c.longitude
-        temp['description'] = c.descricao
-        if c.latitude is None:
-            temp['city'] = ''
-        elif c.latitude is not None:
-            geolocator = Nominatim()
-            print(str(c.latitude) + ', ' + str(c.longitude))
-            location = geolocator.reverse(str(c.latitude) + ', ' + str(c.longitude))
-            if location is None:
-                temp['city'] = ''
-            else:
-                location = location.address.split(',')
-                if len(location) <= 9 and len(location) > 1:
-                    temp['city'] = location[2]
-                elif len(location) >= 10:
-                    temp['city'] = location[3]
-                else:
-                    temp['city'] = ''
-        fotos = db.session.query(Fotografia).filter(Fotografia.nomeconc==c.nomeconceito).all()
-        path = ''
-        for f in fotos:
-            foto = {}
-            
-            try:
-            
-                readImage(f.path)
-                if f.nomeconc == 'desconhecido':
-                    foto['concept'] = ''
-                else:
-                    foto['concept'] = f.nomeconc
-                if './static' in f.path:
-                    temp1 = f.path.replace('./static/img/', '')
-                    temp1 = temp1.split('/')
-                    path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
-                else:
-                    temp1 = f.path.replace('../', '')
-                    temp1 = temp1.replace('treino/', '')
-                    path = 'http://192.168.160.192:8080/sendimage/' + temp1
-                break
-            except:
-                print('Could not find: ' + f.path)
-        temp['imgName'] = path
-        res.append(temp)
-
-    return jsonify(res)
+    return jsonify(ATRACTIONS)
 
 @app.route('/resources/photos/byuser', methods=['POST'])
 def get_photo_history():
@@ -981,7 +989,11 @@ scheduler.add_job(
     trigger=IntervalTrigger(minutes=60),
     id='search_turismo',
     name='Saves events to a file every 60 minutes',
-    replace_existing=True)
+    replace_existing=True
+)
+
+
+
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 

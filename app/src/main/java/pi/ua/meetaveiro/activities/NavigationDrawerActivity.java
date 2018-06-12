@@ -109,9 +109,6 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     // Tab bar
     private TabLayout tabLayout;
 
-    //Current home fragment
-    Fragment currentFragment;
-
     // flag to load home fragment when user presses back key
     private boolean shouldLoadHomeFragOnBackPress = true;
     private Handler mHandler;
@@ -351,7 +348,7 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.option_get_place) {
-            ((PhotoLogFragment) currentFragment).showCurrentPlace();
+            ((PhotoLogFragment) getSupportFragmentManager().findFragmentByTag(CURRENT_TAG)).showCurrentPlace();
         }
         return true;
     }
@@ -382,11 +379,9 @@ public class NavigationDrawerActivity extends AppCompatActivity implements
             @Override
             public void run() {
                 // update the main content by replacing fragments
-                currentFragment = getHomeFragment();
-                Log.i("Fraggg", "homefragggggg");
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 fragmentTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
-                fragmentTransaction.replace(R.id.frame, currentFragment, CURRENT_TAG);
+                fragmentTransaction.replace(R.id.frame, getHomeFragment(), CURRENT_TAG);
                 fragmentTransaction.commitAllowingStateLoss();
             }
         };

@@ -1838,7 +1838,7 @@ public class RouteActivity extends FragmentActivity implements
                     routePoints.add(l);
                 } catch (NumberFormatException e) {
                     //there were no double parselable coordinates found, marker will not be placed
-                    Log.e("ERROR", e.toString());
+                    Log.e("ERROR-numb", e.toString());
                     tmp++;
                     continue;
                 }

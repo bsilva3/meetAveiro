@@ -344,14 +344,18 @@ def TiposDeUtilizadores():
     return tipos
 
 def TipoDeUtilizador(em):
-    sql = text('select tipo.nome from utilizador join tipo on tipo.id=utilizador.tipo where email=\'' + em + '\'')
-    result = db.engine.execute(sql)
+    result = db.engine.execute(text('select tipo.nome from utilizador join tipo on tipo.id=utilizador.tipo where email=:umail'),
+                               {
+                                   'umail': em
+                               })
     for row in result:
         return row[0]
 
 def getFotosUser(em):
-    sql = text('select * from fotografia where emailcriador=\'' + em + '\'')
-    result = db.engine.execute(sql)
+    result = db.engine.execute(text('select * from fotografia where emailcriador=:umail'),
+                               {
+                                   'umail': em
+                               })
     fotos = []
     for row in result:
         fotos.append((row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]))
@@ -367,8 +371,10 @@ def nTotalFotos():
     return Fotografia.query.count()
 
 def nTotalTipoUser(tipo):
-    sql = text('select count(utilizador.email) from utilizador join tipo on tipo.id=utilizador.tipo where tipo.nome=\'' + tipo + '\'')
-    result = db.engine.execute(sql)
+    result = db.engine.execute(text('select count(utilizador.email) from utilizador join tipo on tipo.id=utilizador.tipo where tipo.nome=:utipo'),
+                               {
+                                   'utipo': tipo
+                               })
     for row in result:
         return row[0]
 
@@ -436,86 +442,107 @@ def deleteFoto(path):
     db.session.commit()
 
 def getTodasInstPercursoUser(em):
-    sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \
+    result = db.engine.execute(text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \
         instanciapercurso.classificacao, percurso.estado \
         from instanciapercurso \
         join percurso on instanciapercurso.idpercurso = percurso.id \
-        where instanciapercurso.emailuser=\'' + em + '\'')
-    result = db.engine.execute(sql)
+        where instanciapercurso.emailuser=:umail'),
+                               {
+                                   'umail': em
+                               })
     inst = []
     for row in result:
         inst.append((row[0], row[1], row[2], row[3], row[4], row[5]))
     return inst
 
 def getTodasInstPercursoUser_2(em):
-    sql = text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id \
+    sql = text()
+    result = db.engine.execute(text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id \
         from instanciapercurso \
         join percurso on instanciapercurso.idpercurso = percurso.id \
-        where instanciapercurso.emailuser=\'' + em + '\'')
-    result = db.engine.execute(sql)
+        where instanciapercurso.emailuser=:umail'),
+                               {
+                                   'umail': em
+                               })
     inst = []
     for row in result:
         inst.append((row[0], row[1], row[2], row[3]))
     return inst
 
 def reconstruirPontosPercurso(id):
-    sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
+    result = db.engine.execute(text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
         join percurso on ponto.idpercurso = percurso.id \
-        where percurso.id =\'' + str(id) + '\'')
-    result = db.engine.execute(sql)
+        where percurso.id =:uid'),
+                               {
+                                   'uid': str(id)
+                               })
     pnt = []
     for row in result:
         pnt.append((row[0], row[1], row[2]))
     return pnt
 
 def updateEstadoPercurso(id, novoestado):
-    sql = text('update percurso set estado=\'' + novoestado + '\' where id=\'' + str(id) + '\'')
-    db.engine.execute(sql)
+    db.engine.execute(text('update percurso set estado=:unest where id=:uid'),
+                               {
+                                   'unest': novoestado,
+                                   'uid': str(id)
+                               })
     return
 
 def getFotografiasDeUmaInstPercurso(id):
-    sql = text('select * from fotografia where idinstpercurso=\'' + str(id) + '\'')
-    result = db.engine.execute(sql)
+    result = db.engine.execute(text('select * from fotografia where idinstpercurso=:uid'),
+                               {
+                                   'uid': str(id)
+                               })
     temp = []
     for row in result:
         temp.append(( row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]))
     return temp
 
 def reconstruirPontosInstPercurso(id):
-    sql = text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
+    result = db.engine.execute(text('select ponto.idponto, ponto.latitude, ponto.longitude from ponto \
         join percurso on ponto.idpercurso = percurso.id \
         join instanciapercurso on instanciapercurso.idpercurso = percurso.id \
-        where instanciapercurso.id = \'' + str(id) + '\'')
-    result = db.engine.execute(sql)
+        where instanciapercurso.id =:uid'),
+                               {
+                                   'uid': str(id)
+                               })
     pnt = []
     for row in result:
         pnt.append((row[0], row[1], row[2]))
     return pnt
 
 def todosPercursosDoTipo(estado):
-    sql = text('select * from percurso where estado = \'' + estado + '\'')
-    result = db.engine.execute(sql)
+    result = db.engine.execute(text('select * from percurso where estado=:uest'),
+                               {
+                                   'uest': estado
+                               })
+
     pnt = []
     for row in result:
         pnt.append((row[0], row[1], row[2], row[3], row[4]))
     return pnt
 
 def searchTodosPercursoContemSubString(substring):
-    sql = text('SELECT * FROM percurso WHERE titulo LIKE \'%' + substring + '%\'')
-    result = db.engine.execute(sql)
+    #sql = text('SELECT * FROM percurso WHERE titulo LIKE \'%' + substring + '%\'')
+    result = db.engine.execute(text('SELECT * FROM percurso WHERE titulo LIKE :subs'),
+                               {
+                                   'subs': '%' + substring + '%'
+                               })
     pnt = []
     for row in result:
         pnt.append((row[0], row[1], row[2], row[3], row[4]))
     return pnt
 
 def getInfoConceito(nomeConceito):
-    sql = text('SELECT conceito.descricao, fotografia.path'
+    result = db.engine.execute(text('SELECT conceito.descricao, fotografia.path'
                ' FROM conceito'
                ' JOIN fotografia on fotografia.nomeconceito=conceito.nomeconceito'
-               ' WHERE conceito.nomeconceito= \'' + nomeConceito + '\''
-               ' LIMIT 3;')
-
-    result = db.engine.execute(sql)
+               ' WHERE conceito.nomeconceito=:uname'
+               ' LIMIT 3;'),
+                               {
+                                   'uname': nomeConceito
+                               })
 
     totalfotos = nTotalFotos()
     concs = []
@@ -531,13 +558,14 @@ def getInfoConceito(nomeConceito):
     return concs
 
 def getConceptRoutes(nomeConceito):
-    sql = text('SELECT distinct percurso.id, percurso.titulo, percurso.descricao, percurso.estado'
+    result = db.engine.execute(text('SELECT distinct percurso.id, percurso.titulo, percurso.descricao, percurso.estado'
                ' FROM percurso'
                ' JOIN instanciapercurso on instanciapercurso.idpercurso = percurso.id'
                ' JOIN fotografia on fotografia.idinstpercurso = instanciapercurso.id'
-               ' WHERE fotografia.nomeconceito= \'' + nomeConceito + '\'' + ';')
-
-    result = db.engine.execute(sql)
+               ' WHERE fotografia.nomeconceito=:uname ;'),
+                               {
+                                   'uname': nomeConceito
+                               })
 
     concs = []
 

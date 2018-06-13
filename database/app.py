@@ -224,8 +224,8 @@ def queriesExemplo():
     print(infoPercursos())
 
 def queriesChico():
-    print("\nUpdate fotografia - id, conceito, path:")
-    print(updateFotografia(3, 1, 'DETI, Universidade de Aveiro', 'Biblioteca, Universidade de Aveiro', 'novopath'))
+    #print("\nUpdate fotografia - id, conceito, path:")
+    #print(updateFotografia(3, 1, 'DETI, Universidade de Aveiro', 'Biblioteca, Universidade de Aveiro', 'novopath'))
 
     print("\nObter todas as instancias de percurso feitas por um utilizador:")
     print(getTodasInstPercursoUser('joana@ua.pt'))
@@ -254,24 +254,22 @@ def queriesChico():
 def index():
     #addInfoExemplo()
     #addUsers()
-   
-    # queriesExemplo()
-    #queriesChico()
-    #print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
-    #print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
-    #print(nDesconhConhe())
-    #print(fotosPorConceito())
-    #print(conc())
-    #print(percFeedback())
+
+    print(queriesExemplo())
+    print(queriesChico())
+    print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
+    print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
+    print(nDesconhConhe())
+    print(fotosPorConceito())
+    print(conc())
+    print(percFeedback())
 
     print(getPathFotosUser("joana@ua.pt"))
 
     return render_template('index.html',
                            totalusers = nTotalUsers(),
-                           #totalAdmin = nTotalTipoUser('Administrador'),
-                           #totalTuristas = nTotalTipoUser('Turista'),
-                           totalAdmin=10,
-                           totalTuristas = 80,
+                           totalAdmin = nTotalTipoUser('Administrador'),
+                           totalTuristas = nTotalTipoUser('Turista'),
                            totalconcepts = nTotalConcepts(),
                            totalPaths = nTotalPath(),
                            conceitos = infoConceitos(),

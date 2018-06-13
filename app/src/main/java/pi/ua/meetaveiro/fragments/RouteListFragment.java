@@ -43,12 +43,13 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
-import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.data.Route;
+import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.*;
+import static pi.ua.meetaveiro.others.Constants.API_URL;
+import static pi.ua.meetaveiro.others.Constants.URL_CREATED_ROUTES;
 
 /**
  * A fragment representing a list of routes

@@ -8,18 +8,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.TextView;
 
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteDetailsActivity;
 import pi.ua.meetaveiro.data.Route;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Route} and makes a call to the

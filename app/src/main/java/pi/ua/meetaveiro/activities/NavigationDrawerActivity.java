@@ -42,11 +42,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.adapters.PhotoAdapter;
 import pi.ua.meetaveiro.adapters.RouteAdapter;
 import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
+import pi.ua.meetaveiro.data.Attraction;
+import pi.ua.meetaveiro.data.Event;
 import pi.ua.meetaveiro.data.Photo;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
@@ -55,10 +58,7 @@ import pi.ua.meetaveiro.fragments.AttractionListFragment;
 import pi.ua.meetaveiro.fragments.EventListFragment;
 import pi.ua.meetaveiro.fragments.HistoryFragment;
 import pi.ua.meetaveiro.fragments.PhotoLogFragment;
-import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.fragments.RouteListsFragment;
-import pi.ua.meetaveiro.data.Attraction;
-import pi.ua.meetaveiro.data.Event;
 import pi.ua.meetaveiro.fragments.SlideshowDialogFragment;
 import pi.ua.meetaveiro.others.Utils;
 

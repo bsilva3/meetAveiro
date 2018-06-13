@@ -25,9 +25,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.others.MyApplication;
 

@@ -43,9 +43,9 @@ import java.util.List;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
+import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 

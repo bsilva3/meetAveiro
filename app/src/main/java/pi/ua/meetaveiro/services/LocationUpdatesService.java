@@ -34,7 +34,12 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.activities.RouteActivity;
 import pi.ua.meetaveiro.others.Utils;
 
-import static pi.ua.meetaveiro.others.Constants.*;
+import static pi.ua.meetaveiro.others.Constants.ACTION_BROADCAST;
+import static pi.ua.meetaveiro.others.Constants.EXTRA_LOCATION;
+import static pi.ua.meetaveiro.others.Constants.EXTRA_STARTED_FROM_NOTIFICATION;
+import static pi.ua.meetaveiro.others.Constants.EXTRA_TAKE_PHOTO;
+import static pi.ua.meetaveiro.others.Constants.NEW_ROUTE_EXTRA;
+import static pi.ua.meetaveiro.others.Constants.ROUTE_STATE;
 
 /**
  * A bound and started service that is promoted to a foreground service when location updates have

@@ -3,20 +3,15 @@ package pi.ua.meetaveiro.activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-
 import android.os.Parcelable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
-
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,7 +35,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;

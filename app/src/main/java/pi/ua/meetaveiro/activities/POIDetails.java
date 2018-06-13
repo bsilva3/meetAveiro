@@ -1,16 +1,14 @@
 package pi.ua.meetaveiro.activities;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -33,15 +31,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,11 +41,9 @@ import me.relex.circleindicator.CircleIndicator;
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionImageSliderAdapter;
 import pi.ua.meetaveiro.adapters.RouteExpandable;
-import pi.ua.meetaveiro.interfaces.DataReceiver;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.others.MyApplication;
-import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.URL_ATTRACTION_INFO;
 import static pi.ua.meetaveiro.others.Constants.URL_ROUTES_IN_ATTRACTION;

@@ -33,6 +33,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 import flask
 
 IMAGE_FOLDER = '../../../../treino'
+URL_PATH = 'http://192.168.160.192:8080/sendimage/'
 #IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 ATRACTIONS = []
@@ -101,11 +102,11 @@ def get_all_atractions():
                 if './static' in f.path:
                     temp1 = f.path.replace('./static/img/', '')
                     temp1 = temp1.split('/')
-                    path = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp1[0]+':'+temp1[1])
+                    path = URL_PATH + 'pending/' + str(temp1[0]+':'+temp1[1])
                 else:
                     temp1 = f.path.replace('../', '')
                     temp1 = temp1.replace('treino/', '')
-                    path = 'http://192.168.160.192:8080/sendimage/' + temp1
+                    path = URL_PATH + temp1
                 break
             except:
                 print('Could not find: ' + f.path)
@@ -505,14 +506,14 @@ def classify_image():
     os.rename('./temp.jpg', filename)
     print("Imagem gravada")
 
-    #while(True):
-    #    print("Looping...")
-    #    foto = addFotografia(None, img_name, user_email, lat, lon, filename,
-    #                    None, datetime.datetime.now(), None, 'pending', score, None)
-    #    if foto is None:
-    #        continue
-    #    else:
-    #        break
+    while(True):
+        print("Looping...")
+        foto = addFotografia(None, img_name, user_email, lat, lon, filename,
+                        None, datetime.datetime.now(), None, 'pending', score, None)
+        if foto is None:
+            continue
+        else:
+            break
     print("Enviando resposta...")
     if img_name != 'desconhecido':
         return jsonify({
@@ -742,11 +743,11 @@ def get_route_instance(id):
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                foto['img'] = URL_PATH + 'pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+                foto['img'] = URL_PATH + temp
             foto['latitude'] = f.latitude
             foto['longitude'] = f.longitude
             foto['id'] = f.id
@@ -784,11 +785,11 @@ def get_atraction(id):
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                foto = URL_PATH + 'pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto = 'http://192.168.160.192:8080/sendimage/' + temp
+                foto = URL_PATH + temp
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)
@@ -827,11 +828,11 @@ def get_photo_history():
             if './static' in f.path:
                 temp = f.path.replace('./static/img/', '')
                 temp = temp.split('/')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/pending/' + str(temp[0]+':'+temp[1])
+                foto['img'] = URL_PATH + 'pending/' + str(temp[0]+':'+temp[1])
             else:
                 temp = f.path.replace('../', '')
                 temp = temp.replace('treino/', '')
-                foto['img'] = 'http://192.168.160.192:8080/sendimage/' + temp
+                foto['img'] = URL_PATH + temp
             fotografias.append(foto)
         except:
             print('Could not find: ' + f.path)

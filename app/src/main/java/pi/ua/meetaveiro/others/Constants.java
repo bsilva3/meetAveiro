@@ -11,7 +11,7 @@ public class Constants {
     private static final String FRAGMENTS_PACKAGE_NAME = "pi.ua.meetaveiro.fragments";
 
     //Alterar consoante o IP do servidor (que pode ser consultado com ip addr show)
-    public final static String API_URL = "http://192.168.160.192:8080";
+    public final static String API_URL = "http://193.136.175.192:443";
     //url to log in a user
     public final static String URL_LOG_USER = API_URL + "/resources/users";
     //url to send an image to the server to scan
@@ -36,8 +36,6 @@ public class Constants {
     public static final String URL_ROUTES_IN_ATTRACTION = API_URL + "/resources/routes/search";
     // url to fetch information of an attraction (aka concept)
     public static final String URL_ATTRACTION_INFO = API_URL + "/resources/atractions/";
-    // url to fetch information of an attraction (aka concept)
-    public static final String URL_ROUTES_ATTRACTION = API_URL + "/blahblah";
     // url to fetch routes history json
     public static final String URL_EVENTS = API_URL + "/resources/events";
     //url to send a user's email when registered

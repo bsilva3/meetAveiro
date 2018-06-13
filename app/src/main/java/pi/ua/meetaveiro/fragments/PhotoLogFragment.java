@@ -782,7 +782,7 @@ public class PhotoLogFragment extends Fragment implements
                             (dialog12, which) -> {
                                 dialog12.dismiss();
                                 if (showFeedback)
-                                    showFeedbackDialogAndSend(name, p.getId(), d);
+                                    showFeedbackDialogAndSend(conceptID, p.getId(), d);
                             }
                     )
                     .onNeutral((dialog1, which) -> startActivity(new Intent(getActivity(), POIDetails.class)

@@ -161,7 +161,7 @@ public class RouteActivity extends FragmentActivity implements
     private static final String KEY_CAMERA_POSITION = "lastCameraPosition";
     private static final String KEY_LOCATION = "lastLocation";
     private static final String TAG = "ERROR";
-    private static final String TEMP_ROUTE_POINTS_FILE = "";
+    private static final String TEMP_ROUTE_POINTS_FILE = "tempRouteFile";
 
     //Current start/pause/stop buttons state
     private FloatingActionButton buttonStopRoute;
@@ -407,6 +407,10 @@ public class RouteActivity extends FragmentActivity implements
                                         mMap.clear();
                                         //now procede to the tour
                                         onRouteStateChanged(true);
+                                        SharedPreferences prefs = getSharedPreferences(TEMP_ROUTE_POINTS_FILE, Context.MODE_PRIVATE);
+                                        SharedPreferences.Editor editor = prefs.edit();
+                                        editor.clear();
+                                        editor.commit();
                                         Utils.setRouteState(RouteActivity.this, ROUTE_STATE.STARTED);
                                         updateRouteButtons(Utils.getRouteState(RouteActivity.this));
                                         break;
@@ -622,6 +626,7 @@ public class RouteActivity extends FragmentActivity implements
      */
     private void addItems() {
         for (Photo photo : photos) {
+            Log.d("photo", photo.getTitle()+"");
             mClusterManager.addItem(photo);
         }
     }
@@ -670,11 +675,11 @@ public class RouteActivity extends FragmentActivity implements
                             );
 
                     // adding contacts to contacts list
-                    this.populateGeofenceList(items);
+                    //this.populateGeofenceList(items);
                 },
                 error -> {
                     // error in getting json
-                    Log.e(TAG, "Error: " + error.getMessage());
+                    Log.e(TAG+"Geo", "Error: " + error.getMessage());
                 }
         );
         MyApplication.getInstance().addToRequestQueue(request);
@@ -880,8 +885,8 @@ public class RouteActivity extends FragmentActivity implements
 
                     // Set the circular region of this geofence.
                     .setCircularRegion(
-                            Integer.valueOf(entry.getLatitude()),
-                            Integer.valueOf(entry.getLongitude()),
+                            Double.valueOf(entry.getLatitude()),
+                            Double.valueOf(entry.getLongitude()),
                             Constants.GEOFENCE_RADIUS_IN_METERS
                     )
 
@@ -897,7 +902,7 @@ public class RouteActivity extends FragmentActivity implements
                     // Create the geofence.
                     .build());
         }
-        addGeofences();
+        //addGeofences();
     }
 
     /**
@@ -1237,7 +1242,7 @@ public class RouteActivity extends FragmentActivity implements
                             (dialog12, which) -> {
                                 dialog12.dismiss();
                                 if (showFeedback)
-                                    showFeedbackDialogAndSend(name, p.getId(), d);
+                                    showFeedbackDialogAndSend(conceptID, p.getId(), d);
                             }
                     )
                         .onNeutral((dialog1, which) -> startActivity(new Intent(this, POIDetails.class)
@@ -1672,8 +1677,8 @@ public class RouteActivity extends FragmentActivity implements
                     alertDialog.dismiss();
                     askForRoutePrivacity(jsonT);
                     //delete route data
-                    deleteAllTempPointsInPrefs();
-                    //getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().apply();
+                    //deleteAllTempPointsInPrefs();
+                    getSharedPreferences(TEMP_ROUTE_POINTS_FILE, MODE_PRIVATE).edit().clear().commit();
                 }
             }
         });
@@ -1806,6 +1811,7 @@ public class RouteActivity extends FragmentActivity implements
         int tmp = 0;
         Gson gson = new Gson();
         String markers = gson.toJson(photos);
+        Log.d("gson", markers+"");
         prefs.edit().putString("markers", markers).apply();
         for (LatLng l : routePoints){
             prefs.edit().putString("Lat"+tmp, String.valueOf(l.latitude)).apply();
@@ -1822,9 +1828,9 @@ public class RouteActivity extends FragmentActivity implements
         boolean stop = false;
         int tmp = 0;
         Gson gson = new Gson();
-        if (prefs.contains("markers" )) {
+        if (prefs.contains("markers")) {
             String json = prefs.getString("markers", "");
-            Type listType = new TypeToken<ArrayList<Photo>>(){}.getType();
+            Type listType = new TypeToken<List<Photo>>(){}.getType();
             photos = gson.fromJson(json, listType);
         }
         while (!stop) {
@@ -1857,12 +1863,12 @@ public class RouteActivity extends FragmentActivity implements
         boolean stop = false;
         int tmp = 0;
         if (prefs.contains("markers")){
-            prefs.edit().remove("markers").apply();
+            prefs.edit().remove("markers").commit();
         }
         while (!stop) {
             if (prefs.contains("Lat" + tmp)) {
-                prefs.edit().remove("Lat" + tmp).apply();
-                prefs.edit().remove("Lng" + tmp).apply();
+                prefs.edit().remove("Lat" + tmp).commit();
+                prefs.edit().remove("Lng" + tmp).commit();
                 Log.d("remove", "removed");
                 LatLng l = null;
                 tmp++;

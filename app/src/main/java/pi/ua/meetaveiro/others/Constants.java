@@ -48,6 +48,8 @@ public class Constants {
     //Instancia por id
     public static final String INSTANCE_BY_ID= API_URL + "/resources/routes/instances/"; //+ id
 
+    //Authentication Token
+    public static String TOKEN;
 
     // Geofence related constants
     public static final String GEOFENCES_ADDED_KEY = ACTIVITIES_PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";

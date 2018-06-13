@@ -30,7 +30,6 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -44,7 +43,7 @@ import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.AttractionAdapter;
 import pi.ua.meetaveiro.data.Attraction;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
-import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.API_URL;
@@ -268,16 +267,7 @@ public class AttractionListFragment extends Fragment implements
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
-                FirebaseAuth
-                        .getInstance()
-                        .getCurrentUser()
-                        .getIdToken(true)
-                        .addOnSuccessListener(result -> {
-                            String idToken = result.getToken();
-                            //Do whatever
-                            Log.d(TAG, "GetTokenResult result = " + idToken);
-                        });
-                headers.put("Authorization", "2e96e0a4ff05ba86dc8f778ac49a8dc0");
+                headers.put("Authorization", Constants.TOKEN);
                 return headers;
             }
         };
@@ -287,7 +277,7 @@ public class AttractionListFragment extends Fragment implements
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
-        MyApplication.getInstance().addToRequestQueue(request);
+        Utils.refreshTokenAndQueueRequest(request);
     }
 
     @Override

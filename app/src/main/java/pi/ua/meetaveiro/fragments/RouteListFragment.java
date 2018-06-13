@@ -249,20 +249,17 @@ public class RouteListFragment extends Fragment implements
             e.printStackTrace();
         }
 
-        //routeList.add(new Route("route 1", "desc"));
         if(URL_CREATED_ROUTES == url) {
             new uploadFileToServerTask().execute(jsonRequest.toString(), url);
         }
         else
             new fetchDataAsRoute().execute(url);
 
-
         // refreshing recycler view
         mShimmerViewContainer.stopShimmerAnimation();
         mShimmerViewContainer.setVisibility(View.GONE);
         // stopping swipe refresh
         swipeRefreshLayout.setRefreshing(false);
-
 
     }
 

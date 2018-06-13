@@ -14,6 +14,9 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -137,7 +140,27 @@ public class Utils {
         return Bitmap.createScaledBitmap(image, width, height, false);
     }
 
+    public static void refreshTokenAndQueueRequest(Request<org.json.JSONArray> request){
+        FirebaseAuth
+                .getInstance()
+                .getCurrentUser()
+                .getIdToken(true)
+                .addOnSuccessListener(result -> {
+                    Constants.TOKEN = result.getToken();
+                    MyApplication.getInstance().addToRequestQueue(request);
+                });
+    }
 
+    public static void refreshTokenAndExecuteAsyncTask(AsyncTask<String, Void, String> task, String stringRequest, String url){
+        FirebaseAuth
+                .getInstance()
+                .getCurrentUser()
+                .getIdToken(true)
+                .addOnSuccessListener(result -> {
+                    Constants.TOKEN = result.getToken();
+                    task.execute(stringRequest, url);
+                });
+    }
 
     public static InputStream getHttpConnection(String urlString) throws IOException {
 

@@ -46,6 +46,7 @@ import pi.ua.meetaveiro.adapters.RouteInstanceAdapter;
 import pi.ua.meetaveiro.data.Route;
 import pi.ua.meetaveiro.data.RouteInstance;
 import pi.ua.meetaveiro.interfaces.NetworkCheckResponse;
+import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
 import pi.ua.meetaveiro.others.Utils;
 
@@ -133,7 +134,6 @@ public class RouteHistoryFragment extends Fragment implements
         mShimmerViewContainer.startShimmerAnimation();
 
         (new Utils.NetworkCheckTask(getContext(), this)).execute(API_URL);
-        Log.i("conection", "doneeee");
 
         return view;
     }
@@ -170,8 +170,7 @@ public class RouteHistoryFragment extends Fragment implements
             e.printStackTrace();
         }
 
-        new uploadFileToServerTask().execute(jsonRequest.toString(), INSTANCE_BY_USER);
-
+        Utils.refreshTokenAndExecuteAsyncTask(new UploadFileToServerTask(), jsonRequest.toString(), INSTANCE_BY_USER);
     }
 
     /**
@@ -298,7 +297,7 @@ public class RouteHistoryFragment extends Fragment implements
      * Will recieve all the instances from the server.
      * Needs to include the email
      */
-    private class uploadFileToServerTask extends AsyncTask<String, Void, String> {
+    private class UploadFileToServerTask extends AsyncTask<String, Void, String> {
         String serverUrl;
         @Override
         protected void onPreExecute() {
@@ -320,6 +319,7 @@ public class RouteHistoryFragment extends Fragment implements
                 urlConnection.setDoOutput(true);
                 // is output buffer writter
                 urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Authorization", Constants.TOKEN);
                 urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Accept", "application/json");
                 //set headers and method

@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -29,13 +30,17 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.EventAdapter;
 import pi.ua.meetaveiro.data.Event;
+import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.MyApplication;
 import pi.ua.meetaveiro.others.MyDividerItemDecoration;
+import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.URL_EVENTS;
 
@@ -169,9 +174,16 @@ public class EventListFragment extends Fragment implements
                     // stopping swipe refresh
                     swipeRefreshLayout.setRefreshing(false);
                 }
-        );
+        ){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", Constants.TOKEN);
+                return headers;
+            }
+        };
 
-        MyApplication.getInstance().addToRequestQueue(request);
+        Utils.refreshTokenAndQueueRequest(request);
     }
 
     @Override

@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -22,13 +23,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import pi.ua.meetaveiro.R;
 import pi.ua.meetaveiro.adapters.PhotoAdapter;
 import pi.ua.meetaveiro.data.Photo;
+import pi.ua.meetaveiro.others.Constants;
 import pi.ua.meetaveiro.others.CustomRequest;
 import pi.ua.meetaveiro.others.MyApplication;
+import pi.ua.meetaveiro.others.Utils;
 
 import static pi.ua.meetaveiro.others.Constants.URL_PHOTO_HISTORY;
 
@@ -129,7 +134,7 @@ public class PhotoHistoryFragment extends Fragment  {
             json.put("user", user.getEmail());
         } catch (JSONException e) {}
 
-        CustomRequest req = new CustomRequest(
+        CustomRequest request = new CustomRequest(
                 Request.Method.POST,
                 URL_PHOTO_HISTORY,
                 json,
@@ -151,10 +156,17 @@ public class PhotoHistoryFragment extends Fragment  {
                             Log.e(TAG, "Error: " + error.getMessage());
                             pDialog.hide();
                 }
-        );
+        ){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", Constants.TOKEN);
+                return headers;
+            }
+        };
 
         // Adding request to request queue
-        MyApplication.getInstance().addToRequestQueue(req);
+        Utils.refreshTokenAndQueueRequest(request);
     }
 
 }

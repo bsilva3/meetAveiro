@@ -276,7 +276,7 @@ def add_admin():
 
 
 @app.route('/adicionarAdmin/<string:email>', methods=['POST'])
-def upload(email):
+def adicionarAdmin(email):
     turista2Admin(email)
     return render_template('/addAdmin.html',
                            turistas=getAllTuristas())

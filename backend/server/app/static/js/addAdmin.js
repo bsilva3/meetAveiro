@@ -1,9 +1,9 @@
-function setAdmin()() {
+function setAdmin() {
     var e = document.getElementById("turistasList");
     var tur = e.options[e.selectedIndex].value;
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", '/addAdmin', true);
+    xhr.open("POST", '/adicionarAdmin', true);
 
     //Send the proper header information along with the request
     xhr.setRequestHeader("Content-type", "application/json");
@@ -16,6 +16,6 @@ function setAdmin()() {
     };
 
     xhr.send(JSON.stringify({
-        id: tur
+        email: tur
     }));
 }

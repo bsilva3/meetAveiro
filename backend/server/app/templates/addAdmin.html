@@ -1,0 +1,38 @@
+{% extends "structure.html" %}
+
+{% block content %}
+
+
+<div class="container">
+    <div class="row">
+        <h3>Adicionar Administrador</h3>
+        <div class="col-sm-4">
+              <div class="form-group">
+                <div class="col-md-10">
+                    <!--
+                    select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.id
+                    -->
+                  <select id="turistasList" class="form-control">
+                      {% for turista in turistas %}
+                      <option value="{{turista.email}}">{{turista.email}}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary" onclick="setAdmin()">Mudar</button>
+                </div>
+              </div>
+        </div>
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"></div>
+
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/addAdmin.js')}}"></script>
+{{super()}}
+{% endblock %}

@@ -441,6 +441,10 @@ def deleteFoto(path):
     foto = db.session.query(Fotografia).filter(Fotografia.path == path).delete()
     db.session.commit()
 
+def getAllTuristas():
+    # fotos = db.session.query(Fotografia).filter(Fotografia.emailinst==em).order_by(Fotografia.nomeconc).all()
+    return db.session.query(Utilizador).filter(Utilizador.tipoid == 2).all()
+
 def getTodasInstPercursoUser(em):
     result = db.engine.execute(text('select percurso.titulo, percurso.id, instanciapercurso.datainicio, instanciapercurso.datafim,  \
         instanciapercurso.classificacao, percurso.estado \
@@ -480,6 +484,13 @@ def reconstruirPontosPercurso(id):
     for row in result:
         pnt.append((row[0], row[1], row[2]))
     return pnt
+
+def turista2Admin(email):
+    db.engine.execute(text('update utilizador set tipo=1 where email=:umail;'),
+                      {
+                          'umail': email
+                      })
+    return
 
 def updateEstadoPercurso(id, novoestado):
     db.engine.execute(text('update percurso set estado=:unest where id=:uid'),
@@ -644,6 +655,4 @@ def getPathFotosUser(em):
     #fotos = []
     #for row in result:
     #    fotos.append(row[0])
-    fotos = db.session.query(Fotografia).filter(Fotografia.emailinst==em).order_by(Fotografia.nomeconc).all()
-    return fotos
-    
+    return db.session.query(Fotografia).filter(Fotografia.emailinst==em).order_by(Fotografia.nomeconc).all()

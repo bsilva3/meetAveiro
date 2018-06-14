@@ -67,10 +67,12 @@
 {% endif %}
 
 <div class="container">
-    <div class="page-header">
-        <h2>Adicionar administradores</h2>
-        <button class="btn btn-info" onclick="addAdmin()">Adicionar Administradores</button>
-    </div>
+    <form action={{ url_for('addAdmin') }}" method="POST" role="form">
+        <div class="page-header">
+            <h2>Adicionar administradores</h2>
+            <button type="submit" class="btn btn-info">Adicionar Administradores</button>
+        </div>
+    </form>
 </div>
 
 {% endblock %}

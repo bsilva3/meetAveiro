@@ -255,16 +255,23 @@ def index():
     #addInfoExemplo()
     #addUsers()
 
-    print(queriesExemplo())
-    print(queriesChico())
-    print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
-    print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
-    print(nDesconhConhe())
-    print(fotosPorConceito())
-    print(conc())
-    print(percFeedback())
+    #print(queriesExemplo())
+    #print(queriesChico())
+    #print(getInfoConceito('Biblioteca, Universidade de Aveiro'))
+    #print(getConceptRoutes('Biblioteca, Universidade de Aveiro'))
+    #print(nDesconhConhe())
+    #print(fotosPorConceito())
+    #print(conc())
+    #print(percFeedback())
 
-    print(getPathFotosUser("joana@ua.pt"))
+    #print(getPathFotosUser("joana@ua.pt"))
+
+    turistas = getAllTuristas()
+    for turista in turistas:
+        print(turista.email + ' ' + str(turista.tipoid))
+
+    turista2Admin('anotherAdmin@ua.pt')
+
 
     return render_template('index.html',
                            totalusers = nTotalUsers(),

@@ -33,7 +33,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 import flask
 
 IMAGE_FOLDER = '../../../../treino'
-URL_PATH = 'http://192.168.160.192:8080/sendimage/'
+URL_PATH = 'http://172.20.10.7:8080/sendimage/'
 #IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 ATRACTIONS = []

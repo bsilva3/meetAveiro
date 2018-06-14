@@ -268,7 +268,7 @@ def user_gallery():
     return render_template('user_gallery.html', images=to_send)
 
 @app.route('/addAdmin', methods=['GET'])
-def add_admin():
+def addAdmin():
     if 'uid' not in session:
         return render_template('signIn.html', message='You have to log in first.')
     return render_template('/addAdmin.html',
@@ -278,8 +278,10 @@ def add_admin():
 @app.route('/adicionarAdmin/<string:email>', methods=['POST'])
 def adicionarAdmin(email):
     turista2Admin(email)
-    return render_template('/addAdmin.html',
-                           turistas=getAllTuristas())
+    return jsonify({
+        'url': url_for('addAdmin', turistas=getAllTuristas())
+    })
+    
 
 
 @app.route('/stats', methods=['GET'])

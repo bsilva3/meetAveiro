@@ -33,7 +33,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 import flask
 
 IMAGE_FOLDER = '../../../../treino'
-URL_PATH = 'http://172.20.10.7:8080/sendimage/'
+URL_PATH = 'https://deti-imgrec.ua.pt/sendimage/'
 #IMAGE_FOLDER = '/home/ana/Documents/PI/treino'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 ATRACTIONS = []
@@ -44,6 +44,20 @@ app.config['JSON_AS_ASCII'] = False
 db.init_app(app)
 Bootstrap(app)
 nav = Nav(app)
+admin_nav = Navbar('MeetAveiro', 
+                View('Home', 'index'),
+                View('Stats', 'show_stats'),
+                View('Requests', 'show_requests'),
+                View('Logout', 'signOut'))
+
+user_nav = Navbar('MeetAveiro',
+                View('As minhas fotografias', 'user_gallery'),
+                View('Os meus percursos', 'escInstPercurso'),
+                View('Logout', 'signOut'))
+
+mynav = Navbar('MeetAveiro')
+nav.register_element('admin_nav', admin_nav)
+nav.register_element('user_nav', user_nav)
 
 config = {
     'apiKey': "AIzaSyDCYwU48HMDzFbz_98UUl_NzNXgzy16LOY",
@@ -141,23 +155,13 @@ def signIn():
         print(2)
         session['type'] = utilizador.tipoid
         print(3)
+        global mynav
         if utilizador.tipoid == 1:
-            mynav = Navbar('MeetAveiro', 
-                View('Home', 'index'),
-                View('Stats', 'show_stats'),
-                View('Requests', 'show_requests'),
-                View('Logout', 'signOut'))
-            nav.register_element('mynavbar', mynav)
             return jsonify({
                 'url': url_for('index')
             })
         if utilizador.tipoid == 2:
             print(4)
-            mynav = Navbar('MeetAveiro',
-                View('As minhas fotografias', 'user_gallery'),
-                View('Os meus percursos', 'escInstPercurso'),
-                View('Logout', 'signOut'))
-            nav.register_element('mynavbar', mynav)
             return jsonify({
                 'url': url_for('user_gallery')
             })
@@ -167,9 +171,12 @@ def signIn():
             'url': ''
         })
 
+
+
 @app.route('/routes', methods=['GET'])
 def escInstPercurso():
-    return render_template('user_routes.html', routes=getTodasInstPercursoUser_2(session['email']))
+    return render_template('user_routes.html', routes=getTodasInstPercursoUser_2(session['email']),
+        admin=False)
 
 @app.route('/signOut', methods=['GET'])
 def signOut():
@@ -223,7 +230,7 @@ def retrain():
     print('Done')
     pending_requests = get_request_files()
     return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
-        pending=count_elems_dict(pending_requests))
+        pending=count_elems_dict(pending_requests), admin=True)
     
 
 @app.route('/index')
@@ -231,7 +238,7 @@ def index():
     if 'uid' in session:
         pending_requests = get_request_files()
         return render_template('index.html', topics=next(os.walk(IMAGE_FOLDER))[1], 
-            pending=count_elems_dict(pending_requests))
+            pending=count_elems_dict(pending_requests), admin=True)
     return render_template('signIn.html', message='You have to log in first.')
 
 @app.route('/gallery/<string:query>', methods=['GET'])
@@ -240,7 +247,7 @@ def show_gallery(query):
         return render_template('signIn.html', message='You have to log in first.')
     folder = os.path.join(IMAGE_FOLDER, query)
     images = os.listdir(folder)
-    return render_template('gallery.html', topic=images, path=query)
+    return render_template('gallery.html', topic=images, path=query, admin=True)
 
 
 @app.route('/user_gallery', methods=['GET'])
@@ -265,14 +272,14 @@ def user_gallery():
         except:
             continue
 
-    return render_template('user_gallery.html', images=to_send)
+    return render_template('user_gallery.html', images=to_send, admin=False)
 
 @app.route('/addAdmin', methods=['GET'])
 def addAdmin():
     if 'uid' not in session:
         return render_template('signIn.html', message='You have to log in first.')
     return render_template('/addAdmin.html',
-                           turistas=getAllTuristas())
+                           turistas=getAllTuristas(), admin=True)
 
 
 @app.route('/adicionarAdmin/<string:email>', methods=['POST'])
@@ -300,7 +307,8 @@ def show_stats():
                            fotosPorConceito = fotosPorConceito(),
                            conc = conc(),
                            descConh = nDesconhConhe(),
-                           percFeedback = percFeedback())
+                           percFeedback = percFeedback(),
+                           admin=True)
 
 @app.route('/sendimage/<string:topic>/<string:filename>')
 def send_image(filename, topic):
@@ -396,7 +404,7 @@ def show_requests():
         return render_template('signIn.html', message='You have to log in first.')
     pending_requests = get_request_files()
     return render_template('pending.html', requests=pending_requests, 
-        topics=next(os.walk(IMAGE_FOLDER))[1])
+        topics=next(os.walk(IMAGE_FOLDER))[1], admin=True)
 
 @app.route('/requests/change', methods=['POST'])
 def change_request():

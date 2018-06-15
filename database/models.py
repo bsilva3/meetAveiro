@@ -322,14 +322,14 @@ def addInstanciaPercurso(emailc, idperc, datainicio, datafim, classificacao=None
     return inst
 
 def addFotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow):
-    #try:
-    foto = Fotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
-    db.session.add(foto)
-    db.session.commit()
-    return foto
-    #except IntegrityError as e:
-    #    db.session.rollback()
-    #    return None
+    try:
+        foto = Fotografia(id, nomeconc, emailinst, latitude, longitude, path, idperc, datafoto, feedback, estado, classificacaotensorflow, tempotensorflow)
+        db.session.add(foto)
+        db.session.commit()
+        return foto
+    except IntegrityError as e:
+        db.session.rollback()
+        return None
     
 
 def nTotalUsers():

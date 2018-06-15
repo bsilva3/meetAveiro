@@ -5,5 +5,10 @@ MeetAveiro
 {% endblock %}
 
 {% block navbar %}
-{{nav.mynavbar.render()}}
+{% if admin %}
+{{nav.admin_nav.render()}}
+{% endif %}
+{% if not admin %}
+{{nav.user_nav.render()}}
+{% endif %}
 {% endblock %}

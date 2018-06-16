@@ -1,8 +1,6 @@
 function signIn() {
     var email = document.getElementById('email');
     var passwd = document.getElementById('password'); 
-    console.log(email.value)
-    console.log(passwd.value)
     var xhr = new XMLHttpRequest();
     xhr.open("POST", '/signIn', true);
 

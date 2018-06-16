@@ -222,6 +222,10 @@ def process_image_search(query):
         message = search_wiki(query)
     return message
 
+def auto_retrain():
+    subprocess.call('./retrain.sh')
+
+
 @app.route('/resources/retrain', methods=['POST'])
 def retrain():
     req = request.get_json(force=True)
@@ -1018,7 +1022,12 @@ scheduler.add_job(
     replace_existing=True
 )
 
-
+scheduler.add_job(
+    func=auto_retrain,
+    trigger=IntervalTrigger(hours=48),
+    id='auto_retrain',
+    name='Retrains the model every 48h'
+)
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
